@@ -16,8 +16,8 @@ const PracticeDetails = (props) => {
   const { width } = useViewport()
   const isMobile = width ? width < breakpoints.sm : false
 
-  const takeProfit = props.position.takeProfit * 100;
-  const stopLoss = props.position.stopLoss * 100;
+  const takeProfit = props.position.takeProfit * 100
+  const stopLoss = props.position.stopLoss * 100
 
   return (
     <div
@@ -41,18 +41,14 @@ const PracticeDetails = (props) => {
             <div className="text-th-fgd-3 tiny-text pb-0.5">
               {t('time-left')}
             </div>
-            <div className="font-semibold text-th-fgd-1 md:text-xs">
-              {100}s
-            </div>
+            <div className="font-semibold text-th-fgd-1 md:text-xs">{100}s</div>
           </div>
           <div className="flex items-center justify-between md:block">
             <div className="text-th-fgd-3 tiny-text pb-0.5">
               {t('stop-loss')}
             </div>
             {stopLoss || stopLoss === 0 ? (
-              <div
-                className="font-semibold md:text-xs text-th-red"
-              >
+              <div className="font-semibold md:text-xs text-th-red">
                 {stopLoss.toFixed(2) + '%'}
               </div>
             ) : (
@@ -64,9 +60,7 @@ const PracticeDetails = (props) => {
               {t('take-profit')}
             </div>
             {takeProfit || takeProfit === 0 ? (
-              <div
-                className="font-semibold md:text-xs text-th-green"
-              >
+              <div className="font-semibold md:text-xs text-th-green">
                 {takeProfit.toFixed(2) + '%'}
               </div>
             ) : (

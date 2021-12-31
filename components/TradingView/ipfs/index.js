@@ -1,22 +1,17 @@
-import historyProvider from './historyProvider';
+import historyProvider from './historyProvider'
 
 export default class {
   constructor(supportedResolutions) {
-    this.supportedResolutions = supportedResolutions;
+    this.supportedResolutions = supportedResolutions
     this.config = {
       supported_resolutions: supportedResolutions,
-    };
-    this.priceScale = 10000;
+    }
+    this.priceScale = 10000
   }
   onReady(cb) {
-    setTimeout(() => cb(this.config), 0);
+    setTimeout(() => cb(this.config), 0)
   }
-  resolveSymbol(
-    symbolName,
-    onSymbolResolvedCallback,
-    _onResolveErrorCallback,
-  ) {
-
+  resolveSymbol(symbolName, onSymbolResolvedCallback, _onResolveErrorCallback) {
     var symbol_stub = {
       name: symbolName,
       description: '',
@@ -31,11 +26,11 @@ export default class {
       supported_resolution: this.supportedResolutions,
       volume_precision: 8,
       data_status: 'streaming',
-    };
+    }
 
     setTimeout(function () {
-      onSymbolResolvedCallback(symbol_stub);
-    }, 0);
+      onSymbolResolvedCallback(symbol_stub)
+    }, 0)
 
     // onResolveErrorCallback('Not feeling it today')
   }
@@ -45,23 +40,25 @@ export default class {
     from,
     to,
     onHistoryCallback,
-    onErrorCallback,
+    onErrorCallback
   ) {
     historyProvider
       .getBars(symbolInfo, resolution, from, to)
       .then((bars) => {
-        console.log('bars', bars);
-        if (bars.length) onHistoryCallback(bars, { noData: false });
-        else onHistoryCallback(bars, { noData: true });
+        console.log('bars', bars)
+        if (bars.length) onHistoryCallback(bars, { noData: false })
+        else onHistoryCallback(bars, { noData: true })
       })
       .catch((err) => {
         onErrorCallback(err)
-      });
+      })
   }
   calculateHistoryDepth(resolution, _resolutionBack, _intervalBack) {
     // optional
     // while optional, this makes sure we request 24 hours of minute data at a time
     // CryptoCompare's minute data endpoint will throw an error if we request data beyond 7 days in the past, and return no data
-    return resolution < 60 ? { resolutionBack: 'D', intervalBack: '1' } : undefined;
+    return resolution < 60
+      ? { resolutionBack: 'D', intervalBack: '1' }
+      : undefined
   }
 }

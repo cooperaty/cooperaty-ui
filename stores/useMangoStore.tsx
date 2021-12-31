@@ -71,7 +71,9 @@ export const MNGO_INDEX = defaultMangoGroupIds.oracles.findIndex(
   (t) => t.symbol === 'MNGO'
 )
 
-export const cooperatyProgramId = new PublicKey("EzoGx79u65bAB5ng9ZUdJ22uW59Xi6Jd5LwvPFNQrBXe");
+export const cooperatyProgramId = new PublicKey(
+  'EzoGx79u65bAB5ng9ZUdJ22uW59Xi6Jd5LwvPFNQrBXe'
+)
 export const programId = new PublicKey(defaultMangoGroupIds.mangoProgramId)
 export const serumProgramId = new PublicKey(defaultMangoGroupIds.serumProgramId)
 const mangoGroupPk = new PublicKey(defaultMangoGroupIds.publicKey)
@@ -112,8 +114,8 @@ interface MangoStore extends State {
     current: Connection
     websocket: Connection
     endpoint: string
-    client: MangoClient,
-    cooperatyClient: CooperatyClient,
+    client: MangoClient
+    cooperatyClient: CooperatyClient
     slot: number
   }
   selectedMarket: {
@@ -170,24 +172,22 @@ interface MangoStore extends State {
   set: (x: any) => void
   actions: {
     [key: string]: (args?) => void
-  },
+  }
   // Cooperaty
   practiceForm: {
     prediction: number | ''
-    practiceType:
-      | 'Loss'
-      | 'Profit'
-  },
+    practiceType: 'Loss' | 'Profit'
+  }
   currentExercise: {
-    cid: string,
-    type: | "Scalping" | "Swing",
+    cid: string
+    type: 'Scalping' | 'Swing'
     position: {
-      direction: | 'long_position' | 'short_position',
-      takeProfit: number,
-      stopLoss: number,
-      bars: number,
-    },
-    timeLeft: number,
+      direction: 'long_position' | 'short_position'
+      takeProfit: number
+      stopLoss: number
+      bars: number
+    }
+    timeLeft: number
   }
 }
 
@@ -417,7 +417,7 @@ const useMangoStore = create<MangoStore>((set, get) => {
                 `https://event-history-api.herokuapp.com/trades/open_orders/${pk.toString()}`
               )
               const parsedResponse = await response.json()
-              console.log(parsedResponse);
+              console.log(parsedResponse)
               return parsedResponse?.data ? parsedResponse.data : []
             })
           )
@@ -533,28 +533,30 @@ const useMangoStore = create<MangoStore>((set, get) => {
         const connected = get().wallet.connected
         const cooperatyClient = get().connection.cooperatyClient
         if (wallet?.publicKey && connected) {
-          const user = await cooperatyClient.getProvider(wallet);
-          const exercises = await cooperatyClient.getExercises(user, {full: false})
-          console.log(exercises);
+          const user = await cooperatyClient.getProvider(wallet)
+          const exercises = await cooperatyClient.getExercises(user, {
+            full: false,
+          })
+          console.log(exercises)
         }
       },
     },
     // Cooperaty
     practiceForm: {
-        prediction: 0,
-        practiceType: 'Profit',
+      prediction: 0,
+      practiceType: 'Profit',
     },
     currentExercise: {
-        cid: "QmZmcRLEftCgd8AwsS8hKYSVPtFuEXy6cgWJqL1LEVj8tW",
-        type: "Scalping",
-        position: {
-          direction: 'long_position',
-          takeProfit: 0.03,
-          stopLoss: 0.015,
-          bars: 10,
-        },
-        timeLeft: 100,
-    }
+      cid: 'QmZmcRLEftCgd8AwsS8hKYSVPtFuEXy6cgWJqL1LEVj8tW',
+      type: 'Scalping',
+      position: {
+        direction: 'long_position',
+        takeProfit: 0.03,
+        stopLoss: 0.015,
+        bars: 10,
+      },
+      timeLeft: 100,
+    },
   }
 })
 

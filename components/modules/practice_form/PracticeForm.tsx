@@ -10,7 +10,10 @@ export default function PracticeForm() {
     <FlipCard>
       <FlipCardInner>
         <FlipCardBack>
-          <FloatingElement className="h-full px-1 md:px-4 fadein-floating-element" showConnect>
+          <FloatingElement
+            className="h-full px-1 md:px-4 fadein-floating-element"
+            showConnect
+          >
             <div className={`${!connected ? 'filter blur-sm' : ''}`}>
               <SimplePracticeForm />
             </div>

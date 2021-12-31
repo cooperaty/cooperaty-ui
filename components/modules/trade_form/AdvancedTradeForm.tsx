@@ -556,8 +556,7 @@ export default function AdvancedTradeForm({
         orderbook,
         baseSize,
         side,
-        price || markPrice,
-        triggerPrice
+        price || markPrice
       )
 
       if (!orderPrice) {

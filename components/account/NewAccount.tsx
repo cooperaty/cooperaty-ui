@@ -7,11 +7,7 @@ import Input from '../elements/Input'
 import AccountSelect from './AccountSelect'
 import { ElementTitle } from '../elements/styles'
 import useMangoStore from '../../stores/useMangoStore'
-import {
-  getSymbolForTokenMintAddress,
-  trimDecimals,
-  sleep,
-} from '../../utils'
+import { getSymbolForTokenMintAddress, trimDecimals, sleep } from '../../utils'
 import Loading from '../elements/Loading'
 import Button from '../elements/Button'
 import Tooltip from '../elements/Tooltip'

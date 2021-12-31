@@ -1,7 +1,4 @@
-import {
-  ExternalLinkIcon,
-  StarIcon,
-} from '@heroicons/react/solid'
+import { ExternalLinkIcon, StarIcon } from '@heroicons/react/solid'
 import useMangoStore from '../../stores/useMangoStore'
 import { ElementTitle } from '../elements/styles'
 import Tooltip from '../elements/Tooltip'
@@ -17,7 +14,7 @@ export default function AccountInfo() {
   const { width } = useViewport()
   const isMobile = width ? width < breakpoints.sm : false
 
-  const ranking = 100.00;
+  const ranking = 100.0
 
   return (
     <>
@@ -59,17 +56,13 @@ export default function AccountInfo() {
               <div className="font-normal text-th-fgd-3 leading-4">
                 {t('Name')}
               </div>
-              <div className="text-th-fgd-1">
-                Scalper
-              </div>
+              <div className="text-th-fgd-1">Scalper</div>
             </div>
             <div className="flex justify-between pb-3">
               <div className="font-normal text-th-fgd-3 leading-4">
                 {t('league')}
               </div>
-              <div className="text-th-fgd-1">
-                Gold
-              </div>
+              <div className="text-th-fgd-1">Gold</div>
             </div>
           </div>
           <div className="border border-th-bkg-4 rounded flex items-center my-2 sm:my-3 p-2.5">
@@ -102,22 +95,19 @@ export default function AccountInfo() {
             <div className="h-1.5 flex flex-grow rounded bg-th-bkg-4">
               <div
                 style={{
-                  width: `${ranking}%`
+                  width: `${ranking}%`,
                 }}
                 className={`flex rounded ${
                   ranking > 50
                     ? 'bg-th-green'
                     : ranking > 25
-                      ? 'bg-th-orange'
-                      : 'bg-th-red'
+                    ? 'bg-th-orange'
+                    : 'bg-th-red'
                 }`}
               />
             </div>
             <div className="pl-2 text-right">
-              {ranking > 100
-                ? '>100'
-                : ranking.toFixed(2)}
-              %
+              {ranking > 100 ? '>100' : ranking.toFixed(2)}%
             </div>
           </div>
         </div>

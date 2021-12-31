@@ -67,7 +67,7 @@
   --fgd-4: theme('colors.mango-theme["fgd-4"]');
 }
 
-[data-theme="Cooperaty"] {
+[data-theme='Cooperaty'] {
   --primary: theme('colors.cooperaty-theme.yellow.DEFAULT');
   --primary-dark: theme('colors.cooperaty-theme.yellow.dark');
   --red: theme('colors.cooperaty-theme.red.DEFAULT');

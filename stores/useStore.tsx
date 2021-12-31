@@ -1,6 +1,10 @@
 import create, { State } from 'zustand'
 import produce from 'immer'
-import { IDS, TokenAccount, TokenConfig } from '@blockworks-foundation/mango-client'
+import {
+  IDS,
+  TokenAccount,
+  TokenConfig,
+} from '@blockworks-foundation/mango-client'
 import { AccountInfo, Commitment, Connection, PublicKey } from '@solana/web3.js'
 import { EndpointInfo, WalletAdapter } from '../@types/types'
 import { Notification } from '../utils/notifications'
@@ -11,14 +15,14 @@ export const ENDPOINTS: EndpointInfo[] = [
     name: 'mainnet',
     url: process.env.NEXT_PUBLIC_ENDPOINT || 'https://mango.rpcpool.com',
     websocket: process.env.NEXT_PUBLIC_ENDPOINT || 'https://mango.rpcpool.com',
-    custom: false
+    custom: false,
   },
   {
     name: 'devnet',
     url: 'https://api.devnet.solana.com',
     websocket: 'https://api.devnet.solana.com',
-    custom: false
-  }
+    custom: false,
+  },
 ]
 
 type ClusterType = 'mainnet' | 'devnet'
@@ -44,8 +48,8 @@ export const INITIAL_STATE = {
     providerUrl: null,
     connected: false,
     current: null,
-    tokens: []
-  }
+    tokens: [],
+  },
 }
 
 // an object with keys of Solana account addresses that we are
@@ -96,23 +100,21 @@ interface Store extends State {
   set: (x: any) => void
   actions: {
     [key: string]: (args?) => void
-  },
+  }
   practiceForm: {
     prediction: number | ''
-    practiceType:
-      | 'Loss'
-      | 'Profit'
-  },
+    practiceType: 'Loss' | 'Profit'
+  }
   currentExercise: {
-    cid: string,
-    type: | 'Scalping' | 'Swing',
+    cid: string
+    type: 'Scalping' | 'Swing'
     position: {
-      direction: | 'long_position' | 'short_position',
-      takeProfit: number,
-      stopLoss: number,
-      bars: number,
-    },
-    timeLeft: number,
+      direction: 'long_position' | 'short_position'
+      takeProfit: number
+      stopLoss: number
+      bars: number
+    }
+    timeLeft: number
   }
 }
 
@@ -131,17 +133,17 @@ const useStore = create<Store>((set, get) => {
       current: connection,
       websocket: WEBSOCKET_CONNECTION,
       endpoint: ENDPOINT.url,
-      slot: 0
+      slot: 0,
     },
     accounts: [],
     selectedAccount: {
       current: null,
       initialLoad: true,
-      lastUpdatedAt: 0
+      lastUpdatedAt: 0,
     },
     wallet: INITIAL_STATE.WALLET,
     settings: {
-      uiLocked: true
+      uiLocked: true,
     },
     predictionHistory: [],
     set: (fn) => set(produce(fn)),
@@ -174,11 +176,11 @@ const useStore = create<Store>((set, get) => {
           state.connection.endpoint = endpointUrl
           state.connection.current = newConnection
         })
-      }
+      },
     },
     practiceForm: {
       prediction: 0,
-      practiceType: 'Profit'
+      practiceType: 'Profit',
     },
     currentExercise: {
       cid: 'QmZmcRLEftCgd8AwsS8hKYSVPtFuEXy6cgWJqL1LEVj8tW',
@@ -187,10 +189,10 @@ const useStore = create<Store>((set, get) => {
         direction: 'long_position',
         takeProfit: 0.03,
         stopLoss: 0.015,
-        bars: 10
+        bars: 10,
       },
-      timeLeft: 100
-    }
+      timeLeft: 100,
+    },
   }
 })
 

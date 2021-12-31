@@ -4,12 +4,13 @@ import {
   widget,
   ChartingLibraryWidgetOptions,
   IChartingLibraryWidget,
-  ResolutionString, IOrderLineAdapter
+  ResolutionString,
+  IOrderLineAdapter,
 } from '../../public/charting_library'
 import useMangoStore from '../../stores/useMangoStore'
 import { useViewport } from '../../hooks/useViewport'
 import { breakpoints } from '../PracticePageGrid'
-import Datafeed from './ipfs/';
+import Datafeed from './ipfs/'
 
 // This is a basic example of how to create a TV widget
 // You can add more feature such as storing charts in localStorage
@@ -70,7 +71,7 @@ const TVChartContainer = (props) => {
 
   const lastBarData = useRef<Record<string, number>>({})
 
-  const datafeed = new Datafeed(["1", "5", "15", "30"]);
+  const datafeed = new Datafeed(['1', '5', '15', '30'])
 
   useEffect(() => {
     const widgetOptions: ChartingLibraryWidgetOptions = {
@@ -117,11 +118,15 @@ const TVChartContainer = (props) => {
       theme: theme === 'Light' ? 'Light' : 'Dark',
       custom_css_url: '/tradingview-chart.css',
       loading_screen: { backgroundColor: 'rgba(0,0,0,0.1)' },
-      container_border: {background: 'transparent'},
+      container_border: { background: 'transparent' },
       overrides: {
         timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
         'paneProperties.background':
-          theme === 'Dark' ? '#1B1B1F' : theme === 'Light' ? '#fff' : 'rgba(0,0,0,0)',
+          theme === 'Dark'
+            ? '#1B1B1F'
+            : theme === 'Light'
+            ? '#fff'
+            : 'rgba(0,0,0,0)',
         'mainSeriesProperties.candleStyle.barColorsOnPrevClose': true,
         'mainSeriesProperties.candleStyle.drawWick': true,
         'mainSeriesProperties.candleStyle.drawBorder': true,
@@ -146,22 +151,23 @@ const TVChartContainer = (props) => {
     tvWidgetRef.current = tvWidget
 
     tvWidgetRef.current.onChartReady(function () {
-      console.log("WIDGET:", tvWidgetRef.current);
+      console.log('WIDGET:', tvWidgetRef.current)
 
       // get last bar information
       // @ts-ignore
-      const bars = tvWidgetRef.current.chart().getSeries()._series.m_data.m_bars,
-        lastBar = bars._items[bars._end-1]
+      const bars = tvWidgetRef.current.chart().getSeries()._series
+          .m_data.m_bars,
+        lastBar = bars._items[bars._end - 1]
 
       lastBarData.current = {
-          time: lastBar.exTime,
-          open: lastBar.value[1],
-          close: lastBar.value[4],
-          percent: lastBar.value[1],
-          distance: lastBar.exTime - bars._items[bars._end - 2].exTime,
-          takeProfitPrice: lastBar.value[4] * (1 + props.position.takeProfit),
-          stopLossPrice: lastBar.value[4] * (1 - props.position.stopLoss),
-      };
+        time: lastBar.exTime,
+        open: lastBar.value[1],
+        close: lastBar.value[4],
+        percent: lastBar.value[1],
+        distance: lastBar.exTime - bars._items[bars._end - 2].exTime,
+        takeProfitPrice: lastBar.value[4] * (1 + props.position.takeProfit),
+        stopLossPrice: lastBar.value[4] * (1 - props.position.stopLoss),
+      }
 
       console.log(bars, lastBarData)
 
@@ -170,7 +176,9 @@ const TVChartContainer = (props) => {
         [
           { time: lastBarData.current.time, price: lastBarData.current.close },
           {
-            time: lastBarData.current.time + lastBarData.current.distance * props.position.bars,
+            time:
+              lastBarData.current.time +
+              lastBarData.current.distance * props.position.bars,
             price: lastBarData.current.close,
           },
         ],
@@ -179,11 +187,17 @@ const TVChartContainer = (props) => {
           shape: props.position.direction,
           lock: true,
           overrides: {
-            profitLevel: lastBarData.current.percent * props.position.takeProfit * datafeed.priceScale,
-            stopLevel: lastBarData.current.percent * props.position.stopLoss * datafeed.priceScale,
+            profitLevel:
+              lastBarData.current.percent *
+              props.position.takeProfit *
+              datafeed.priceScale,
+            stopLevel:
+              lastBarData.current.percent *
+              props.position.stopLoss *
+              datafeed.priceScale,
           },
-        },
-      );
+        }
+      )
 
       // prediction line
       predictionLine.current = tvWidgetRef.current
@@ -191,22 +205,27 @@ const TVChartContainer = (props) => {
         .createOrderLine({ disableUndo: false })
         .onMove(function () {
           // @ts-ignore
-          console.log(this);
+          console.log(this)
           // @ts-ignore
-          const actualPrice = this.getPrice();
-          let newPrice = actualPrice;
+          const actualPrice = this.getPrice()
+          let newPrice = actualPrice
 
-          console.log(actualPrice, lastBarData.current.takeProfitPrice);
+          console.log(actualPrice, lastBarData.current.takeProfitPrice)
 
-          if (actualPrice > lastBarData.current.takeProfitPrice) newPrice = lastBarData.current.takeProfitPrice;
-          else if (actualPrice < lastBarData.current.stopLossPrice) newPrice = lastBarData.current.stopLossPrice;
+          if (actualPrice > lastBarData.current.takeProfitPrice)
+            newPrice = lastBarData.current.takeProfitPrice
+          else if (actualPrice < lastBarData.current.stopLossPrice)
+            newPrice = lastBarData.current.stopLossPrice
 
-          const newPrediction =
-            ((newPrice >= lastBarData.current.close
+          const newPrediction = (
+            (newPrice >= lastBarData.current.close
               ? (newPrice - lastBarData.current.close) /
-              (lastBarData.current.takeProfitPrice - lastBarData.current.close)
+                (lastBarData.current.takeProfitPrice -
+                  lastBarData.current.close)
               : (lastBarData.current.close - newPrice) /
-              (lastBarData.current.stopLossPrice - lastBarData.current.close)) * 100).toFixed(2);
+                (lastBarData.current.stopLossPrice -
+                  lastBarData.current.close)) * 100
+          ).toFixed(2)
 
           setPrediction(newPrediction)
         })
@@ -219,21 +238,35 @@ const TVChartContainer = (props) => {
 
   useEffect(() => {
     if (predictionLine.current != null && typeof prediction == 'number') {
-      console.log("PREDICTION:", prediction);
-      predictionLine.current.setQuantity(prediction + '%');
-      const actualPrice = predictionLine.current.getPrice();
-      let newPrice = lastBarData.current.close + (prediction > 0 ? (lastBarData.current.takeProfitPrice - lastBarData.current.close) : (lastBarData.current.close - lastBarData.current.stopLossPrice)) * (prediction / 100);
+      console.log('PREDICTION:', prediction)
+      predictionLine.current.setQuantity(prediction + '%')
+      const actualPrice = predictionLine.current.getPrice()
+      let newPrice =
+        lastBarData.current.close +
+        (prediction > 0
+          ? lastBarData.current.takeProfitPrice - lastBarData.current.close
+          : lastBarData.current.close - lastBarData.current.stopLossPrice) *
+          (prediction / 100)
 
-      console.log("ACTUAL PRICE:", actualPrice, "NEW PRICE:", newPrice, "PREDICTION", prediction, (1 + prediction / 100));
+      console.log(
+        'ACTUAL PRICE:',
+        actualPrice,
+        'NEW PRICE:',
+        newPrice,
+        'PREDICTION',
+        prediction,
+        1 + prediction / 100
+      )
 
-      if (newPrice > lastBarData.current.takeProfitPrice) newPrice = lastBarData.current.takeProfitPrice;
-      else if (newPrice < lastBarData.current.stopLossPrice) newPrice = lastBarData.current.stopLossPrice;
+      if (newPrice > lastBarData.current.takeProfitPrice)
+        newPrice = lastBarData.current.takeProfitPrice
+      else if (newPrice < lastBarData.current.stopLossPrice)
+        newPrice = lastBarData.current.stopLossPrice
 
       // @ts-ignore
-      if (newPrice !== actualPrice) predictionLine.current.setPrice(newPrice);
+      if (newPrice !== actualPrice) predictionLine.current.setPrice(newPrice)
     }
   }, [prediction])
-
 
   return <div id={defaultProps.containerId} className="tradingview-chart" />
 }

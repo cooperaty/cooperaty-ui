@@ -7,9 +7,7 @@ import ManualRefresh from '../../elements/ManualRefresh'
 import Tabs from '../../elements/Tabs'
 import useMangoAccount from '../../../hooks/useMangoAccount'
 
-const TABS = [
-  'Practice History',
-]
+const TABS = ['Practice History']
 
 const UserPracticeInfoTabs = ({ activeTab, setActiveTab }) => {
   const openOrders = useOpenOrders()

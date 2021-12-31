@@ -110,4 +110,3 @@ const PerpMarket = () => {
 }
 
 export default PerpMarket
-

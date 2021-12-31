@@ -1,10 +1,10 @@
 import historyJSON from './history.json'
 //import * as IPFS from 'ipfs-core'
 
-const history = {};
+const history = {}
 export default {
   history,
-  getIPFS: async function() {
+  getIPFS: async function () {
     let data = '{}'
 
     /*const node = await IPFS.create()
@@ -20,24 +20,22 @@ export default {
   },
   getBars: function (symbolInfo, resolution, from, to, first) {
     return this.getIPFS().then(function (history) {
-      let bars = [];
+      let bars = []
       for (let i = 0; i < historyJSON.t.length; i++) {
-        bars.push(
-          {
-            time: historyJSON.t[i] * 1e3, // TradingView requires bar time in ms
-            low: parseFloat(historyJSON.l[i]),
-            high: parseFloat(historyJSON.h[i]),
-            open: parseFloat(historyJSON.o[i]),
-            close: parseFloat(historyJSON.c[i]),
-            volume: parseFloat(historyJSON.v[i]),
-          }
-        )
+        bars.push({
+          time: historyJSON.t[i] * 1e3, // TradingView requires bar time in ms
+          low: parseFloat(historyJSON.l[i]),
+          high: parseFloat(historyJSON.h[i]),
+          open: parseFloat(historyJSON.o[i]),
+          close: parseFloat(historyJSON.c[i]),
+          volume: parseFloat(historyJSON.v[i]),
+        })
         if (first) {
           var lastBar = bars[bars.length - 1]
-          history[symbolInfo.name] = {lastBar: lastBar}
+          history[symbolInfo.name] = { lastBar: lastBar }
         }
       }
-      return bars;
-    });
+      return bars
+    })
   },
-};
+}

@@ -54,10 +54,10 @@ function App({ Component, pageProps }) {
         />
         <meta name="twitter:image" content="/twitter-image.png" />
 
-        <script src="/datafeeds/udf/dist/polyfills.js"/>
-        <script src="/datafeeds/udf/dist/bundle.js"/>
+        <script src="/datafeeds/udf/dist/polyfills.js" />
+        <script src="/datafeeds/udf/dist/bundle.js" />
 
-        <link rel="manifest" href="/manifest.json"/>
+        <link rel="manifest" href="/manifest.json" />
       </Head>
       <Head>
         <title>Cooperaty</title>
