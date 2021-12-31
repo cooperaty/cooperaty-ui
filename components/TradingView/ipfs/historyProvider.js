@@ -1,5 +1,5 @@
 import historyJSON from './history.json'
-import * as IPFS from 'ipfs-core'
+//import * as IPFS from 'ipfs-core'
 
 const history = {};
 export default {

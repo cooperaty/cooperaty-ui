@@ -163,7 +163,7 @@ const useStore = create<Store>((set, get) => {
           state.selectedAccount.current = account
           state.selectedAccount.lastUpdatedAt = new Date().toISOString()
         })
-        console.log('reloaded mango account', account)
+        console.log('reloaded account', account)
       },
       async updateConnection(endpointUrl) {
         const set = get().set

@@ -11,11 +11,10 @@ export default class {
   onReady(cb) {
     setTimeout(() => cb(this.config), 0);
   }
-  searchSymbols(userInput, exchange, symbolType, onResultReadyCallback) {}
   resolveSymbol(
     symbolName,
     onSymbolResolvedCallback,
-    onResolveErrorCallback,
+    _onResolveErrorCallback,
   ) {
 
     var symbol_stub = {
@@ -59,27 +58,10 @@ export default class {
         onErrorCallback(err)
       });
   }
-  subscribeBars(
-    symbolInfo,
-    resolution,
-    onRealtimeCallback,
-    subscribeUID,
-    onResetCacheNeededCallback,
-  ) {}
-  unsubscribeBars(subscriberUID) {}
-  calculateHistoryDepth(resolution, resolutionBack, intervalBack) {
+  calculateHistoryDepth(resolution, _resolutionBack, _intervalBack) {
     // optional
     // while optional, this makes sure we request 24 hours of minute data at a time
     // CryptoCompare's minute data endpoint will throw an error if we request data beyond 7 days in the past, and return no data
     return resolution < 60 ? { resolutionBack: 'D', intervalBack: '1' } : undefined;
   }
-  getMarks(symbolInfo, startDate, endDate, onDataCallback, resolution) {}
-  getTimeScaleMarks(
-    symbolInfo,
-    startDate,
-    endDate,
-    onDataCallback,
-    resolution,
-  ) {}
-  getServerTime(cb) {}
 }

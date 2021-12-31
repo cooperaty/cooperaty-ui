@@ -32,6 +32,7 @@ import {
   NODE_URL_KEY,
 } from '../components/modules/settings/SettingsModal'
 import { MSRM_DECIMALS } from '@project-serum/serum/lib/token-instructions'
+import CooperatyClient from '../clients/cooperaty'
 
 export const ENDPOINTS: EndpointInfo[] = [
   {
@@ -70,6 +71,7 @@ export const MNGO_INDEX = defaultMangoGroupIds.oracles.findIndex(
   (t) => t.symbol === 'MNGO'
 )
 
+export const cooperatyProgramId = new PublicKey("EzoGx79u65bAB5ng9ZUdJ22uW59Xi6Jd5LwvPFNQrBXe");
 export const programId = new PublicKey(defaultMangoGroupIds.mangoProgramId)
 export const serumProgramId = new PublicKey(defaultMangoGroupIds.serumProgramId)
 const mangoGroupPk = new PublicKey(defaultMangoGroupIds.publicKey)
@@ -110,7 +112,8 @@ interface MangoStore extends State {
     current: Connection
     websocket: Connection
     endpoint: string
-    client: MangoClient
+    client: MangoClient,
+    cooperatyClient: CooperatyClient,
     slot: number
   }
   selectedMarket: {
@@ -209,6 +212,7 @@ const useMangoStore = create<MangoStore>((set, get) => {
       current: connection,
       websocket: WEBSOCKET_CONNECTION,
       client: new MangoClient(connection, programId),
+      cooperatyClient: new CooperatyClient(connection, programId),
       endpoint: ENDPOINT.url,
       slot: 0,
     },
@@ -512,13 +516,27 @@ const useMangoStore = create<MangoStore>((set, get) => {
 
         const newConnection = new Connection(endpointUrl, 'processed')
 
-        const newClient = new MangoClient(newConnection, programId)
+        const newMangoClient = new MangoClient(newConnection, programId)
+
+        const newCooperatyClient = new CooperatyClient(newConnection, programId)
 
         set((state) => {
           state.connection.endpoint = endpointUrl
           state.connection.current = newConnection
-          state.connection.client = newClient
+          state.connection.client = newMangoClient
+          state.connection.cooperatyClient = newCooperatyClient
         })
+      },
+      // Cooperaty
+      async fetchExercise() {
+        const wallet = get().wallet.current
+        const connected = get().wallet.connected
+        const cooperatyClient = get().connection.cooperatyClient
+        if (wallet?.publicKey && connected) {
+          const user = await cooperatyClient.getProvider(wallet);
+          const exercises = await cooperatyClient.getExercises(user, {full: false})
+          console.log(exercises);
+        }
       },
     },
     // Cooperaty

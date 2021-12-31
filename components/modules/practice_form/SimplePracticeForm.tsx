@@ -15,6 +15,7 @@ export default function SimplePracticeForm() {
   const { ipAllowed } = useIpAddress()
   const currentExercise = useMangoStore((s) => s.currentExercise)
   const walletTokens = useMangoStore((s) => s.wallet.tokens)
+  const actions = useMangoStore((s) => s.actions)
   const market = useMangoStore((s) => s.selectedMarket.current)
   const { prediction } = useMangoStore((s) => s.practiceForm)
 
@@ -63,7 +64,11 @@ export default function SimplePracticeForm() {
     setPrediction(parseInt(predictionPercent.replace('%', '')))
   }
 
-  async function onSubmit() {
+  async function onSubmitChangeExercise() {
+    actions.fetchExercise();
+  }
+
+  async function onSubmitPrediction() {
     if (!prediction) {
       notify({
         title: t('missing-prediction'),
@@ -141,7 +146,7 @@ export default function SimplePracticeForm() {
               <div className={`grid grid-cols-2 grid-rows-1 gap-4 pt-2 sm:pt-4`}>
                 <Button
                   disabled={disabledPracticeButton}
-                  onClick={onSubmit}
+                  onClick={onSubmitChangeExercise}
                   className={`${
                     !disabledPracticeButton
                       ? 'bg-th-bkg-2 border border-th-white hover:border-th-white'
@@ -151,6 +156,8 @@ export default function SimplePracticeForm() {
                   <span>{t('change-exercise')}</span>
                 </Button>
                 <Button
+                  disabled={disabledPracticeButton}
+                  onClick={onSubmitPrediction}
                   className={`${
                     !disabledPracticeButton
                       ? 'bg-th-bkg-2 border border-th-green hover:border-th-green-dark'

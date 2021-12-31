@@ -17,4 +17,3 @@ Uses:
 4. Run `yarn install` to install dependencies
 5. Run `yarn dev` to start the webserver
 6. Navigate to `http://localhost:3000` in your browser
-# cooperaty-ui

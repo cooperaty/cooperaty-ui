@@ -13,7 +13,7 @@ import useMangoAccount from '../../hooks/useMangoAccount'
 export default function AccountInfo() {
   const { t } = useTranslation('common')
   const connected = useMangoStore((s) => s.wallet.connected)
-  const { mangoAccount, initialLoad } = useMangoAccount()
+  const { mangoAccount } = useMangoAccount()
   const { width } = useViewport()
   const isMobile = width ? width < breakpoints.sm : false
 

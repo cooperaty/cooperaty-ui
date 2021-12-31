@@ -1,6 +1,5 @@
 import { Disclosure } from '@headlessui/react'
 import { ChevronDownIcon } from '@heroicons/react/outline'
-import { ReactNode } from 'hoist-non-react-statics/node_modules/@types/react'
 
 export const Table = ({ children }) => (
   <table className="min-w-full divide-y divide-th-bkg-2">{children}</table>
@@ -34,7 +33,7 @@ export const Td = ({
   children,
   className,
 }: {
-  children: ReactNode
+  children: React.ReactNode
   className?: string
 }) => (
   <td
