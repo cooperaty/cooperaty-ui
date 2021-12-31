@@ -103,8 +103,7 @@ export function calculateTradePrice(
   orderBook: Orderbook,
   baseSize: number,
   side: 'buy' | 'sell',
-  price: string | number,
-  triggerPrice?: string | number
+  price: string | number
 ): number {
   if (tradeType === 'Market' && kind === 'spot') {
     return calculateMarketPrice(orderBook, baseSize, side)
