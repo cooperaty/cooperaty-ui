@@ -33,6 +33,12 @@ import {
 } from '../components/modules/settings/SettingsModal'
 import { MSRM_DECIMALS } from '@project-serum/serum/lib/token-instructions'
 import CooperatyClient from '../clients/cooperaty'
+import Axios from 'axios'
+
+export class TraderAccount {
+  publicKey: PublicKey
+  owner: PublicKey
+}
 
 export const ENDPOINTS: EndpointInfo[] = [
   {
@@ -71,9 +77,6 @@ export const MNGO_INDEX = defaultMangoGroupIds.oracles.findIndex(
   (t) => t.symbol === 'MNGO'
 )
 
-export const cooperatyProgramId = new PublicKey(
-  'EzoGx79u65bAB5ng9ZUdJ22uW59Xi6Jd5LwvPFNQrBXe'
-)
 export const programId = new PublicKey(defaultMangoGroupIds.mangoProgramId)
 export const serumProgramId = new PublicKey(defaultMangoGroupIds.serumProgramId)
 const mangoGroupPk = new PublicKey(defaultMangoGroupIds.publicKey)
@@ -173,21 +176,39 @@ interface MangoStore extends State {
   actions: {
     [key: string]: (args?) => void
   }
+
   // Cooperaty
+  traderAccounts: TraderAccount[]
+  selectedTraderAccount: {
+    current: TraderAccount | null
+    initialLoad: boolean
+    lastUpdatedAt: number
+  }
   practiceForm: {
     prediction: number | ''
     practiceType: 'Loss' | 'Profit'
   }
   currentExercise: {
-    cid: string
+    id: string
+    account: any
     type: 'Scalping' | 'Swing'
+    data: [
+      {
+        time: number
+        low: number
+        high: number
+        open: number
+        close: number
+        volume: number
+      }
+    ]
     position: {
       direction: 'long_position' | 'short_position'
       takeProfit: number
       stopLoss: number
       bars: number
     }
-    timeLeft: number
+    state: 'active' | 'answered' | 'skipped'
   }
 }
 
@@ -212,7 +233,7 @@ const useMangoStore = create<MangoStore>((set, get) => {
       current: connection,
       websocket: WEBSOCKET_CONNECTION,
       client: new MangoClient(connection, programId),
-      cooperatyClient: new CooperatyClient(connection, programId),
+      cooperatyClient: new CooperatyClient(connection),
       endpoint: ENDPOINT.url,
       slot: 0,
     },
@@ -511,14 +532,13 @@ const useMangoStore = create<MangoStore>((set, get) => {
           })
         }
       },
+
+      // Cooperaty
       async updateConnection(endpointUrl) {
         const set = get().set
-
         const newConnection = new Connection(endpointUrl, 'processed')
-
         const newMangoClient = new MangoClient(newConnection, programId)
-
-        const newCooperatyClient = new CooperatyClient(newConnection, programId)
+        const newCooperatyClient = new CooperatyClient(newConnection)
 
         set((state) => {
           state.connection.endpoint = endpointUrl
@@ -527,35 +547,107 @@ const useMangoStore = create<MangoStore>((set, get) => {
           state.connection.cooperatyClient = newCooperatyClient
         })
       },
-      // Cooperaty
       async fetchExercise() {
+        const set = get().set
+        const cid = get().currentExercise.id
+        const response = await Axios.get('https://ipfs.io/ipfs/' + cid)
+        console.log(response)
+
+        set((state) => {
+          state.currentExercise.position = response.data.position
+          state.currentExercise.data = response.data.candles
+        })
+
+        console.log(get().currentExercise.position)
+      },
+      async fetchExerciseId() {
         const wallet = get().wallet.current
         const connected = get().wallet.connected
         const cooperatyClient = get().connection.cooperatyClient
-        if (wallet?.publicKey && connected) {
+        const currentExercise = get().currentExercise
+        const lastExercisePubkey = localStorage.getItem('last_exercise_account')
+        const set = get().set
+
+        console.log('EA', lastExercisePubkey)
+
+        if (
+          wallet?.publicKey &&
+          connected &&
+          currentExercise.state != 'active'
+        ) {
           const user = await cooperatyClient.getProvider(wallet)
-          const exercises = await cooperatyClient.getExercises(user, {
-            full: false,
-          })
-          console.log(exercises)
+          let exercise = null
+
+          // if there is a last exercise in the localstorage,
+          // check if it is still active and assign it to the current exercise
+          if (lastExercisePubkey != null) {
+            const lastExerciseAccount = await cooperatyClient.getExercise(
+              user,
+              new PublicKey(lastExercisePubkey)
+            )
+            if (!lastExerciseAccount.account.full)
+              exercise = lastExerciseAccount
+          }
+
+          // if there is no last exercise in the localstorage,
+          // or if the last exercise is not active anymore,
+          // get the first exercise from the global list of exercises
+          if (exercise == null) {
+            const exercises = await cooperatyClient.getExercises(user, {
+              full: false,
+            })
+            if (exercises.length > 0) {
+              exercise = exercises[0]
+            }
+          }
+
+          // if there is an active exercise, set it as the current exercise
+          if (exercise != null && currentExercise.id != exercise.account?.cid) {
+            set((state) => {
+              // @ts-ignore
+              state.currentExercise.id = exercise.account.cid
+              state.currentExercise.account = exercise
+              state.currentExercise.state = 'active'
+            })
+            localStorage.setItem(
+              'last_exercise_account',
+              exercise.publicKey.toString()
+            )
+          }
         }
       },
     },
-    // Cooperaty
+    traderAccounts: [],
+    selectedTraderAccount: {
+      current: null,
+      initialLoad: true,
+      lastUpdatedAt: 0,
+    },
     practiceForm: {
       prediction: 0,
       practiceType: 'Profit',
     },
     currentExercise: {
-      cid: 'QmZmcRLEftCgd8AwsS8hKYSVPtFuEXy6cgWJqL1LEVj8tW',
+      id: 'bafkreieuenothwt6vlex57nlj3b7olib6qlbkgquk4orwa3oas2xanevim',
+      account: {},
       type: 'Scalping',
+      data: [
+        {
+          time: 1588888888,
+          low: 0.1,
+          high: 0.2,
+          open: 0.1,
+          close: 0.2,
+          volume: 0.1,
+        },
+      ],
       position: {
         direction: 'long_position',
         takeProfit: 0.03,
         stopLoss: 0.015,
         bars: 10,
       },
-      timeLeft: 100,
+      state: 'answered',
     },
   }
 })

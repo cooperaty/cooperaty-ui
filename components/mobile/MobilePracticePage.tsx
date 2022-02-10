@@ -28,13 +28,6 @@ const MobilePracticePage = () => {
 
   const TABS = ['Predict', 'Account', 'History']
 
-  const position = {
-    direction: 'long_position',
-    takeProfit: 0.03,
-    stopLoss: 0.015,
-    bars: 10,
-  }
-
   return (
     <div className="pb-14 pt-4 px-2">
       <div className="relative">
@@ -64,7 +57,7 @@ const MobilePracticePage = () => {
               </Disclosure.Button>
               <Disclosure.Panel>
                 <div className="bg-th-bkg-2 h-96 mb-2 p-2 rounded-lg">
-                  <TVChartContainer position={position} />
+                  <TVChartContainer />
                 </div>
               </Disclosure.Panel>
             </>

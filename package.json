@@ -36,6 +36,7 @@
     "@project-serum/sol-wallet-adapter": "0.2.0",
     "@solana/web3.js": "^1.31.0",
     "@tippyjs/react": "^4.2.5",
+    "axios": "^0.25.0",
     "big.js": "^6.1.1",
     "bn.js": "^5.2.0",
     "bs58": "^4.0.1",

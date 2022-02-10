@@ -6,18 +6,17 @@ import { useViewport } from '../../hooks/useViewport'
 import { breakpoints } from '../TradePageGrid'
 import { useTranslation } from 'next-i18next'
 
-const PracticeDetails = (props) => {
+const PracticeDetails = () => {
   const { t } = useTranslation('common')
   const currentExercise = useMangoStore((s) => s.currentExercise)
-  const exerciseType = currentExercise.type
 
   const mangoAccount = useMangoStore((s) => s.selectedMangoAccount.current)
   const connected = useMangoStore((s) => s.wallet.connected)
   const { width } = useViewport()
   const isMobile = width ? width < breakpoints.sm : false
 
-  const takeProfit = props.position.takeProfit * 100
-  const stopLoss = props.position.stopLoss * 100
+  const takeProfit = currentExercise.position.takeProfit * 100
+  const stopLoss = currentExercise.position.stopLoss * 100
 
   return (
     <div
@@ -30,10 +29,12 @@ const PracticeDetails = (props) => {
               alt=""
               width="24"
               height="24"
-              src={`/assets/icons/modalities/${exerciseType.toLowerCase()}.png`}
+              src={`/assets/icons/modalities/${currentExercise.type.toLowerCase()}.png`}
               className={`mr-2.5`}
             />
-            <div className="font-semibold pr-0.5 text-xl">{exerciseType}</div>
+            <div className="font-semibold pr-0.5 text-xl">
+              {currentExercise.type}
+            </div>
           </div>
         </div>
         <div className="grid grid-flow-row grid-cols-1 md:grid-cols-3 gap-3 xl:grid-cols-none xl:grid-flow-col xl:grid-rows-1 xl:gap-6">

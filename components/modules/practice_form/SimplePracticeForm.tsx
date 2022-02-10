@@ -18,6 +18,7 @@ export default function SimplePracticeForm() {
   const actions = useMangoStore((s) => s.actions)
   const market = useMangoStore((s) => s.selectedMarket.current)
   const { prediction } = useMangoStore((s) => s.practiceForm)
+  const cooperatyClient = useMangoStore((s) => s.connection.cooperatyClient)
 
   const [, setSubmitting] = useState(false)
   const [predictionPercent, setPredictionPercent] = useState('5%')
@@ -87,19 +88,22 @@ export default function SimplePracticeForm() {
 
     const mangoAccount = useMangoStore.getState().selectedMangoAccount.current
     const wallet = useMangoStore.getState().wallet.current
+    const currentExercise = useMangoStore.getState().currentExercise
 
     if (!wallet || !mangoAccount || !market) return
     setSubmitting(true)
 
     try {
-      let txid
+      const exercise = await cooperatyClient.addPrediction(
+        wallet, // user
+        wallet, // trader
+        currentExercise.account, // exercise
+        wallet, // authority
+        prediction, // prediction
+        currentExercise.id // cid
+      )
 
-      // txid = await mangoClient.placeSpotOrder(
-      //   mangoGroup,
-      //   mangoAccount,
-      // )
-
-      notify({ title: t('successfully-placed'), txid })
+      notify({ title: t('successfully-placed'), txid: exercise.txid })
       setPrediction('0')
     } catch (e) {
       notify({

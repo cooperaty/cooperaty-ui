@@ -12,25 +12,25 @@ export default class CooperatyClient {
   public connection: anchor.web3.Connection
   public program: any
 
-  constructor(connection: anchor.web3.Connection, programId: any) {
+  constructor(connection: anchor.web3.Connection) {
     this.connection = connection
-    this.program = { idl, programId }
+    this.program = { idl, programId: idl.metadata.address }
   }
 
-  async getProvider(
-    user: WalletAdapter,
-    airdropBalance = 2 * anchor.web3.LAMPORTS_PER_SOL
-  ) {
+  async getProvider(user: WalletAdapter, airdropBalance = 0) {
     const provider = new anchor.Provider(
       this.connection,
       user,
       opts as ConfirmOptions
     )
-    const sig = await provider.connection.requestAirdrop(
-      user.publicKey,
-      airdropBalance
-    )
-    await provider.connection.confirmTransaction(sig)
+
+    if (airdropBalance > 0) {
+      const sig = await provider.connection.requestAirdrop(
+        user.publicKey,
+        airdropBalance * anchor.web3.LAMPORTS_PER_SOL
+      )
+      await provider.connection.confirmTransaction(sig)
+    }
 
     return {
       key: user,
@@ -162,6 +162,15 @@ export default class CooperatyClient {
     )
   }
 
+  async getExercise(user, publicKey) {
+    const program = this.programForUser(user)
+
+    return {
+      publicKey: publicKey,
+      account: await program.account.exercise.fetch(publicKey),
+    }
+  }
+
   async getExercises(user, filters) {
     const program = this.programForUser(user)
 
@@ -178,14 +187,12 @@ export default class CooperatyClient {
     if ('cid' in filters)
       searchFilters.push(cmp(13, bs58.encode(Buffer.from(filters.cid))))
 
-    const exercises = await program.account.exercise.all(searchFilters)
-
-    return exercises
+    return await program.account.exercise.all(searchFilters)
   }
 
   async addPrediction(user, trader, exercise, authority, value, cid) {
     const program = this.programForUser(user)
-    await program.rpc.addPrediction(new anchor.BN(value), cid, {
+    const txid = await program.rpc.addPrediction(new anchor.BN(value), cid, {
       accounts: {
         exercise: exercise.publicKey,
         authority: authority.key.publicKey,
@@ -195,6 +202,7 @@ export default class CooperatyClient {
     })
 
     return {
+      txid: txid,
       publicKey: exercise.publicKey,
       account: await program.account.exercise.fetch(exercise.publicKey),
     }

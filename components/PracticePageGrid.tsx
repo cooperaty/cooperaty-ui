@@ -55,6 +55,9 @@ export const GRID_LAYOUT_KEY = 'practiceSavedLayouts' + Math.random() * 100
 export const breakpoints = { xl: 1600, lg: 1280, md: 1024, sm: 768, xs: 0 }
 const PracticePageGrid = () => {
   const { uiLocked } = useMangoStore((s) => s.settings)
+  const actions = useMangoStore((s) => s.actions)
+  const currentExerciseId = useMangoStore((s) => s.currentExercise.id)
+  const connected = useMangoStore((s) => s.wallet.connected)
   const [savedLayouts, setSavedLayouts] = useLocalStorageState(
     GRID_LAYOUT_KEY,
     defaultLayouts
@@ -75,19 +78,22 @@ const PracticePageGrid = () => {
   const [, setCurrentBreakpoint] = useState(null)
   const [mounted, setMounted] = useState(false)
 
-  useEffect(() => setMounted(true), [])
-  if (!mounted) return null
+  useEffect(() => {
+    actions.fetchExercise()
+  }, [currentExerciseId])
 
-  const position = {
-    direction: 'long_position',
-    takeProfit: 0.03,
-    stopLoss: 0.015,
-    bars: 10,
-  }
+  useEffect(() => {
+    actions.fetchExerciseId()
+  }, [connected])
+
+  useEffect(() => {
+    setMounted(true)
+  }, [])
+  if (!mounted) return null
 
   return !isMobile ? (
     <>
-      <PracticeDetails position={position} />
+      <PracticeDetails />
       <ResponsiveGridLayout
         className="layout"
         layouts={savedLayouts || defaultLayouts}
@@ -104,7 +110,7 @@ const PracticePageGrid = () => {
       >
         <div key="tvChart">
           <FloatingElement className="h-full pl-0 md:pl-0 md:pr-1 md:pb-1 md:pt-3">
-            <TVChartContainer position={position} />
+            <TVChartContainer />
           </FloatingElement>
         </div>
         <div key="practiceForm">

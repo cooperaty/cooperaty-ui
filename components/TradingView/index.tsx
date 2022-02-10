@@ -6,7 +6,6 @@ import {
   IChartingLibraryWidget,
   ResolutionString,
 } from '../../public/charting_library'
-import { CHART_DATA_FEED } from '../../utils/chartDataConnector'
 import useMangoStore from '../../stores/useMangoStore'
 import { useViewport } from '../../hooks/useViewport'
 import { breakpoints } from '../TradePageGrid'
@@ -67,7 +66,7 @@ const TVChartContainer = () => {
     interval: '60' as ResolutionString,
     theme: 'Dark',
     containerId: 'tv_chart_container',
-    datafeedUrl: CHART_DATA_FEED,
+    //datafeedUrl: CHART_DATA_FEED,
     libraryPath: '/charting_library/',
     fullscreen: false,
     autosize: true,
@@ -97,6 +96,7 @@ const TVChartContainer = () => {
   }, [selectedMarketConfig.name])
 
   useEffect(() => {
+    // @ts-ignore
     const widgetOptions: ChartingLibraryWidgetOptions = {
       symbol: selectedMarketConfig.name,
       // BEWARE: no trailing slash is expected in feed URL

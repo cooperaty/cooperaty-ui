@@ -1,10 +1,8 @@
-import { useEffect, useState } from 'react'
+import { useEffect } from 'react'
 import Link from 'next/link'
 import { useRouter } from 'next/router'
-import { ChartBarIcon, CurrencyDollarIcon } from '@heroicons/react/solid'
-import { BtcMonoIcon, TradeIcon } from '../elements/icons'
+import { TradeIcon } from '../elements/icons'
 import useMangoGroupConfig from '../../hooks/useMangoGroupConfig'
-import MarketsModal from '../market/MarketsModal'
 import { useTranslation } from 'next-i18next'
 
 const StyledBarItemLabel = ({ children, ...props }) => (
@@ -15,8 +13,6 @@ const StyledBarItemLabel = ({ children, ...props }) => (
 
 const BottomBar = () => {
   const { t } = useTranslation('common')
-  const [showMarketsModal, setShowMarketsModal] = useState(false)
-  const [sortedMarkets, setSortedMarkets] = useState([])
   const { asPath } = useRouter()
   const groupConfig = useMangoGroupConfig()
 
@@ -32,65 +28,29 @@ const BottomBar = () => {
         found.markets.push(market)
       }
     })
-    setSortedMarkets(markets)
   }, [])
 
   return (
     <>
-      <div className="bg-th-bkg-1 default-transition grid grid-cols-4 grid-rows-1 py-2.5">
-        <div
-          className="col-span-1 cursor-pointer default-transition flex flex-col items-center text-th-fgd-3 hover:text-th-primary"
-          onClick={() => setShowMarketsModal(true)}
-        >
-          <BtcMonoIcon className="h-4 mb-1 w-4" />
-          <StyledBarItemLabel>{t('markets')}</StyledBarItemLabel>
-        </div>
+      <div className="bg-th-bkg-1 default-transition grid grid-cols-1 grid-rows-1 py-2.5">
         <Link
           href={{
-            pathname: '/market',
-            query: { name: 'BTC-PERP' },
+            pathname: '/practice',
           }}
           shallow={true}
         >
           <div
             className={`${
-              asPath === '/' || asPath.includes('market')
+              asPath === '/' || asPath.includes('practice')
                 ? 'text-th-primary'
                 : 'text-th-fgd-3'
             } col-span-1 cursor-pointer default-transition flex flex-col items-center hover:text-th-primary`}
           >
             <TradeIcon className="h-4 mb-1 w-4" />
-            <StyledBarItemLabel>{t('trade')}</StyledBarItemLabel>
-          </div>
-        </Link>
-        <Link href="/account" shallow={true}>
-          <div
-            className={`${
-              asPath === '/account' ? 'text-th-primary' : 'text-th-fgd-3'
-            } col-span-1 cursor-pointer default-transition flex flex-col items-center hover:text-th-primary`}
-          >
-            <CurrencyDollarIcon className="h-4 mb-1 w-4" />
-            <StyledBarItemLabel>{t('account')}</StyledBarItemLabel>
-          </div>
-        </Link>
-        <Link href="/stats" shallow={true}>
-          <div
-            className={`${
-              asPath === '/stats' ? 'text-th-primary' : 'text-th-fgd-3'
-            } col-span-1 cursor-pointer default-transition flex flex-col items-center hover:text-th-primary`}
-          >
-            <ChartBarIcon className="h-4 mb-1 w-4" />
-            <StyledBarItemLabel>{t('stats')}</StyledBarItemLabel>
+            <StyledBarItemLabel>{t('practice')}</StyledBarItemLabel>
           </div>
         </Link>
       </div>
-      {showMarketsModal ? (
-        <MarketsModal
-          isOpen={showMarketsModal}
-          onClose={() => setShowMarketsModal(false)}
-          markets={sortedMarkets}
-        />
-      ) : null}
     </>
   )
 }

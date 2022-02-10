@@ -10,10 +10,7 @@ import {
 import useMangoStore from '../../stores/useMangoStore'
 import { useViewport } from '../../hooks/useViewport'
 import { breakpoints } from '../PracticePageGrid'
-import Datafeed from './ipfs/'
-
-// This is a basic example of how to create a TV widget
-// You can add more feature such as storing charts in localStorage
+import Datafeed from './datafeed'
 
 export interface ChartContainerProps {
   symbol: ChartingLibraryWidgetOptions['symbol']
@@ -30,9 +27,7 @@ export interface ChartContainerProps {
   theme: string
 }
 
-// export interface ChartContainerState {}
-
-const TVChartContainer = (props) => {
+const TVChartContainer = () => {
   const set = useMangoStore((s) => s.set)
   const { prediction } = useMangoStore((s) => s.practiceForm)
   const currentExercise = useMangoStore((s) => s.currentExercise)
@@ -66,14 +61,15 @@ const TVChartContainer = (props) => {
   }
 
   const tvWidgetRef = useRef<IChartingLibraryWidget | null>(null)
-
   const predictionLine = useRef<IOrderLineAdapter | null>(null)
-
   const lastBarData = useRef<Record<string, number>>({})
 
-  const datafeed = new Datafeed(['1', '5', '15', '30'])
-
   useEffect(() => {
+    const exerciseData = currentExercise.data.map((item) => {
+      return Object.assign({}, item)
+    })
+    const datafeed = new Datafeed(exerciseData, ['1', '5', '15', '30'])
+
     const widgetOptions: ChartingLibraryWidgetOptions = {
       symbol: currentExercise.type,
       // BEWARE: no trailing slash is expected in feed URL
@@ -146,12 +142,11 @@ const TVChartContainer = (props) => {
           theme === 'Cooperaty' ? '#E54033' : '#CC2929',
       },
     }
-
     const tvWidget = new widget(widgetOptions)
-    tvWidgetRef.current = tvWidget
 
+    tvWidgetRef.current = tvWidget
     tvWidgetRef.current.onChartReady(function () {
-      console.log('WIDGET:', tvWidgetRef.current)
+      console.log('TV', tvWidgetRef.current)
 
       // get last bar information
       // @ts-ignore
@@ -165,11 +160,11 @@ const TVChartContainer = (props) => {
         close: lastBar.value[4],
         percent: lastBar.value[1],
         distance: lastBar.exTime - bars._items[bars._end - 2].exTime,
-        takeProfitPrice: lastBar.value[4] * (1 + props.position.takeProfit),
-        stopLossPrice: lastBar.value[4] * (1 - props.position.stopLoss),
+        takeProfitPrice:
+          lastBar.value[4] * (1 + currentExercise.position.takeProfit),
+        stopLossPrice:
+          lastBar.value[4] * (1 - currentExercise.position.stopLoss),
       }
-
-      console.log(bars, lastBarData)
 
       // position shape
       tvWidgetRef.current.chart().createMultipointShape(
@@ -178,22 +173,22 @@ const TVChartContainer = (props) => {
           {
             time:
               lastBarData.current.time +
-              lastBarData.current.distance * props.position.bars,
+              lastBarData.current.distance * currentExercise.position.bars,
             price: lastBarData.current.close,
           },
         ],
         {
           // @ts-ignore
-          shape: props.position.direction,
+          shape: currentExercise.position.direction,
           lock: true,
           overrides: {
             profitLevel:
               lastBarData.current.percent *
-              props.position.takeProfit *
+              currentExercise.position.takeProfit *
               datafeed.priceScale,
             stopLevel:
               lastBarData.current.percent *
-              props.position.stopLoss *
+              currentExercise.position.stopLoss *
               datafeed.priceScale,
           },
         }
@@ -205,17 +200,22 @@ const TVChartContainer = (props) => {
         .createOrderLine({ disableUndo: false })
         .onMove(function () {
           // @ts-ignore
-          console.log(this)
-          // @ts-ignore
           const actualPrice = this.getPrice()
           let newPrice = actualPrice
 
-          console.log(actualPrice, lastBarData.current.takeProfitPrice)
+          console.log(
+            'Actual Price',
+            actualPrice,
+            'TakeProfit',
+            lastBarData.current.takeProfitPrice
+          )
 
           if (actualPrice > lastBarData.current.takeProfitPrice)
             newPrice = lastBarData.current.takeProfitPrice
           else if (actualPrice < lastBarData.current.stopLossPrice)
             newPrice = lastBarData.current.stopLossPrice
+
+          console.log('New Price', newPrice)
 
           const newPrediction = (
             (newPrice >= lastBarData.current.close
@@ -227,6 +227,10 @@ const TVChartContainer = (props) => {
                   lastBarData.current.close)) * 100
           ).toFixed(2)
 
+          console.log('New Prediction', newPrediction, prediction)
+
+          // TODO: Find a better approach to update the prediction line
+          setPrediction(newPrediction + 1)
           setPrediction(newPrediction)
         })
         .setText('Prediction')
@@ -234,11 +238,11 @@ const TVChartContainer = (props) => {
         .setPrice(lastBarData.current.close)
     })
     //eslint-disable-next-line
-  }, [theme, isMobile])
+  }, [theme, isMobile, currentExercise])
 
   useEffect(() => {
+    console.log('Prediction', predictionLine.current, prediction)
     if (predictionLine.current != null && typeof prediction == 'number') {
-      console.log('PREDICTION:', prediction)
       predictionLine.current.setQuantity(prediction + '%')
       const actualPrice = predictionLine.current.getPrice()
       let newPrice =
