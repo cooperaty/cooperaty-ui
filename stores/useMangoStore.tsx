@@ -34,10 +34,40 @@ import {
 import { MSRM_DECIMALS } from '@project-serum/serum/lib/token-instructions'
 import CooperatyClient from '../clients/cooperaty'
 import Axios from 'axios'
+import { LAST_TRADER_ACCOUNT_KEY } from '../components/trader_account/TraderAccountsModal'
+import { BN } from '@project-serum/anchor'
 
 export class TraderAccount {
   publicKey: PublicKey
-  owner: PublicKey
+  account: {
+    user: PublicKey
+    name: string
+    performance: BN
+    bump: BN
+  }
+}
+
+export class Exercise {
+  id: string
+  account: any
+  type: 'Scalping' | 'Swing'
+  data: [
+    {
+      time: number
+      low: number
+      high: number
+      open: number
+      close: number
+      volume: number
+    }
+  ]
+  position: {
+    direction: 'long_position' | 'short_position'
+    takeProfit: number
+    stopLoss: number
+    bars: number
+  }
+  state: 'active' | 'answered' | 'skipped'
 }
 
 export const ENDPOINTS: EndpointInfo[] = [
@@ -80,6 +110,8 @@ export const MNGO_INDEX = defaultMangoGroupIds.oracles.findIndex(
 export const programId = new PublicKey(defaultMangoGroupIds.mangoProgramId)
 export const serumProgramId = new PublicKey(defaultMangoGroupIds.serumProgramId)
 const mangoGroupPk = new PublicKey(defaultMangoGroupIds.publicKey)
+
+let traderAccountRetryAttempt = 0
 
 export const INITIAL_STATE = {
   WALLET: {
@@ -188,27 +220,11 @@ interface MangoStore extends State {
     prediction: number | ''
     practiceType: 'Loss' | 'Profit'
   }
-  currentExercise: {
-    id: string
-    account: any
-    type: 'Scalping' | 'Swing'
-    data: [
-      {
-        time: number
-        low: number
-        high: number
-        open: number
-        close: number
-        volume: number
-      }
-    ]
-    position: {
-      direction: 'long_position' | 'short_position'
-      takeProfit: number
-      stopLoss: number
-      bars: number
-    }
-    state: 'active' | 'answered' | 'skipped'
+  exercises: Exercise[]
+  selectedExercise: {
+    current: Exercise | null
+    initialLoad: boolean
+    lastUpdatedAt: number
   }
 }
 
@@ -534,6 +550,83 @@ const useMangoStore = create<MangoStore>((set, get) => {
       },
 
       // Cooperaty
+      async fetchAllTraderAccounts() {
+        const set = get().set
+        const connected = get().wallet.connected
+        const cooperatyClient = get().connection.cooperatyClient
+        const wallet = get().wallet.current
+        const actions = get().actions
+
+        if (wallet?.publicKey && connected) {
+          try {
+            const traderAccounts = await cooperatyClient.getFilteredTraders(
+              wallet,
+              { user: wallet.publicKey }
+            )
+            console.log('traderAccounts', traderAccounts)
+            if (traderAccounts.length > 0) {
+              const sortedTraderAccounts = traderAccounts
+                .slice()
+                .sort((a, b) =>
+                  a.publicKey.toBase58() > b.publicKey.toBase58() ? 1 : -1
+                )
+
+              set((state) => {
+                state.selectedTraderAccount.initialLoad = false
+                state.traderAccounts = sortedTraderAccounts
+                if (!state.selectedTraderAccount.current) {
+                  const lastTraderAccount = localStorage.getItem(
+                    LAST_TRADER_ACCOUNT_KEY
+                  )
+                  state.selectedTraderAccount.current =
+                    traderAccounts.find(
+                      (ma) =>
+                        ma.publicKey.toString() ===
+                        JSON.parse(lastTraderAccount)
+                    ) || sortedTraderAccounts[0]
+                }
+              })
+            } else {
+              set((state) => {
+                state.selectedTraderAccount.initialLoad = false
+              })
+            }
+            traderAccountRetryAttempt = 0
+          } catch (err) {
+            if (traderAccountRetryAttempt < 2) {
+              traderAccountRetryAttempt++
+              await actions.fetchAllTraderAccounts()
+            } else {
+              notify({
+                type: 'error',
+                title: 'Unable to load trader accounts',
+                description: err.message,
+              })
+              console.log('Could not get trader accounts for wallet', err)
+            }
+          }
+        }
+      },
+      async reloadTraderAccount() {
+        const set = get().set
+        const connected = get().wallet.connected
+        const cooperatyClient = get().connection.cooperatyClient
+        const wallet = get().wallet.current
+        const selectedTraderAccount = get().selectedTraderAccount.current
+
+        if (wallet?.publicKey && connected && selectedTraderAccount) {
+          const reloadedTraderAccount =
+            await cooperatyClient.reloadTraderAccount(
+              wallet,
+              selectedTraderAccount
+            )
+          set((state) => {
+            state.selectedTraderAccount.current = reloadedTraderAccount
+            state.selectedTraderAccount.lastUpdatedAt = new Date().toISOString()
+          })
+          console.log('reloaded trader account', reloadedTraderAccount)
+        }
+      },
       async updateConnection(endpointUrl) {
         const set = get().set
         const newConnection = new Connection(endpointUrl, 'processed')
@@ -549,42 +642,39 @@ const useMangoStore = create<MangoStore>((set, get) => {
       },
       async fetchExercise() {
         const set = get().set
-        const cid = get().currentExercise.id
+        const cid = get().selectedExercise.current.id
         const response = await Axios.get('https://ipfs.io/ipfs/' + cid)
-        console.log(response)
 
         set((state) => {
-          state.currentExercise.position = response.data.position
-          state.currentExercise.data = response.data.candles
+          state.selectedExercise.current.position = response.data.position
+          state.selectedExercise.current.data = response.data.candles
         })
-
-        console.log(get().currentExercise.position)
       },
       async fetchExerciseId() {
         const wallet = get().wallet.current
         const connected = get().wallet.connected
         const cooperatyClient = get().connection.cooperatyClient
-        const currentExercise = get().currentExercise
-        const lastExercisePubkey = localStorage.getItem('last_exercise_account')
+        const currentExercise = get().selectedExercise.current
+        const lastExercisePublicKey = localStorage.getItem(
+          'last_exercise_account'
+        )
         const set = get().set
-
-        console.log('EA', lastExercisePubkey)
 
         if (
           wallet?.publicKey &&
           connected &&
-          currentExercise.state != 'active'
+          currentExercise?.state != 'active'
         ) {
-          const user = await cooperatyClient.getProvider(wallet)
           let exercise = null
 
           // if there is a last exercise in the localstorage,
           // check if it is still active and assign it to the current exercise
-          if (lastExercisePubkey != null) {
-            const lastExerciseAccount = await cooperatyClient.getExercise(
-              user,
-              new PublicKey(lastExercisePubkey)
+          if (lastExercisePublicKey != null) {
+            const lastExerciseAccount = await cooperatyClient.reloadExercise(
+              wallet,
+              { publicKey: new PublicKey(lastExercisePublicKey) }
             )
+            // TODO: add notification exercise is full and change to a new one
             if (!lastExerciseAccount.account.full)
               exercise = lastExerciseAccount
           }
@@ -593,9 +683,12 @@ const useMangoStore = create<MangoStore>((set, get) => {
           // or if the last exercise is not active anymore,
           // get the first exercise from the global list of exercises
           if (exercise == null) {
-            const exercises = await cooperatyClient.getExercises(user, {
-              full: false,
-            })
+            const exercises = await cooperatyClient.getFilteredExercises(
+              wallet,
+              {
+                full: false,
+              }
+            )
             if (exercises.length > 0) {
               exercise = exercises[0]
             }
@@ -605,9 +698,9 @@ const useMangoStore = create<MangoStore>((set, get) => {
           if (exercise != null && currentExercise.id != exercise.account?.cid) {
             set((state) => {
               // @ts-ignore
-              state.currentExercise.id = exercise.account.cid
-              state.currentExercise.account = exercise
-              state.currentExercise.state = 'active'
+              state.selectedExercise.current.id = exercise.account.cid
+              state.selectedExercise.current.account = exercise
+              state.selectedExercise.current.state = 'active'
             })
             localStorage.setItem(
               'last_exercise_account',
@@ -627,27 +720,32 @@ const useMangoStore = create<MangoStore>((set, get) => {
       prediction: 0,
       practiceType: 'Profit',
     },
-    currentExercise: {
-      id: 'bafkreieuenothwt6vlex57nlj3b7olib6qlbkgquk4orwa3oas2xanevim',
-      account: {},
-      type: 'Scalping',
-      data: [
-        {
-          time: 1588888888,
-          low: 0.1,
-          high: 0.2,
-          open: 0.1,
-          close: 0.2,
-          volume: 0.1,
+    exercises: [],
+    selectedExercise: {
+      current: {
+        id: 'bafkreieuenothwt6vlex57nlj3b7olib6qlbkgquk4orwa3oas2xanevim',
+        account: {},
+        type: 'Scalping',
+        data: [
+          {
+            time: 1588888888,
+            low: 0.1,
+            high: 0.2,
+            open: 0.1,
+            close: 0.2,
+            volume: 0.1,
+          },
+        ],
+        position: {
+          direction: 'long_position',
+          takeProfit: 0.03,
+          stopLoss: 0.015,
+          bars: 10,
         },
-      ],
-      position: {
-        direction: 'long_position',
-        takeProfit: 0.03,
-        stopLoss: 0.015,
-        bars: 10,
+        state: 'answered',
       },
-      state: 'answered',
+      initialLoad: true,
+      lastUpdatedAt: 0,
     },
   }
 })

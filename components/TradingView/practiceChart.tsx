@@ -30,7 +30,7 @@ export interface ChartContainerProps {
 const TVChartContainer = () => {
   const set = useMangoStore((s) => s.set)
   const { prediction } = useMangoStore((s) => s.practiceForm)
-  const currentExercise = useMangoStore((s) => s.currentExercise)
+  const currentExercise = useMangoStore((s) => s.selectedExercise.current)
   const { theme } = useTheme()
   const { width } = useViewport()
   const isMobile = width ? width < breakpoints.sm : false

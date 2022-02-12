@@ -7,14 +7,19 @@ import { breakpoints } from '../TradePageGrid'
 import { useTranslation } from 'next-i18next'
 import useMangoAccount from '../../hooks/useMangoAccount'
 
-export default function AccountInfo() {
+export default function TraderAccountPracticeInfo() {
   const { t } = useTranslation('common')
   const connected = useMangoStore((s) => s.wallet.connected)
+  const selectedTraderAccount = useMangoStore(
+    (s) => s.selectedTraderAccount.current
+  )
   const { mangoAccount } = useMangoAccount()
   const { width } = useViewport()
   const isMobile = width ? width < breakpoints.sm : false
 
-  const ranking = 100.0
+  const ranking = selectedTraderAccount
+    ? selectedTraderAccount.account?.performance.toNumber()
+    : 0.0
 
   return (
     <>
@@ -77,7 +82,7 @@ export default function AccountInfo() {
                     <div>
                       {t('tooltip-account-liquidated')}{' '}
                       <a
-                        href="https://docs.mango.markets/mango-v3/overview#health"
+                        href="https://docs.cooperaty.org/overview#ranking"
                         target="_blank"
                         rel="noopener noreferrer"
                       >

@@ -39,11 +39,9 @@ const MobileMenu = () => {
           <ConnectWalletButton />
         </div>
         <div className="p-6">
-          <MenuItem href="/market?name=BTC/USDC">{t('trade')}</MenuItem>
+          <MenuItem href="/practice">{t('practice')}</MenuItem>
           <MenuItem href="/account">{t('account')}</MenuItem>
-          <MenuItem href="/borrow">{t('borrow')}</MenuItem>
-          <MenuItem href="/stats">{t('stats')}</MenuItem>
-          <MenuItem href="https://docs.mango.markets/">{t('learn')}</MenuItem>
+          <MenuItem href="https://docs.cooperaty.org/">{t('docs')}</MenuItem>
         </div>
       </Transition>
       <div

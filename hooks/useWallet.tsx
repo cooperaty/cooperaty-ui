@@ -67,8 +67,9 @@ export default function useWallet() {
     providerUrl: selectedProviderUrl,
   } = useMangoStore((state) => state.wallet)
   const endpoint = useMangoStore((state) => state.connection.endpoint)
-  const mangoAccount = useMangoStore((s) => s.selectedMangoAccount.current)
+  const traderAccount = useMangoStore((s) => s.selectedTraderAccount.current)
   const actions = useMangoStore((s) => s.actions)
+  const cooperatyClient = useMangoStore((s) => s.connection.cooperatyClient)
   const [savedProviderUrl, setSavedProviderUrl] = useLocalStorageState(
     PROVIDER_LOCAL_STORAGE_KEY,
     DEFAULT_PROVIDER.url
@@ -93,6 +94,10 @@ export default function useWallet() {
           savedProviderUrl,
           endpoint
         ) as WalletAdapter
+
+        wallet.provider = cooperatyClient.getProvider(wallet)
+        wallet.program = cooperatyClient.getProgram(wallet)
+
         setMangoStore((state) => {
           state.wallet.current = wallet
         })
@@ -118,7 +123,7 @@ export default function useWallet() {
       setMangoStore((state) => {
         state.wallet.connected = true
       })
-
+      await actions.fetchAllTraderAccounts()
       actions.fetchTradeHistory()
       actions.fetchWalletTokens()
     })
@@ -138,15 +143,15 @@ export default function useWallet() {
   }, [wallet, setMangoStore])
 
   useInterval(() => {
-    if (connected && mangoAccount) {
+    if (connected && traderAccount) {
       actions.fetchWalletTokens()
       actions.fetchTradeHistory()
     }
   }, 90 * SECONDS)
 
   useInterval(() => {
-    if (connected && mangoAccount) {
-      actions.reloadMangoAccount()
+    if (connected && traderAccount) {
+      actions.reloadTraderAccount()
     }
   }, 90 * SECONDS)
 

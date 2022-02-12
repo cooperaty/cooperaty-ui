@@ -1,3 +1,4 @@
+import * as anchor from '@project-serum/anchor'
 import { AccountInfo, PublicKey, Transaction } from '@solana/web3.js'
 import { Market, OpenOrders } from '@project-serum/serum'
 import { Event } from '@project-serum/serum/lib/queue'
@@ -98,23 +99,10 @@ export interface ChartTradeType {
   marketAddress: string
 }
 
-export interface FeeRates {
-  taker: number
-  maker: number
-}
-
 // Type declaration for the margin accounts for the mango group
 export type mangoTokenAccounts = {
   mango_group: string
   accounts: TokenAccount[]
-}
-
-// Token infos
-export interface KnownToken {
-  tokenSymbol: string
-  tokenName: string
-  icon?: string
-  mintAddress: string
 }
 
 export const DEFAULT_PUBLIC_KEY = new PublicKey(
@@ -123,6 +111,8 @@ export const DEFAULT_PUBLIC_KEY = new PublicKey(
 
 export interface WalletAdapter {
   publicKey: PublicKey
+  provider?: anchor.Provider
+  program?: anchor.Program
   autoApprove: boolean
   connected: boolean
   signTransaction: (transaction: Transaction) => Promise<Transaction>

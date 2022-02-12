@@ -4,114 +4,121 @@ import { ConfirmOptions } from '@solana/web3.js'
 const BASE58 = '123456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz'
 const bs58 = require('base-x')(BASE58)
 const idl = require('./idl.json')
-const opts = {
-  preflightCommitment: 'processed',
-}
 
 export default class CooperatyClient {
   public connection: anchor.web3.Connection
-  public program: any
+  public idl: any
 
   constructor(connection: anchor.web3.Connection) {
     this.connection = connection
-    this.program = { idl, programId: idl.metadata.address }
+    this.idl = idl
   }
 
-  async getProvider(user: WalletAdapter, airdropBalance = 0) {
-    const provider = new anchor.Provider(
-      this.connection,
-      user,
-      opts as ConfirmOptions
-    )
-
-    if (airdropBalance > 0) {
-      const sig = await provider.connection.requestAirdrop(
-        user.publicKey,
-        airdropBalance * anchor.web3.LAMPORTS_PER_SOL
-      )
-      await provider.connection.confirmTransaction(sig)
-    }
-
-    return {
-      key: user,
-      provider: provider,
-    }
-  }
-
-  async getAccountBalance(user) {
-    const account = await user.provider.connection.getAccountInfo(
-      user.publicKey
+  async getAccountBalance(wallet) {
+    const account = await wallet.provider.connection.getAccountInfo(
+      wallet.publicKey
     )
     return account?.lamports ?? 0
   }
 
-  programForUser(user) {
-    return new anchor.Program(
-      this.program.idl,
-      this.program.programId,
-      user.provider
+  async getAirdrop(wallet: WalletAdapter, airdropBalance) {
+    const sig = await wallet.provider.connection.requestAirdrop(
+      wallet.publicKey,
+      airdropBalance * anchor.web3.LAMPORTS_PER_SOL
+    )
+    return await wallet.provider.connection.confirmTransaction(sig)
+  }
+
+  getProvider(wallet: WalletAdapter) {
+    return new anchor.Provider(
+      this.connection,
+      wallet,
+      this.connection.commitment as ConfirmOptions
     )
   }
 
-  async createTrader(user, name) {
+  getProgram(wallet: WalletAdapter) {
+    return new anchor.Program(
+      this.idl,
+      this.idl.metadata.address,
+      wallet.provider
+    )
+  }
+
+  async createTrader(wallet: WalletAdapter, name) {
     const [traderPublicKey, bump] =
       await anchor.web3.PublicKey.findProgramAddress(
-        ['trader', name.slice(0, 32), user.key.publicKey.toBytes()],
-        this.program.programId
+        ['trader', name.slice(0, 32), wallet.publicKey.toBytes()],
+        wallet.program.programId
       )
 
-    const program = this.programForUser(user)
-    await program.rpc.createTrader(name, bump, {
+    await wallet.program.rpc.createTrader(name, bump, {
       accounts: {
         trader: traderPublicKey,
-        user: user.key.publicKey,
+        user: wallet.publicKey,
         systemProgram: anchor.web3.SystemProgram.programId,
       },
     })
 
     return {
       publicKey: traderPublicKey,
-      account: await program.account.trader.fetch(traderPublicKey),
+      account: await wallet.program.account.trader.fetch(traderPublicKey),
     }
   }
 
-  async updateTraderAccount(user, trader) {
-    const program = this.programForUser(user)
+  async reloadTraderAccount(wallet, trader) {
     return {
       publicKey: trader.publicKey,
-      account: await program.account.trader.fetch(trader.publicKey),
+      account: await wallet.program.account.trader.fetch(trader.publicKey),
     }
   }
 
-  async createExercise(authority, cid, predictions_capacity = 5) {
+  async getFilteredTraders(wallet, filters) {
+    const cmp = (offset, bytes) => {
+      return { memcmp: { offset, bytes } }
+    }
+
+    const searchFilters = []
+
+    if ('user' in filters) searchFilters.push(cmp(8, filters.user.toBase58()))
+
+    return await wallet.program.account.trader.all(searchFilters)
+  }
+
+  async createExercise(wallet, cid, predictions_capacity = 5) {
     const [exercisePublicKey, bump] =
       await anchor.web3.PublicKey.findProgramAddress(
         [
           'exercise',
-          authority.key.publicKey.toBytes(),
+          wallet.key.publicKey.toBytes(),
           cid.slice(0, 32),
           cid.slice(32, 64),
         ],
-        this.program.programId
+        wallet.program.programId
       )
 
-    const program = this.programForUser(authority)
-    await program.rpc.createExercise(cid, predictions_capacity, bump, {
+    await wallet.program.rpc.createExercise(cid, predictions_capacity, bump, {
       accounts: {
         exercise: exercisePublicKey,
-        authority: authority.key.publicKey,
+        authority: wallet.publicKey,
         systemProgram: anchor.web3.SystemProgram.programId,
       },
     })
 
     return {
       publicKey: exercisePublicKey,
-      account: await program.account.exercise.fetch(exercisePublicKey),
+      account: await wallet.program.account.exercise.fetch(exercisePublicKey),
     }
   }
 
-  async createMultipleExercises(authority, cids, predictions_capacity = 5) {
-    const program = this.programForUser(authority)
+  async reloadExercise(wallet, exercise) {
+    return {
+      publicKey: exercise.publicKey,
+      account: await wallet.program.account.exercise.fetch(exercise.publicKey),
+    }
+  }
+
+  async createMultipleExercises(wallet, cids, predictions_capacity = 5) {
     const instructions = []
     const exercisesPublicKeys = []
 
@@ -121,34 +128,44 @@ export default class CooperatyClient {
         await anchor.web3.PublicKey.findProgramAddress(
           [
             'exercise',
-            authority.key.publicKey.toBytes(),
+            wallet.publicKey.toBytes(),
             cid.slice(0, 32),
             cid.slice(32, 64),
           ],
-          this.program.programId
+          wallet.program.programId
         )
 
       exercisesPublicKeys.push(exercisePublicKey)
 
       if (i < cids.length - 1) {
         instructions.push(
-          program.instruction.createExercise(cid, predictions_capacity, bump, {
-            accounts: {
-              exercise: exercisePublicKey,
-              authority: authority.key.publicKey,
-              systemProgram: anchor.web3.SystemProgram.programId,
-            },
-          })
+          wallet.program.instruction.createExercise(
+            cid,
+            predictions_capacity,
+            bump,
+            {
+              accounts: {
+                exercise: exercisePublicKey,
+                authority: wallet.publicKey,
+                systemProgram: anchor.web3.SystemProgram.programId,
+              },
+            }
+          )
         )
       } else {
-        await program.rpc.createExercise(cid, predictions_capacity, bump, {
-          accounts: {
-            exercise: exercisePublicKey,
-            authority: authority.key.publicKey,
-            systemProgram: anchor.web3.SystemProgram.programId,
-          },
-          instructions,
-        })
+        await wallet.program.rpc.createExercise(
+          cid,
+          predictions_capacity,
+          bump,
+          {
+            accounts: {
+              exercise: exercisePublicKey,
+              authority: wallet.publicKey,
+              systemProgram: anchor.web3.SystemProgram.programId,
+            },
+            instructions,
+          }
+        )
       }
     }
 
@@ -156,24 +173,28 @@ export default class CooperatyClient {
       exercisesPublicKeys.map(async (exercisePublicKey): Promise<any> => {
         return {
           publicKey: exercisePublicKey,
-          account: await program.account.exercise.fetch(exercisePublicKey),
+          account: await wallet.program.account.exercise.fetch(
+            exercisePublicKey
+          ),
         }
       })
     )
   }
 
-  async getExercise(user, publicKey) {
-    const program = this.programForUser(user)
-
-    return {
-      publicKey: publicKey,
-      account: await program.account.exercise.fetch(publicKey),
-    }
+  async reloadMultipleExercises(wallet, exercises) {
+    return await Promise.all(
+      exercises.map(async (exercise): Promise<any> => {
+        return {
+          publicKey: exercise.publicKey,
+          account: await wallet.program.account.exercise.fetch(
+            exercise.publicKey
+          ),
+        }
+      })
+    )
   }
 
-  async getExercises(user, filters) {
-    const program = this.programForUser(user)
-
+  async getFilteredExercises(wallet, filters) {
     const cmp = (offset, bytes) => {
       return { memcmp: { offset, bytes } }
     }
@@ -187,72 +208,55 @@ export default class CooperatyClient {
     if ('cid' in filters)
       searchFilters.push(cmp(13, bs58.encode(Buffer.from(filters.cid))))
 
-    return await program.account.exercise.all(searchFilters)
+    return await wallet.program.account.exercise.all(searchFilters)
   }
 
-  async addPrediction(user, trader, exercise, authority, value, cid) {
-    const program = this.programForUser(user)
-    const txid = await program.rpc.addPrediction(new anchor.BN(value), cid, {
+  async addPrediction(wallet, trader, exercise, value, cid) {
+    return await wallet.program.rpc.addPrediction(new anchor.BN(value), cid, {
       accounts: {
         exercise: exercise.publicKey,
-        authority: authority.key.publicKey,
+        authority: exercise.authority.publicKey,
         trader: trader.publicKey,
-        user: user.key.publicKey,
+        user: wallet.publicKey,
       },
     })
-
-    return {
-      txid: txid,
-      publicKey: exercise.publicKey,
-      account: await program.account.exercise.fetch(exercise.publicKey),
-    }
   }
 
-  async addOutcome(exercise, authority, outcome, solution_key, cid) {
-    const program = this.programForUser(authority)
-    await program.rpc.addOutcome(new anchor.BN(outcome), solution_key, cid, {
-      accounts: {
-        exercise: exercise.publicKey,
-        authority: authority.key.publicKey,
-      },
-    })
-
-    return {
-      publicKey: exercise.publicKey,
-      account: await program.account.exercise.fetch(exercise.publicKey),
-    }
+  async addOutcome(wallet, exercise, outcome, solution_key, cid) {
+    return await wallet.program.rpc.addOutcome(
+      new anchor.BN(outcome),
+      solution_key,
+      cid,
+      {
+        accounts: {
+          exercise: exercise.publicKey,
+          authority: exercise.authority.publicKey,
+        },
+      }
+    )
   }
 
-  async checkPrediction(user, trader, exercise, authority, index, cid) {
-    const program = this.programForUser(authority)
-    await program.rpc.checkPrediction(new anchor.BN(index), cid, {
+  async checkPrediction(wallet, trader, exercise, index, cid) {
+    return await wallet.program.rpc.checkPrediction(new anchor.BN(index), cid, {
       accounts: {
         exercise: exercise.publicKey,
-        authority: authority.key.publicKey,
+        authority: wallet.exercise.authority.publicKey,
         trader: trader.publicKey,
-        user: user.key.publicKey,
+        user: wallet.publicKey,
       },
     })
   }
 
-  async checkMultiplePredictions(
-    users,
-    traders,
-    exercise,
-    authority,
-    index,
-    cid
-  ) {
-    const program = this.programForUser(authority)
+  async checkMultiplePredictions(wallet, users, traders, exercise, index, cid) {
     const instructions = []
     const lastTraderIndex = users.length - 1
 
     for (let i = 0; i < lastTraderIndex; i++) {
       instructions.push(
-        program.instruction.checkPrediction(new anchor.BN(index), cid, {
+        wallet.program.instruction.checkPrediction(new anchor.BN(index), cid, {
           accounts: {
             exercise: exercise.publicKey,
-            authority: authority.key.publicKey,
+            authority: exercise.authority.publicKey,
             trader: traders[i].publicKey,
             user: users[i].key.publicKey,
           },
@@ -260,10 +264,10 @@ export default class CooperatyClient {
       )
     }
 
-    await program.rpc.checkPrediction(new anchor.BN(index), cid, {
+    await wallet.program.rpc.checkPrediction(new anchor.BN(index), cid, {
       accounts: {
         exercise: exercise.publicKey,
-        authority: authority.key.publicKey,
+        authority: exercise.authority.publicKey,
         trader: traders[lastTraderIndex].publicKey,
         user: users[lastTraderIndex].key.publicKey,
       },

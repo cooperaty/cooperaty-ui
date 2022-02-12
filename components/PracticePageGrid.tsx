@@ -8,7 +8,7 @@ const TVChartContainer = dynamic(
 )
 import { useEffect, useState } from 'react'
 import FloatingElement from './elements/FloatingElement'
-import AccountPracticeInfo from './account/AccountPracticeInfo'
+import TraderAccountPracticeInfo from './trader_account/TraderAccountPracticeInfo'
 import PracticeForm from './modules/practice_form/PracticeForm'
 import UserPracticeInfo from './modules/user/UserPracticeInfo'
 import useMangoStore from '../stores/useMangoStore'
@@ -56,7 +56,7 @@ export const breakpoints = { xl: 1600, lg: 1280, md: 1024, sm: 768, xs: 0 }
 const PracticePageGrid = () => {
   const { uiLocked } = useMangoStore((s) => s.settings)
   const actions = useMangoStore((s) => s.actions)
-  const currentExerciseId = useMangoStore((s) => s.currentExercise.id)
+  const currentExerciseId = useMangoStore((s) => s.selectedExercise.current.id)
   const connected = useMangoStore((s) => s.wallet.connected)
   const [savedLayouts, setSavedLayouts] = useLocalStorageState(
     GRID_LAYOUT_KEY,
@@ -80,11 +80,11 @@ const PracticePageGrid = () => {
 
   useEffect(() => {
     actions.fetchExercise()
-  }, [currentExerciseId])
+  }, [actions, currentExerciseId])
 
   useEffect(() => {
     actions.fetchExerciseId()
-  }, [connected])
+  }, [actions, connected])
 
   useEffect(() => {
     setMounted(true)
@@ -118,7 +118,7 @@ const PracticePageGrid = () => {
         </div>
         <div key="accountInfo">
           <FloatingElement className="h-full" showConnect>
-            <AccountPracticeInfo />
+            <TraderAccountPracticeInfo />
           </FloatingElement>
         </div>
         <div key="userInfo">

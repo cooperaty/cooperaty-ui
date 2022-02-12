@@ -13,9 +13,7 @@ import PageBodyContainer from '../components/elements/PageBodyContainer'
 import TopBar from '../components/modules/TopBar'
 import AccountOrders from '../components/account_page/AccountOrders'
 import AccountHistory from '../components/account_page/AccountHistory'
-import AccountsModal from '../components/account/AccountsModal'
 import AccountOverview from '../components/account_page/AccountOverview'
-import AccountNameModal from '../components/account/AccountNameModal'
 import Button from '../components/elements/Button'
 import EmptyState from '../components/elements/EmptyState'
 import Loading from '../components/elements/Loading'
@@ -28,6 +26,7 @@ import { useTranslation } from 'next-i18next'
 import Select from '../components/elements/Select'
 import { useRouter } from 'next/router'
 import { PublicKey } from '@solana/web3.js'
+import TraderAccountsModal from '../components/trader_account/TraderAccountsModal'
 
 export async function getServerSideProps({ locale }) {
   return {
@@ -43,7 +42,7 @@ const TABS = ['Portfolio', 'Orders', 'History', 'Interest', 'Funding']
 export default function Account() {
   const { t } = useTranslation('common')
   const [showAccountsModal, setShowAccountsModal] = useState(false)
-  const [showNameModal, setShowNameModal] = useState(false)
+  const [, setShowNameModal] = useState(false)
   const [isCopied, setIsCopied] = useState(false)
   const [resetOnLeave, setResetOnLeave] = useState(false)
   const connected = useMangoStore((s) => s.wallet.connected)
@@ -69,9 +68,6 @@ export default function Account() {
     setIsCopied(true)
     copyToClipboard(code)
   }
-  const handleCloseNameModal = useCallback(() => {
-    setShowNameModal(false)
-  }, [])
 
   useEffect(() => {
     // @ts-ignore
@@ -97,20 +93,20 @@ export default function Account() {
           setResetOnLeave(true)
         }
       } catch (error) {
-        router.push('/account')
+        await router.push('/account')
       }
     }
 
     if (pubkey) {
       loadUnownedMangoAccount()
     }
-  }, [pubkey, mangoGroup])
+  }, [pubkey, mangoGroup, mangoClient, setMangoStore, actions, router])
 
   useEffect(() => {
     if (connected) {
       router.push('/account')
     }
-  }, [connected])
+  }, [connected, router])
 
   useEffect(() => {
     const handleRouteChange = () => {
@@ -124,7 +120,7 @@ export default function Account() {
     return () => {
       router.events.off('routeChangeStart', handleRouteChange)
     }
-  }, [resetOnLeave])
+  }, [resetOnLeave, router.events, setMangoStore])
 
   useEffect(() => {
     if (isCopied) {
@@ -269,16 +265,9 @@ export default function Account() {
         </div>
       </PageBodyContainer>
       {showAccountsModal ? (
-        <AccountsModal
+        <TraderAccountsModal
           onClose={handleCloseAccounts}
           isOpen={showAccountsModal}
-        />
-      ) : null}
-      {showNameModal ? (
-        <AccountNameModal
-          accountName={mangoAccount?.name}
-          isOpen={showNameModal}
-          onClose={handleCloseNameModal}
         />
       ) : null}
     </div>

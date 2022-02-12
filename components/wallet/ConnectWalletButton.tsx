@@ -15,9 +15,9 @@ import useLocalStorageState from '../../hooks/useLocalStorageState'
 import { abbreviateAddress, copyToClipboard } from '../../utils'
 import WalletSelect from './WalletSelect'
 import { WalletIcon, ProfileIcon } from '../elements/icons'
-import AccountsModal from '../account/AccountsModal'
 import { useEffect } from 'react'
 import { useTranslation } from 'next-i18next'
+import TraderAccountsModal from '../trader_account/TraderAccountsModal'
 
 const ConnectWalletButton = () => {
   const { t } = useTranslation('common')
@@ -117,7 +117,7 @@ const ConnectWalletButton = () => {
         </div>
       )}
       {showAccountsModal ? (
-        <AccountsModal
+        <TraderAccountsModal
           onClose={handleCloseAccounts}
           isOpen={showAccountsModal}
         />

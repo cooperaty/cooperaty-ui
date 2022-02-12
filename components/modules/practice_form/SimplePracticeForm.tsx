@@ -9,17 +9,33 @@ import ButtonGroup from '../../elements/ButtonGroup'
 import Tooltip from '../../elements/Tooltip'
 import { useTranslation } from 'next-i18next'
 
+const PREDICTION_PERCENT_LIST_LOSS = [
+  '0%',
+  '-20%',
+  '-40%',
+  '-60%',
+  '-80%',
+  '-100%',
+]
+const PREDICTION_PERCENT_LIST_PROFIT = [
+  '0%',
+  '20%',
+  '40%',
+  '60%',
+  '80%',
+  '100%',
+]
+
 export default function SimplePracticeForm() {
   const { t } = useTranslation('common')
   const set = useMangoStore((s) => s.set)
   const { ipAllowed } = useIpAddress()
-  const currentExercise = useMangoStore((s) => s.currentExercise)
+  const currentExercise = useMangoStore((s) => s.selectedExercise.current)
   const walletTokens = useMangoStore((s) => s.wallet.tokens)
   const actions = useMangoStore((s) => s.actions)
   const market = useMangoStore((s) => s.selectedMarket.current)
   const { prediction } = useMangoStore((s) => s.practiceForm)
   const cooperatyClient = useMangoStore((s) => s.connection.cooperatyClient)
-
   const [, setSubmitting] = useState(false)
   const [predictionPercent, setPredictionPercent] = useState('5%')
   const [, setinsufficientSol] = useState(false)
@@ -32,7 +48,9 @@ export default function SimplePracticeForm() {
   useEffect(() => {
     const predictionPercent = `${prediction}%`
     const predictionPercentList =
-      prediction >= 0 ? predictionPercentListProfit : predictionPercentListLoss
+      prediction >= 0
+        ? PREDICTION_PERCENT_LIST_PROFIT
+        : PREDICTION_PERCENT_LIST_LOSS
     if (predictionPercentList.includes(predictionPercent)) {
       setPredictionPercent(`${prediction}%`)
     } else {
@@ -53,15 +71,6 @@ export default function SimplePracticeForm() {
     setPrediction(prediction)
   }
 
-  const predictionPercentListLoss = [
-    '0%',
-    '-20%',
-    '-40%',
-    '-60%',
-    '-80%',
-    '-100%',
-  ]
-  const predictionPercentListProfit = ['0%', '20%', '40%', '60%', '80%', '100%']
   const onPredictionTypeChange = () => {
     if (typeof prediction === 'number') {
       setPrediction(-1 * prediction)
@@ -74,7 +83,7 @@ export default function SimplePracticeForm() {
   }
 
   async function onSubmitChangeExercise() {
-    actions.fetchExercise()
+    await actions.fetchExercise()
   }
 
   async function onSubmitPrediction() {
@@ -88,22 +97,22 @@ export default function SimplePracticeForm() {
 
     const mangoAccount = useMangoStore.getState().selectedMangoAccount.current
     const wallet = useMangoStore.getState().wallet.current
-    const currentExercise = useMangoStore.getState().currentExercise
+    const currentExercise = useMangoStore.getState().selectedExercise.current
+    const traderAccount = useMangoStore.getState().selectedTraderAccount.current
 
     if (!wallet || !mangoAccount || !market) return
     setSubmitting(true)
 
     try {
-      const exercise = await cooperatyClient.addPrediction(
-        wallet, // user
-        wallet, // trader
-        currentExercise.account, // exercise
-        wallet, // authority
-        prediction, // prediction
-        currentExercise.id // cid
+      const txid = await cooperatyClient.addPrediction(
+        wallet,
+        traderAccount,
+        currentExercise.account,
+        prediction,
+        currentExercise.id
       )
 
-      notify({ title: t('successfully-placed'), txid: exercise.txid })
+      notify({ title: t('successfully-placed'), txid })
       setPrediction('0')
     } catch (e) {
       notify({
@@ -150,8 +159,8 @@ export default function SimplePracticeForm() {
             onChange={(p) => onPredictionPercentChange(p)}
             values={
               prediction >= 0
-                ? predictionPercentListProfit
-                : predictionPercentListLoss
+                ? PREDICTION_PERCENT_LIST_PROFIT
+                : PREDICTION_PERCENT_LIST_LOSS
             }
           />
         </div>

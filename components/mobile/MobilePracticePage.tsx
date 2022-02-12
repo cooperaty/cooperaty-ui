@@ -8,7 +8,7 @@ import SwipeableTabs from './SwipeableTabs'
 import FloatingElement from '../elements/FloatingElement'
 import Swipeable from './Swipeable'
 import PracticeHistoryTable from '../modules/user/PracticeHistoryTable'
-import AccountPracticeInfo from '../account/AccountPracticeInfo'
+import AccountPracticeInfo from '../trader_account/TraderAccountPracticeInfo'
 import SimplePracticeForm from '../modules/practice_form/SimplePracticeForm'
 
 const TVChartContainer = dynamic(
@@ -19,7 +19,7 @@ const TVChartContainer = dynamic(
 const MobilePracticePage = () => {
   const [viewIndex, setViewIndex] = useState(0)
   const connected = useMangoStore((s) => s.wallet.connected)
-  const currentExercise = useMangoStore((s) => s.currentExercise)
+  const currentExercise = useMangoStore((s) => s.selectedExercise.current)
   const exerciseType = currentExercise.type
 
   const handleChangeViewIndex = (index) => {

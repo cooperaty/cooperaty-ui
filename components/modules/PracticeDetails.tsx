@@ -8,7 +8,7 @@ import { useTranslation } from 'next-i18next'
 
 const PracticeDetails = () => {
   const { t } = useTranslation('common')
-  const currentExercise = useMangoStore((s) => s.currentExercise)
+  const currentExercise = useMangoStore((s) => s.selectedExercise.current)
 
   const mangoAccount = useMangoStore((s) => s.selectedMangoAccount.current)
   const connected = useMangoStore((s) => s.wallet.connected)

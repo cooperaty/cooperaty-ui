@@ -6,16 +6,15 @@ import MenuItem from '../elements/MenuItem'
 import ThemeSwitch from '../elements/ThemeSwitch'
 import useMangoStore from '../../stores/useMangoStore'
 import ConnectWalletButton from '../wallet/ConnectWalletButton'
-import AccountsModal from '../account/AccountsModal'
 import LanguageSwitch from '../elements/LanguageSwitch'
 import { DEFAULT_MARKET_KEY, initialMarket } from './settings/SettingsModal'
-// import { useRouter } from 'next/router'
 import { useTranslation } from 'next-i18next'
 import Settings from './settings/Settings'
+import TraderAccountsModal from '../trader_account/TraderAccountsModal'
 
 const TopBar = () => {
   const { t } = useTranslation('common')
-  const mangoAccount = useMangoStore((s) => s.selectedMangoAccount.current)
+  const traderAccount = useMangoStore((s) => s.selectedTraderAccount.current)
   const wallet = useMangoStore((s) => s.wallet.current)
   const [showAccountsModal, setShowAccountsModal] = useState(false)
   const [defaultMarket] = useLocalStorageState(
@@ -62,8 +61,8 @@ const TopBar = () => {
               <div className="pl-2">
                 <Settings />
               </div>
-              {mangoAccount &&
-              mangoAccount.owner.toBase58() ===
+              {traderAccount &&
+              traderAccount.account.user.toBase58() ===
                 wallet?.publicKey?.toBase58() ? (
                 <div className="pl-2">
                   <button
@@ -73,9 +72,9 @@ const TopBar = () => {
                     <div className="font-normal text-th-primary text-xs">
                       {t('account')}
                     </div>
-                    {mangoAccount.name
-                      ? mangoAccount.name
-                      : abbreviateAddress(mangoAccount.publicKey)}
+                    {traderAccount.account.name
+                      ? traderAccount.account.name
+                      : abbreviateAddress(traderAccount.publicKey)}
                   </button>
                 </div>
               ) : null}
@@ -89,7 +88,7 @@ const TopBar = () => {
         </div>
       </nav>
       {showAccountsModal ? (
-        <AccountsModal
+        <TraderAccountsModal
           onClose={handleCloseAccounts}
           isOpen={showAccountsModal}
         />

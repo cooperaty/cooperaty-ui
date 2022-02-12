@@ -138,7 +138,6 @@
   "initial-deposit": "Initial Deposit",
   "insufficient-balance-deposit": "Insufficient balance. Reduce the amount to deposit",
   "insufficient-balance-withdraw": "Insufficient balance. Borrow funds to withdraw",
-  "insufficient-sol": "You need 0.035 SOL to create a Mango Account.",
   "interest": "Interest",
   "interest-chart-title": "{{symbol}} Interest (Last 30 days)",
   "interest-chart-value-title": "{{symbol}} Interest Value (Last 30 days)",
@@ -378,6 +377,7 @@
   "your-assets": "Your Assets",
   "your-borrows": "Your Borrows",
 
+  "cooperaty": "Cooperaty",
   "rank": "Rank",
   "prediction": "Prediction",
   "change-exercise": "Change Exercise",
@@ -385,8 +385,13 @@
   "league": "League",
   "practice": "Practice",
   "time-left": "Time Left",
-  "cooperaty": "Cooperaty",
   "practice-history": "Practice History",
   "no-practice-history": "No practice history",
-  "predict": "Predict"
+  "predict": "Predict",
+  "create-trader-account": "Create Trader Account",
+  "insufficient-sol": "You need 0.035 SOL to create a Trader Account.",
+  "trader-name": "Trader Name",
+  "trader-account-info": "This account will store on-chain your trading performance (rank) and your last prediction results.",
+  "trader-accounts": "Trader Accounts",
+  "create-trader-account-error": "Could not create trader account"
 }
