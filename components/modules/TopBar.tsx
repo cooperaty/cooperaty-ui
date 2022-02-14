@@ -1,13 +1,11 @@
 import { useCallback, useState } from 'react'
 import Link from 'next/link'
 import { abbreviateAddress } from '../../utils'
-import useLocalStorageState from '../../hooks/useLocalStorageState'
 import MenuItem from '../elements/MenuItem'
 import ThemeSwitch from '../elements/ThemeSwitch'
 import useMangoStore from '../../stores/useMangoStore'
 import ConnectWalletButton from '../wallet/ConnectWalletButton'
 import LanguageSwitch from '../elements/LanguageSwitch'
-import { DEFAULT_MARKET_KEY, initialMarket } from './settings/SettingsModal'
 import { useTranslation } from 'next-i18next'
 import Settings from './settings/Settings'
 import TraderAccountsModal from '../trader_account/TraderAccountsModal'
@@ -17,10 +15,6 @@ const TopBar = () => {
   const traderAccount = useMangoStore((s) => s.selectedTraderAccount.current)
   const wallet = useMangoStore((s) => s.wallet.current)
   const [showAccountsModal, setShowAccountsModal] = useState(false)
-  const [defaultMarket] = useLocalStorageState(
-    DEFAULT_MARKET_KEY,
-    initialMarket
-  )
 
   const handleCloseAccounts = useCallback(() => {
     setShowAccountsModal(false)
@@ -32,7 +26,7 @@ const TopBar = () => {
         <div className={`px-4 lg:px-10`}>
           <div className={`flex justify-between h-14`}>
             <div className={`flex`}>
-              <Link href={defaultMarket.path} shallow={true}>
+              <Link href="/practice" shallow={true}>
                 <div
                   className={`cursor-pointer flex-shrink-0 flex items-center`}
                 >
