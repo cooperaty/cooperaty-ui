@@ -1,7 +1,7 @@
 import { useMemo, useState } from 'react'
 import { SwitchHorizontalIcon } from '@heroicons/react/outline'
 import { getWeights } from '@blockworks-foundation/mango-client'
-import useMangoStore from '../../stores/useMangoStore'
+import useStore from '../../stores/useStore'
 import AdvancedTradeForm from './trade_form/AdvancedTradeForm'
 import SimpleTradeForm from './trade_form/SimpleTradeForm'
 import {
@@ -14,9 +14,9 @@ import FloatingElement from '../elements/FloatingElement'
 
 export default function TradeForm() {
   const [showAdvancedFrom, setShowAdvancedForm] = useState(true)
-  const marketConfig = useMangoStore((s) => s.selectedMarket.config)
-  const mangoGroup = useMangoStore((s) => s.selectedMangoGroup.current)
-  const connected = useMangoStore((s) => s.wallet.connected)
+  const marketConfig = useStore((s) => s.selectedMarket.config)
+  const mangoGroup = useStore((s) => s.selectedMangoGroup.current)
+  const connected = useStore((s) => s.wallet.connected)
 
   const handleFormChange = () => {
     setShowAdvancedForm(!showAdvancedFrom)

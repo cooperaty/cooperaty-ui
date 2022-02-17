@@ -6,7 +6,7 @@ import {
   HeartIcon,
 } from '@heroicons/react/outline'
 import { nativeToUi, ZERO_BN } from '@blockworks-foundation/mango-client'
-import useMangoStore, { MNGO_INDEX } from '../../stores/useMangoStore'
+import useStore, { MNGO_INDEX } from '../../stores/useStore'
 import { formatUsdValue } from '../../utils'
 import { notify } from '../../utils/notifications'
 import { LinkButton } from '../elements/Button'
@@ -20,11 +20,11 @@ const SHOW_ZERO_BALANCE_KEY = 'showZeroAccountBalances-0.2'
 
 export default function AccountOverview() {
   const { t } = useTranslation('common')
-  const actions = useMangoStore((s) => s.actions)
-  const mangoAccount = useMangoStore((s) => s.selectedMangoAccount.current)
-  const mangoGroup = useMangoStore((s) => s.selectedMangoGroup.current)
-  const mangoCache = useMangoStore((s) => s.selectedMangoGroup.cache)
-  const mangoClient = useMangoStore((s) => s.connection.client)
+  const actions = useStore((s) => s.actions)
+  const mangoAccount = useStore((s) => s.selectedMangoAccount.current)
+  const mangoGroup = useStore((s) => s.selectedMangoGroup.current)
+  const mangoCache = useStore((s) => s.selectedMangoGroup.cache)
+  const mangoClient = useStore((s) => s.connection.client)
   const [showZeroBalances, setShowZeroBalances] = useLocalStorageState(
     SHOW_ZERO_BALANCE_KEY,
     true
@@ -51,7 +51,7 @@ export default function AccountOverview() {
   }, [mangoAccount])
 
   const handleRedeemMngo = async () => {
-    const wallet = useMangoStore.getState().wallet.current
+    const wallet = useStore.getState().wallet.current
     const mngoNodeBank =
       mangoGroup.rootBankAccounts[MNGO_INDEX].nodeBankAccounts[0]
 

@@ -1,5 +1,5 @@
 import { ElementTitle } from '../elements/styles'
-import useMangoStore from '../../stores/useMangoStore'
+import useStore from '../../stores/useStore'
 import { i80f48ToPercent, floorToDecimal } from '../../utils'
 import Tooltip from '../elements/Tooltip'
 import {
@@ -12,16 +12,16 @@ import { useTranslation } from 'next-i18next'
 
 export default function MarketBalances() {
   const { t } = useTranslation('common')
-  const mangoGroup = useMangoStore((s) => s.selectedMangoGroup.current)
-  const mangoGroupConfig = useMangoStore((s) => s.selectedMangoGroup.config)
-  const mangoGroupCache = useMangoStore((s) => s.selectedMangoGroup.cache)
-  const mangoAccount = useMangoStore((s) => s.selectedMangoAccount.current)
-  const selectedMarket = useMangoStore((s) => s.selectedMarket.current)
-  const marketConfig = useMangoStore((s) => s.selectedMarket.config)
-  const setMangoStore = useMangoStore((s) => s.set)
-  const price = useMangoStore((s) => s.tradeForm.price)
-  const connected = useMangoStore((s) => s.wallet.connected)
-  const isLoading = useMangoStore((s) => s.selectedMangoAccount.initialLoad)
+  const mangoGroup = useStore((s) => s.selectedMangoGroup.current)
+  const mangoGroupConfig = useStore((s) => s.selectedMangoGroup.config)
+  const mangoGroupCache = useStore((s) => s.selectedMangoGroup.cache)
+  const mangoAccount = useStore((s) => s.selectedMangoAccount.current)
+  const selectedMarket = useStore((s) => s.selectedMarket.current)
+  const marketConfig = useStore((s) => s.selectedMarket.config)
+  const setStore = useStore((s) => s.set)
+  const price = useStore((s) => s.tradeForm.price)
+  const connected = useStore((s) => s.wallet.connected)
+  const isLoading = useStore((s) => s.selectedMangoAccount.initialLoad)
   const baseSymbol = marketConfig.baseSymbol
   const { width } = useViewport()
   const isMobile = width ? width < breakpoints.sm : false
@@ -37,7 +37,7 @@ export default function MarketBalances() {
       : mangoGroup.getPrice(marketIndex, mangoGroupCache).toNumber()
     if (symbol === 'USDC') {
       const baseSize = Math.floor(size / priceOrDefault / step) * step
-      setMangoStore((state) => {
+      setStore((state) => {
         state.tradeForm.baseSize = baseSize
         state.tradeForm.quoteSize = (baseSize * priceOrDefault).toFixed(2)
         state.tradeForm.side = 'buy'
@@ -45,7 +45,7 @@ export default function MarketBalances() {
     } else {
       const roundedSize = Math.round(size / step) * step
       const quoteSize = roundedSize * priceOrDefault
-      setMangoStore((state) => {
+      setStore((state) => {
         state.tradeForm.baseSize = roundedSize
         state.tradeForm.quoteSize = quoteSize.toFixed(2)
         state.tradeForm.side = 'sell'

@@ -1,7 +1,7 @@
 import { useEffect } from 'react'
 import { useRouter } from 'next/router'
 import useMangoGroupConfig from '../hooks/useMangoGroupConfig'
-import useMangoStore from '../stores/useMangoStore'
+import useStore from '../stores/useStore'
 import {
   getMarketByBaseSymbolAndKind,
   getMarketIndexBySymbol,
@@ -34,9 +34,9 @@ const PerpMarket = () => {
   const [alphaAccepted] = useLocalStorageState(ALPHA_MODAL_KEY, false)
   const [showTour] = useLocalStorageState(SHOW_TOUR_KEY, false)
   const groupConfig = useMangoGroupConfig()
-  const setMangoStore = useMangoStore((s) => s.set)
-  const connected = useMangoStore(walletConnectedSelector)
-  const marketConfig = useMangoStore(marketConfigSelector)
+  const setStore = useStore((s) => s.set)
+  const connected = useStore(walletConnectedSelector)
+  const marketConfig = useStore(marketConfigSelector)
   const router = useRouter()
   const { width } = useViewport()
   const hideTips = width ? width < breakpoints.md : false
@@ -51,7 +51,7 @@ const PerpMarket = () => {
 
   useEffect(() => {
     const name = decodeURIComponent(router.asPath).split('name=')[1]
-    const mangoGroup = useMangoStore.getState().selectedMangoGroup.current
+    const mangoGroup = useStore.getState().selectedMangoGroup.current
 
     let marketQueryParam, marketBaseSymbol, marketType, newMarket, marketIndex
     if (name) {
@@ -71,8 +71,8 @@ const PerpMarket = () => {
     }
 
     if (name && mangoGroup) {
-      const mangoCache = useMangoStore.getState().selectedMangoGroup.cache
-      setMangoStore((state) => {
+      const mangoCache = useStore.getState().selectedMangoGroup.cache
+      setStore((state) => {
         state.selectedMarket.kind = marketType
         if (newMarket.name !== marketConfig.name) {
           // state.selectedMarket.current = null
@@ -86,7 +86,7 @@ const PerpMarket = () => {
     } else if (name && marketConfig) {
       // if mangoGroup hasn't loaded yet, set the marketConfig to the query param if different
       if (newMarket.name !== marketConfig.name) {
-        setMangoStore((state) => {
+        setStore((state) => {
           state.selectedMarket.kind = marketType
           state.selectedMarket.config = newMarket
         })

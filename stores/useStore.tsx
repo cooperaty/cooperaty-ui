@@ -48,9 +48,17 @@ export class TraderAccount {
 }
 
 export class Exercise {
-  id: string
-  account: any
-  type: 'Scalping' | 'Swing'
+  publicKey: PublicKey
+  account: {
+    full: boolean
+    cid: string
+    authority: PublicKey
+    outcome: number
+    solutionKey: PublicKey
+    predictionsCapacity: number
+    predictions: any
+    bump: number
+  }
   data: [
     {
       time: number
@@ -61,6 +69,7 @@ export class Exercise {
       volume: number
     }
   ]
+  type: 'Scalping' | 'Swing'
   position: {
     direction: 'long_position' | 'short_position'
     takeProfit: number
@@ -140,7 +149,7 @@ export interface Orderbook {
   asks: number[][]
 }
 
-interface MangoStore extends State {
+interface Store extends State {
   notificationIdCounter: number
   notifications: Array<Notification>
   accountInfos: AccountInfoList
@@ -220,15 +229,16 @@ interface MangoStore extends State {
     prediction: number | ''
     practiceType: 'Loss' | 'Profit'
   }
-  exercises: Exercise[]
+  exercisesHistory: Exercise[]
   selectedExercise: {
     current: Exercise | null
     initialLoad: boolean
+    loadNew: boolean
     lastUpdatedAt: number
   }
 }
 
-const useMangoStore = create<MangoStore>((set, get) => {
+const useStore = create<Store>((set, get) => {
   const rpcUrl =
     typeof window !== 'undefined' && CLUSTER === 'mainnet'
       ? JSON.parse(localStorage.getItem(NODE_URL_KEY)) || ENDPOINT.url
@@ -641,73 +651,79 @@ const useMangoStore = create<MangoStore>((set, get) => {
         })
       },
       async fetchExercise() {
-        const set = get().set
-        const cid = get().selectedExercise.current.id
-        const response = await Axios.get('https://ipfs.io/ipfs/' + cid)
-
-        set((state) => {
-          state.selectedExercise.current.position = response.data.position
-          state.selectedExercise.current.data = response.data.candles
-        })
-      },
-      async fetchExerciseId() {
         const wallet = get().wallet.current
         const connected = get().wallet.connected
+        const endpoint = get().connection.endpoint
         const cooperatyClient = get().connection.cooperatyClient
-        const currentExercise = get().selectedExercise.current
-        const lastExercisePublicKey = localStorage.getItem(
-          'last_exercise_account'
-        )
+        const currentWallet =
+          wallet?.publicKey && connected
+            ? wallet
+            : cooperatyClient.getTemporalWallet(endpoint)
+
         const set = get().set
+        const exerciseLoadInitial = get().selectedExercise.initialLoad
+        const exerciseLoadNew = get().selectedExercise.initialLoad
+        const exercisesHistory = get().exercisesHistory
 
-        if (
-          wallet?.publicKey &&
-          connected &&
-          currentExercise?.state != 'active'
-        ) {
-          let exercise = null
-
-          // if there is a last exercise in the localstorage,
-          // check if it is still active and assign it to the current exercise
-          if (lastExercisePublicKey != null) {
-            const lastExerciseAccount = await cooperatyClient.reloadExercise(
-              wallet,
-              { publicKey: new PublicKey(lastExercisePublicKey) }
-            )
-            // TODO: add notification exercise is full and change to a new one
-            if (!lastExerciseAccount.account.full)
-              exercise = lastExerciseAccount
-          }
-
-          // if there is no last exercise in the localstorage,
-          // or if the last exercise is not active anymore,
-          // get the first exercise from the global list of exercises
-          if (exercise == null) {
-            const exercises = await cooperatyClient.getFilteredExercises(
-              wallet,
-              {
-                full: false,
-              }
-            )
-            if (exercises.length > 0) {
-              exercise = exercises[0]
+        const getNewExercise = async () => {
+          const exercises = await cooperatyClient.getFilteredExercises(
+            currentWallet,
+            {
+              full: false,
             }
-          }
-
-          // if there is an active exercise, set it as the current exercise
-          if (exercise != null && currentExercise.id != exercise.account?.cid) {
-            set((state) => {
-              // @ts-ignore
-              state.selectedExercise.current.id = exercise.account.cid
-              state.selectedExercise.current.account = exercise
-              state.selectedExercise.current.state = 'active'
-            })
-            localStorage.setItem(
-              'last_exercise_account',
-              exercise.publicKey.toString()
-            )
-          }
+          )
+          const newExercises = exercises.filter(
+            (exercise) => exercisesHistory.indexOf(exercise.publicKey) === -1
+          )
+          return newExercises.length > 0 ? newExercises[0] : null
         }
+
+        const setNewExercise = async (exercise) => {
+          // TODO: throw error if no cid
+          const cid = exercise.account.cid
+
+          // TODO: throw error if now ipfs data
+          const response = await Axios.get('https://ipfs.io/ipfs/' + cid)
+
+          exercise.position = response.data.position
+          exercise.data = response.data.candles
+
+          // TODO: add type to exercise
+          exercise.type = 'Scalping'
+
+          // TODO: add status by filtering exercises history
+          exercise.status = 'Active'
+
+          set((state) => {
+            // @ts-ignore
+            state.selectedExercise.current = exercise
+            state.selectedExercise.initialLoad = false
+            state.selectedExercise.loadNew = false
+            state.lastUpdatedAt = new Date().toISOString()
+          })
+          localStorage.setItem(
+            'last_exercise_account',
+            exercise.publicKey.toString()
+          )
+        }
+
+        let exercise = null
+
+        if (exerciseLoadInitial) {
+          const lastExercisePublicKey = localStorage.getItem(
+            'last_exercise_account'
+          )
+          exercise =
+            lastExercisePublicKey != null
+              ? await cooperatyClient.reloadExercise(currentWallet, {
+                  publicKey: new PublicKey(lastExercisePublicKey),
+                })
+              : await getNewExercise()
+        } else if (exerciseLoadNew) {
+          exercise = await getNewExercise()
+        }
+
+        if (exercise != null) await setNewExercise(exercise)
       },
     },
     traderAccounts: [],
@@ -720,34 +736,14 @@ const useMangoStore = create<MangoStore>((set, get) => {
       prediction: 0,
       practiceType: 'Profit',
     },
-    exercises: [],
+    exercisesHistory: [],
     selectedExercise: {
-      current: {
-        id: 'bafkreieuenothwt6vlex57nlj3b7olib6qlbkgquk4orwa3oas2xanevim',
-        account: {},
-        type: 'Scalping',
-        data: [
-          {
-            time: 1588888888,
-            low: 0.1,
-            high: 0.2,
-            open: 0.1,
-            close: 0.2,
-            volume: 0.1,
-          },
-        ],
-        position: {
-          direction: 'long_position',
-          takeProfit: 0.03,
-          stopLoss: 0.015,
-          bars: 10,
-        },
-        state: 'answered',
-      },
+      current: null,
       initialLoad: true,
+      loadNew: false,
       lastUpdatedAt: 0,
     },
   }
 })
 
-export default useMangoStore
+export default useStore

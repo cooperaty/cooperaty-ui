@@ -7,7 +7,7 @@ import {
   marketConfigSelector,
   tradeHistorySelector,
 } from '../stores/selectors'
-import useMangoStore from '../stores/useMangoStore'
+import useStore from '../stores/useStore'
 
 const byTimestamp = (a, b) => {
   return (
@@ -19,7 +19,7 @@ const byTimestamp = (a, b) => {
 const reverseSide = (side) => (side === 'buy' ? 'sell' : 'buy')
 
 function getMarketName(event) {
-  const mangoGroupConfig = useMangoStore.getState().selectedMangoGroup.config
+  const mangoGroupConfig = useStore.getState().selectedMangoGroup.config
 
   let marketName
   if (!event.marketName && event.address) {
@@ -84,11 +84,11 @@ const formatTradeHistory = (mangoAccountPk: PublicKey, newTradeHistory) => {
 export const useTradeHistory = (
   opts: { excludePerpLiquidations?: boolean } = {}
 ) => {
-  const marketConfig = useMangoStore(marketConfigSelector)
-  const fills = useMangoStore(fillsSelector)
-  const mangoAccount = useMangoStore(mangoAccountSelector)
-  const selectedMangoGroup = useMangoStore(mangoGroupSelector)
-  let tradeHistory = useMangoStore(tradeHistorySelector)
+  const marketConfig = useStore(marketConfigSelector)
+  const fills = useStore(fillsSelector)
+  const mangoAccount = useStore(mangoAccountSelector)
+  const selectedMangoGroup = useStore(mangoGroupSelector)
+  let tradeHistory = useStore(tradeHistorySelector)
 
   if (!mangoAccount || !selectedMangoGroup) return null
   const openOrdersAccount =

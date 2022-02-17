@@ -1,5 +1,5 @@
 import { FunctionComponent, ReactNode } from 'react'
-import useMangoStore from '../../stores/useMangoStore'
+import useStore from '../../stores/useStore'
 import Button from './Button'
 
 interface EmptyStateProps {
@@ -17,7 +17,7 @@ const EmptyState: FunctionComponent<EmptyStateProps> = ({
   desc,
   title,
 }) => {
-  const wallet = useMangoStore((s) => s.wallet.current)
+  const wallet = useStore((s) => s.wallet.current)
 
   return (
     <div className="flex flex-col items-center text-th-fgd-1 px-4 pb-2 rounded-lg">

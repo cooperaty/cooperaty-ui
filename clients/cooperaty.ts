@@ -1,6 +1,7 @@
 import * as anchor from '@project-serum/anchor'
 import { WalletAdapter } from '../@types/types'
 import { ConfirmOptions } from '@solana/web3.js'
+import Wallet from '@project-serum/sol-wallet-adapter'
 const BASE58 = '123456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz'
 const bs58 = require('base-x')(BASE58)
 const idl = require('./idl.json')
@@ -12,6 +13,16 @@ export default class CooperatyClient {
   constructor(connection: anchor.web3.Connection) {
     this.connection = connection
     this.idl = idl
+  }
+
+  getTemporalWallet(endpoint: string) {
+    const wallet = new Wallet(
+      'https://www.sollet.io',
+      endpoint
+    ) as WalletAdapter
+    wallet.provider = this.getProvider(wallet)
+    wallet.program = this.getProgram(wallet)
+    return wallet
   }
 
   async getAccountBalance(wallet) {

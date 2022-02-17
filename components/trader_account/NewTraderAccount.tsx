@@ -5,7 +5,7 @@ import {
 } from '@heroicons/react/outline'
 import Input from '../elements/Input'
 import { ElementTitle } from '../elements/styles'
-import useMangoStore from '../../stores/useMangoStore'
+import useStore from '../../stores/useStore'
 import Loading from '../elements/Loading'
 import Button from '../elements/Button'
 import Tooltip from '../elements/Tooltip'
@@ -24,9 +24,9 @@ const NewTraderAccount: FunctionComponent<NewAccountProps> = ({
   const [submitting, setSubmitting] = useState(false)
   const [invalidNameMessage, setInvalidNameMessage] = useState('')
   const [name, setName] = useState('')
-  const wallet = useMangoStore((s) => s.wallet.current)
-  const actions = useMangoStore((s) => s.actions)
-  const cooperatyClient = useMangoStore((s) => s.connection.cooperatyClient)
+  const wallet = useStore((s) => s.wallet.current)
+  const actions = useStore((s) => s.actions)
+  const cooperatyClient = useStore((s) => s.connection.cooperatyClient)
 
   const handleNewTraderAccount = () => {
     setSubmitting(true)

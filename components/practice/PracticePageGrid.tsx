@@ -1,20 +1,19 @@
 import dynamic from 'next/dynamic'
 import { Responsive, WidthProvider } from 'react-grid-layout'
-import MobilePracticePage from './mobile/MobilePracticePage'
+import MobilePracticePage from './MobilePracticePage'
 
-const TVChartContainer = dynamic(
-  () => import('../components/TradingView/practiceChart'),
-  { ssr: false }
-)
+const TVChartContainer = dynamic(() => import('../tradingview/practiceChart'), {
+  ssr: false,
+})
 import { useEffect, useState } from 'react'
-import FloatingElement from './elements/FloatingElement'
-import TraderAccountPracticeInfo from './trader_account/TraderAccountPracticeInfo'
-import PracticeForm from './modules/practice_form/PracticeForm'
-import UserPracticeInfo from './modules/user/UserPracticeInfo'
-import useMangoStore from '../stores/useMangoStore'
-import useLocalStorageState from '../hooks/useLocalStorageState'
-import { useViewport } from '../hooks/useViewport'
-import PracticeDetails from './modules/PracticeDetails'
+import FloatingElement from '../elements/FloatingElement'
+import TraderAccountPracticeInfo from '../trader_account/TraderAccountPracticeInfo'
+import PracticeForm from './PracticeForm'
+import UserPracticeInfo from '../modules/user/UserPracticeInfo'
+import useStore from '../../stores/useStore'
+import useLocalStorageState from '../../hooks/useLocalStorageState'
+import { useViewport } from '../../hooks/useViewport'
+import PracticeDetails from './PracticeDetails'
 
 const ResponsiveGridLayout = WidthProvider(Responsive)
 
@@ -50,20 +49,23 @@ export const defaultLayouts = {
     { i: 'userInfo', x: 0, y: 2, w: 12, h: 10, minW: 6 },
   ],
 }
-
-export const GRID_LAYOUT_KEY = 'practiceSavedLayouts' + Math.random() * 100
+export const GRID_LAYOUT_KEY = 'practiceSavedLayouts' // + Math.random() * 100
 export const breakpoints = { xl: 1600, lg: 1280, md: 1024, sm: 768, xs: 0 }
+
 const PracticePageGrid = () => {
-  const { uiLocked } = useMangoStore((s) => s.settings)
-  const actions = useMangoStore((s) => s.actions)
-  const currentExerciseId = useMangoStore((s) => s.selectedExercise.current.id)
-  const connected = useMangoStore((s) => s.wallet.connected)
+  const { uiLocked } = useStore((s) => s.settings)
+  const currentExercise = useStore((s) => s.selectedExercise.current)
+
   const [savedLayouts, setSavedLayouts] = useLocalStorageState(
     GRID_LAYOUT_KEY,
     defaultLayouts
   )
+  const [, setCurrentBreakpoint] = useState(null)
+  const [mounted, setMounted] = useState(false)
   const { width } = useViewport()
+
   const isMobile = width ? width < breakpoints.sm : false
+  const isExerciseAvailable = !(currentExercise === null)
 
   const onLayoutChange = (layouts) => {
     if (layouts) {
@@ -75,20 +77,10 @@ const PracticePageGrid = () => {
     setCurrentBreakpoint(newBreakpoint)
   }
 
-  const [, setCurrentBreakpoint] = useState(null)
-  const [mounted, setMounted] = useState(false)
-
-  useEffect(() => {
-    actions.fetchExercise()
-  }, [actions, currentExerciseId])
-
-  useEffect(() => {
-    actions.fetchExerciseId()
-  }, [actions, connected])
-
   useEffect(() => {
     setMounted(true)
   }, [])
+
   if (!mounted) return null
 
   return !isMobile ? (
@@ -110,7 +102,7 @@ const PracticePageGrid = () => {
       >
         <div key="tvChart">
           <FloatingElement className="h-full pl-0 md:pl-0 md:pr-1 md:pb-1 md:pt-3">
-            <TVChartContainer />
+            {isExerciseAvailable && <TVChartContainer />}
           </FloatingElement>
         </div>
         <div key="practiceForm">

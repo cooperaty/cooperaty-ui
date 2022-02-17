@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import useMangoStore from '../../../stores/useMangoStore'
+import useStore from '../../../stores/useStore'
 import { useOpenOrders } from '../../../hooks/useOpenOrders'
 import usePerpPositions from '../../../hooks/usePerpPositions'
 import OpenOrdersTable from '../OpenOrdersTable'
@@ -65,7 +65,7 @@ const TabContent = ({ activeTab }) => {
 }
 
 const UserInfo = () => {
-  const marketConfig = useMangoStore(marketConfigSelector)
+  const marketConfig = useStore(marketConfigSelector)
   const isPerpMarket = marketConfig.kind === 'perp'
   const [activeTab, setActiveTab] = useState('')
 

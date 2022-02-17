@@ -11,7 +11,7 @@ import { ViewportProvider } from '../hooks/useViewport'
 import BottomBar from '../components/mobile/BottomBar'
 import { appWithTranslation } from 'next-i18next'
 
-const MangoStoreUpdater = () => {
+const StoreUpdater = () => {
   useHydrateStore()
   useWallet()
 
@@ -62,7 +62,7 @@ function App({ Component, pageProps }) {
       <Head>
         <title>Cooperaty</title>
       </Head>
-      <MangoStoreUpdater />
+      <StoreUpdater />
       <ThemeProvider defaultTheme="Cooperaty">
         <ViewportProvider>
           <div className="bg-th-bkg-0 min-h-screen">

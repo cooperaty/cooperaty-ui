@@ -17,7 +17,7 @@ import {
   mangoGroupSelector,
   marketsSelector,
 } from '../stores/selectors'
-import useMangoStore from '../stores/useMangoStore'
+import useStore from '../stores/useStore'
 import useMangoAccount from './useMangoAccount'
 
 type OrderInfo = {
@@ -108,11 +108,11 @@ function parsePerpOpenOrders(
 }
 
 export function useOpenOrders() {
-  const markets = useMangoStore(marketsSelector)
+  const markets = useStore(marketsSelector)
   const { mangoAccount } = useMangoAccount()
-  const mangoGroup = useMangoStore(mangoGroupSelector)
-  const groupConfig = useMangoStore(mangoGroupConfigSelector)
-  const accountInfos = useMangoStore(accountInfosSelector)
+  const mangoGroup = useStore(mangoGroupSelector)
+  const groupConfig = useStore(mangoGroupConfigSelector)
+  const accountInfos = useStore(accountInfosSelector)
 
   if (!mangoGroup || !mangoAccount || !accountInfos) return null
 

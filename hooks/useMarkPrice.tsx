@@ -6,15 +6,15 @@ import {
   orderbookSelector,
   setStoreSelector,
 } from '../stores/selectors'
-import useMangoStore from '../stores/useMangoStore'
+import useStore from '../stores/useStore'
 import { getDecimalCount } from '../utils'
 
 export default function useMarkPrice() {
-  const setMangoStore = useMangoStore(setStoreSelector)
-  const markPrice = useMangoStore(markPriceSelector)
-  const orderbook = useMangoStore(orderbookSelector)
-  const fills = useMangoStore(fillsSelector)
-  const market = useMangoStore(marketSelector)
+  const setStore = useStore(setStoreSelector)
+  const markPrice = useStore(markPriceSelector)
+  const orderbook = useStore(orderbookSelector)
+  const fills = useStore(fillsSelector)
+  const market = useStore(marketSelector)
 
   const trades = fills
     .filter((trade) => trade?.eventFlags?.maker || trade?.maker)
@@ -39,7 +39,7 @@ export default function useMarkPrice() {
     //       : (bb + ba) / 2
     //     : null
     if (newMarkPrice !== markPrice) {
-      setMangoStore((state) => {
+      setStore((state) => {
         state.selectedMarket.markPrice = newMarkPrice?.toFixed(
           getDecimalCount(market?.tickSize)
         )

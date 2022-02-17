@@ -7,9 +7,9 @@ import {
   ResolutionString,
   IOrderLineAdapter,
 } from '../../public/charting_library'
-import useMangoStore from '../../stores/useMangoStore'
+import useStore from '../../stores/useStore'
 import { useViewport } from '../../hooks/useViewport'
-import { breakpoints } from '../PracticePageGrid'
+import { breakpoints } from '../practice/PracticePageGrid'
 import Datafeed from './datafeed'
 
 export interface ChartContainerProps {
@@ -28,9 +28,10 @@ export interface ChartContainerProps {
 }
 
 const TVChartContainer = () => {
-  const set = useMangoStore((s) => s.set)
-  const { prediction } = useMangoStore((s) => s.practiceForm)
-  const currentExercise = useMangoStore((s) => s.selectedExercise.current)
+  const set = useStore((s) => s.set)
+  const prediction = useStore((s) => s.practiceForm.prediction)
+  const currentExercise = useStore((s) => s.selectedExercise.current)
+
   const { theme } = useTheme()
   const { width } = useViewport()
   const isMobile = width ? width < breakpoints.sm : false

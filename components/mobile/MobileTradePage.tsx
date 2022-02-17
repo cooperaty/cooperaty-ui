@@ -2,7 +2,7 @@ import { useMemo, useState } from 'react'
 import { Disclosure } from '@headlessui/react'
 import dynamic from 'next/dynamic'
 import { XIcon } from '@heroicons/react/outline'
-import useMangoStore from '../../stores/useMangoStore'
+import useStore from '../../stores/useStore'
 import { getWeights, PerpMarket } from '@blockworks-foundation/mango-client'
 import { CandlesIcon } from '../elements/icons'
 import SwipeableTabs from './SwipeableTabs'
@@ -17,19 +17,18 @@ import FloatingElement from '../elements/FloatingElement'
 import Swipeable from './Swipeable'
 import { useTranslation } from 'next-i18next'
 
-const TVChartContainer = dynamic(
-  () => import('../../components/TradingView/index'),
-  { ssr: false }
-)
+const TVChartContainer = dynamic(() => import('../tradingview/index'), {
+  ssr: false,
+})
 
 const MobileTradePage = () => {
   const { t } = useTranslation('common')
   const [viewIndex, setViewIndex] = useState(0)
-  const selectedMarket = useMangoStore((s) => s.selectedMarket.current)
-  const marketConfig = useMangoStore((s) => s.selectedMarket.config)
-  const mangoGroup = useMangoStore((s) => s.selectedMangoGroup.current)
-  const connected = useMangoStore((s) => s.wallet.connected)
-  const groupConfig = useMangoStore((s) => s.selectedMangoGroup.config)
+  const selectedMarket = useStore((s) => s.selectedMarket.current)
+  const marketConfig = useStore((s) => s.selectedMarket.config)
+  const mangoGroup = useStore((s) => s.selectedMangoGroup.current)
+  const connected = useStore((s) => s.wallet.connected)
+  const groupConfig = useStore((s) => s.selectedMangoGroup.config)
   const baseSymbol = marketConfig.baseSymbol
   const isPerpMarket = marketConfig.kind === 'perp'
 

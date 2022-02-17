@@ -1,10 +1,10 @@
-import useMangoStore from '../../../stores/useMangoStore'
+import useStore from '../../stores/useStore'
 import SimplePracticeForm from './SimplePracticeForm'
-import { FlipCard, FlipCardBack, FlipCardInner } from '../../elements/FlipCard'
-import FloatingElement from '../../elements/FloatingElement'
+import { FlipCard, FlipCardBack, FlipCardInner } from '../elements/FlipCard'
+import FloatingElement from '../elements/FloatingElement'
 
 export default function PracticeForm() {
-  const connected = useMangoStore((s) => s.wallet.connected)
+  const connected = useStore((s) => s.wallet.connected)
 
   return (
     <FlipCard>

@@ -1,4 +1,4 @@
-import useMangoStore from '../stores/useMangoStore'
+import useStore from '../stores/useStore'
 import BN from 'bn.js'
 import {
   MangoAccount,
@@ -86,10 +86,10 @@ export const collectPerpPosition = (
 
 const usePerpPositions = () => {
   const { mangoAccount } = useMangoAccount()
-  const groupConfig = useMangoStore(mangoGroupConfigSelector)
-  const mangoGroup = useMangoStore(mangoGroupSelector)
-  const mangoCache = useMangoStore(mangoCacheSelector)
-  const allMarkets = useMangoStore(marketsSelector)
+  const groupConfig = useStore(mangoGroupConfigSelector)
+  const mangoGroup = useStore(mangoGroupSelector)
+  const mangoCache = useStore(mangoCacheSelector)
+  const allMarkets = useStore(marketsSelector)
   const tradeHistory = useTradeHistory()
 
   const perpAccounts = mangoAccount

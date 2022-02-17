@@ -2,7 +2,7 @@ import React, { FunctionComponent, useEffect, useMemo, useState } from 'react'
 import Modal from '../elements/Modal'
 import Input from '../elements/Input'
 import { ElementTitle } from '../elements/styles'
-import useMangoStore from '../../stores/useMangoStore'
+import useStore from '../../stores/useStore'
 import { floorToDecimal, tokenPrecision } from '../../utils'
 import Loading from '../elements/Loading'
 import Button, { LinkButton } from '../elements/Button'
@@ -56,11 +56,11 @@ const WithdrawModal: FunctionComponent<WithdrawModalProps> = ({
   const [simulation, setSimulation] = useState(null)
   const [showSimulation, setShowSimulation] = useState(false)
 
-  const actions = useMangoStore((s) => s.actions)
-  const mangoGroup = useMangoStore((s) => s.selectedMangoGroup.current)
-  const mangoAccount = useMangoStore((s) => s.selectedMangoAccount.current)
-  const mangoCache = useMangoStore((s) => s.selectedMangoGroup.cache)
-  const mangoGroupConfig = useMangoStore((s) => s.selectedMangoGroup.config)
+  const actions = useStore((s) => s.actions)
+  const mangoGroup = useStore((s) => s.selectedMangoGroup.current)
+  const mangoAccount = useStore((s) => s.selectedMangoAccount.current)
+  const mangoCache = useStore((s) => s.selectedMangoGroup.cache)
+  const mangoGroupConfig = useStore((s) => s.selectedMangoGroup.config)
 
   const tokens = useMemo(() => mangoGroupConfig.tokens, [mangoGroupConfig])
   const token = useMemo(
@@ -271,8 +271,8 @@ const WithdrawModal: FunctionComponent<WithdrawModalProps> = ({
   }, [simulation])
 
   const getTokenBalances = () => {
-    const mangoCache = useMangoStore.getState().selectedMangoGroup.cache
-    const mangoGroup = useMangoStore.getState().selectedMangoGroup.current
+    const mangoCache = useStore.getState().selectedMangoGroup.cache
+    const mangoGroup = useStore.getState().selectedMangoGroup.current
 
     return tokens.map((token) => {
       const tokenIndex = mangoGroup.getTokenIndex(token.mintKey)

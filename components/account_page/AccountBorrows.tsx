@@ -4,7 +4,7 @@ import {
   ZERO_I80F48,
   I80F48,
 } from '@blockworks-foundation/mango-client'
-import useMangoStore from '../../stores/useMangoStore'
+import useStore from '../../stores/useStore'
 import { useBalances } from '../../hooks/useBalances'
 import {
   formatUsdValue,
@@ -24,14 +24,14 @@ import { useTranslation } from 'next-i18next'
 export default function AccountBorrows() {
   const { t } = useTranslation('common')
   const balances = useBalances()
-  const mangoGroup = useMangoStore((s) => s.selectedMangoGroup.current)
-  const mangoCache = useMangoStore((s) => s.selectedMangoGroup.cache)
-  const mangoConfig = useMangoStore((s) => s.selectedMangoGroup.config)
-  const mangoAccount = useMangoStore((s) => s.selectedMangoAccount.current)
-  const loadingMangoAccount = useMangoStore(
+  const mangoGroup = useStore((s) => s.selectedMangoGroup.current)
+  const mangoCache = useStore((s) => s.selectedMangoGroup.cache)
+  const mangoConfig = useStore((s) => s.selectedMangoGroup.config)
+  const mangoAccount = useStore((s) => s.selectedMangoAccount.current)
+  const loadingMangoAccount = useStore(
     (s) => s.selectedMangoAccount.initialLoad
   )
-  const connected = useMangoStore((s) => s.wallet.connected)
+  const connected = useStore((s) => s.wallet.connected)
 
   const [borrowSymbol, setBorrowSymbol] = useState('')
   const [depositToSettle, setDepositToSettle] = useState(null)

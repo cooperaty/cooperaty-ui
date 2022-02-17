@@ -6,7 +6,7 @@ import {
   IChartingLibraryWidget,
   ResolutionString,
 } from '../../public/charting_library'
-import useMangoStore from '../../stores/useMangoStore'
+import useStore from '../../stores/useStore'
 import { useViewport } from '../../hooks/useViewport'
 import { breakpoints } from '../TradePageGrid'
 import { useOpenOrders } from '../../hooks/useOpenOrders'
@@ -17,9 +17,6 @@ import { sleep, formatUsdValue, usdFormatter } from '../../utils'
 import useInterval from '../../hooks/useInterval'
 import { PerpTriggerOrder } from '../../@types/types'
 import { useTranslation } from 'next-i18next'
-
-// This is a basic example of how to create a TV widget
-// You can add more feature such as storing charts in localStorage
 
 export interface ChartContainerProps {
   symbol: ChartingLibraryWidgetOptions['symbol']
@@ -37,28 +34,25 @@ export interface ChartContainerProps {
   theme: string
 }
 
-// export interface ChartContainerState {}
-
 const TVChartContainer = () => {
   const { t } = useTranslation(['common', 'tv-chart'])
-  const selectedMarketConfig = useMangoStore((s) => s.selectedMarket.config)
+  const selectedMarketConfig = useStore((s) => s.selectedMarket.config)
   const { theme } = useTheme()
   const { width } = useViewport()
   const isMobile = width ? width < breakpoints.sm : false
 
   const selectedMarketName = selectedMarketConfig.name
   const openOrders = useOpenOrders()
-  const actions = useMangoStore((s) => s.actions)
-  const connected = useMangoStore((s) => s.wallet.connected)
-  const selectedMarginAccount =
-    useMangoStore.getState().selectedMangoAccount.current
-  const selectedMarketPrice = useMangoStore((s) => s.selectedMarket.markPrice)
+  const actions = useStore((s) => s.actions)
+  const connected = useStore((s) => s.wallet.connected)
+  const selectedMarginAccount = useStore.getState().selectedMangoAccount.current
+  const selectedMarketPrice = useStore((s) => s.selectedMarket.markPrice)
   const [lines, setLines] = useState(new Map())
   const [moveInProgress, toggleMoveInProgress] = useState(false)
   const [orderInProgress, toggleOrderInProgress] = useState(false)
   const [priceReset, togglePriceReset] = useState(false)
   const [showOrderLines, toggleShowOrderLines] = useState(true)
-  const mangoClient = useMangoStore.getState().connection.client
+  const mangoClient = useStore.getState().connection.client
 
   // @ts-ignore
   const defaultProps: ChartContainerProps = {
@@ -200,12 +194,11 @@ const TVChartContainer = () => {
     order: Order | PerpOrder | PerpTriggerOrder,
     market: Market | PerpMarket
   ) => {
-    const wallet = useMangoStore.getState().wallet.current
-    const selectedMangoGroup =
-      useMangoStore.getState().selectedMangoGroup.current
+    const wallet = useStore.getState().wallet.current
+    const selectedMangoGroup = useStore.getState().selectedMangoGroup.current
     const selectedMangoAccount =
-      useMangoStore.getState().selectedMangoAccount.current
-    const mangoClient = useMangoStore.getState().connection.client
+      useStore.getState().selectedMangoAccount.current
+    const mangoClient = useStore.getState().connection.client
     let txid
     try {
       if (!selectedMangoGroup || !selectedMangoAccount) return
@@ -259,10 +252,10 @@ const TVChartContainer = () => {
     market: Market | PerpMarket,
     price: number
   ) => {
-    const mangoAccount = useMangoStore.getState().selectedMangoAccount.current
-    const mangoGroup = useMangoStore.getState().selectedMangoGroup.current
-    const { askInfo, bidInfo } = useMangoStore.getState().selectedMarket
-    const wallet = useMangoStore.getState().wallet.current
+    const mangoAccount = useStore.getState().selectedMangoAccount.current
+    const mangoGroup = useStore.getState().selectedMangoGroup.current
+    const { askInfo, bidInfo } = useStore.getState().selectedMarket
+    const wallet = useStore.getState().wallet.current
 
     if (!wallet || !mangoGroup || !mangoAccount || !market) return
 

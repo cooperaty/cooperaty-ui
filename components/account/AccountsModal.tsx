@@ -2,7 +2,7 @@ import React, { FunctionComponent, useEffect, useState } from 'react'
 import { RadioGroup } from '@headlessui/react'
 import { CheckCircleIcon } from '@heroicons/react/solid'
 import { PlusCircleIcon } from '@heroicons/react/outline'
-import useMangoStore from '../../stores/useMangoStore'
+import useStore from '../../stores/useStore'
 import { MangoAccount, MangoGroup } from '@blockworks-foundation/mango-client'
 import { abbreviateAddress, formatUsdValue } from '../../utils'
 import useLocalStorageState from '../../hooks/useLocalStorageState'
@@ -26,18 +26,16 @@ const AccountsModal: FunctionComponent<AccountsModalProps> = ({
   const { t } = useTranslation('common')
   const [showNewAccountForm, setShowNewAccountForm] = useState(false)
   const [newAccPublicKey, setNewAccPublicKey] = useState(null)
-  const mangoAccounts = useMangoStore((s) => s.mangoAccounts)
-  const selectedMangoAccount = useMangoStore(
-    (s) => s.selectedMangoAccount.current
-  )
-  const mangoGroup = useMangoStore((s) => s.selectedMangoGroup.current)
-  const setMangoStore = useMangoStore((s) => s.set)
-  const actions = useMangoStore((s) => s.actions)
+  const mangoAccounts = useStore((s) => s.mangoAccounts)
+  const selectedMangoAccount = useStore((s) => s.selectedMangoAccount.current)
+  const mangoGroup = useStore((s) => s.selectedMangoGroup.current)
+  const setStore = useStore((s) => s.set)
+  const actions = useStore((s) => s.actions)
   const [, setLastAccountViewed] = useLocalStorageState(LAST_ACCOUNT_KEY)
 
   const handleMangoAccountChange = (mangoAccount: MangoAccount) => {
     setLastAccountViewed(mangoAccount.publicKey.toString())
-    setMangoStore((state) => {
+    setStore((state) => {
       state.selectedMangoAccount.current = mangoAccount
     })
 
@@ -47,7 +45,7 @@ const AccountsModal: FunctionComponent<AccountsModalProps> = ({
 
   useEffect(() => {
     if (newAccPublicKey) {
-      setMangoStore((state) => {
+      setStore((state) => {
         state.selectedMangoAccount.current = mangoAccounts.find(
           (ma) => ma.publicKey.toString() === newAccPublicKey
         )
@@ -173,7 +171,7 @@ const AccountInfo = ({
   mangoGroup: MangoGroup
   mangoAccount: MangoAccount
 }) => {
-  const mangoCache = useMangoStore((s) => s.selectedMangoGroup.cache)
+  const mangoCache = useStore((s) => s.selectedMangoGroup.cache)
   const accountEquity = mangoAccount.computeValue(mangoGroup, mangoCache)
   const leverage = mangoAccount.getLeverage(mangoGroup, mangoCache).toFixed(2)
 

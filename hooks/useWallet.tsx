@@ -1,7 +1,7 @@
 import { useEffect, useMemo } from 'react'
 import Wallet from '@project-serum/sol-wallet-adapter'
 import useLocalStorageState from './useLocalStorageState'
-import useMangoStore from '../stores/useMangoStore'
+import useStore from '../stores/useStore'
 import { notify } from '../utils/notifications'
 import {
   PhantomWalletAdapter,
@@ -60,16 +60,16 @@ export const DEFAULT_PROVIDER = WALLET_PROVIDERS[0]
 
 export default function useWallet() {
   const { t } = useTranslation('common')
-  const setMangoStore = useMangoStore((state) => state.set)
+  const setStore = useStore((state) => state.set)
   const {
     current: wallet,
     connected,
     providerUrl: selectedProviderUrl,
-  } = useMangoStore((state) => state.wallet)
-  const endpoint = useMangoStore((state) => state.connection.endpoint)
-  const traderAccount = useMangoStore((s) => s.selectedTraderAccount.current)
-  const actions = useMangoStore((s) => s.actions)
-  const cooperatyClient = useMangoStore((s) => s.connection.cooperatyClient)
+  } = useStore((state) => state.wallet)
+  const endpoint = useStore((state) => state.connection.endpoint)
+  const traderAccount = useStore((s) => s.selectedTraderAccount.current)
+  const actions = useStore((s) => s.actions)
+  const cooperatyClient = useStore((s) => s.connection.cooperatyClient)
   const [savedProviderUrl, setSavedProviderUrl] = useLocalStorageState(
     PROVIDER_LOCAL_STORAGE_KEY,
     DEFAULT_PROVIDER.url
@@ -98,7 +98,7 @@ export default function useWallet() {
         wallet.provider = cooperatyClient.getProvider(wallet)
         wallet.program = cooperatyClient.getProgram(wallet)
 
-        setMangoStore((state) => {
+        setStore((state) => {
           state.wallet.current = wallet
         })
       }
@@ -120,7 +120,7 @@ export default function useWallet() {
   useEffect(() => {
     if (!wallet) return
     wallet.on('connect', async () => {
-      setMangoStore((state) => {
+      setStore((state) => {
         state.wallet.connected = true
       })
       await actions.fetchAllTraderAccounts()
@@ -129,7 +129,7 @@ export default function useWallet() {
     })
     wallet.on('disconnect', () => {
       console.log('disconnecting wallet')
-      setMangoStore((state) => {
+      setStore((state) => {
         state.wallet.connected = false
         state.mangoAccounts = []
         state.selectedMangoAccount.current = null
@@ -140,7 +140,7 @@ export default function useWallet() {
         title: t('wallet-disconnected'),
       })
     })
-  }, [wallet, setMangoStore])
+  }, [wallet, setStore])
 
   useInterval(() => {
     if (connected && traderAccount) {

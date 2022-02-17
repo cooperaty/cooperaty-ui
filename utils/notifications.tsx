@@ -1,4 +1,4 @@
-import useMangoStore from '../stores/useMangoStore'
+import useStore from '../stores/useStore'
 
 export type Notification = {
   type: 'success' | 'info' | 'error' | 'confirm'
@@ -15,9 +15,9 @@ export function notify(newNotification: {
   description?: string
   txid?: string
 }) {
-  const setMangoStore = useMangoStore.getState().set
-  const notifications = useMangoStore.getState().notifications
-  const lastId = useMangoStore.getState().notificationIdCounter
+  const setStore = useStore.getState().set
+  const notifications = useStore.getState().notifications
+  const lastId = useStore.getState().notificationIdCounter
   const newId = lastId + 1
 
   const newNotif: Notification = {
@@ -28,7 +28,7 @@ export function notify(newNotification: {
     ...newNotification,
   }
 
-  setMangoStore((state) => {
+  setStore((state) => {
     state.notificationIdCounter = newId
     state.notifications = [...notifications, newNotif]
   })

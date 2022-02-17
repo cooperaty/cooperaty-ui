@@ -1,20 +1,17 @@
 import { useEffect, useState } from 'react'
 import { RefreshClockwiseIcon } from './icons'
-import useMangoStore from '../../stores/useMangoStore'
 import Tooltip from './Tooltip'
 import { IconButton } from './Button'
 import { useTranslation } from 'next-i18next'
 
-const ManualRefresh = ({ className = '' }) => {
+const ManualRefresh = ({ className = '', callback = async () => {} }) => {
   const { t } = useTranslation('common')
   const [spin, setSpin] = useState(false)
-  const actions = useMangoStore((s) => s.actions)
 
   const handleRefreshData = async () => {
     setSpin(true)
-    await actions.fetchMangoGroup()
-    await actions.reloadMangoAccount()
-    actions.fetchTradeHistory()
+    await callback()
+    setSpin(false)
   }
 
   useEffect(() => {

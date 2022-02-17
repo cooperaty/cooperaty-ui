@@ -16,7 +16,7 @@ import {
 import { notify } from '../../../utils/notifications'
 import { calculateTradePrice, getDecimalCount } from '../../../utils'
 import { floorToDecimal } from '../../../utils'
-import useMangoStore, { Orderbook } from '../../../stores/useMangoStore'
+import useStore, { Orderbook } from '../../../stores/useStore'
 import Button, { LinkButton } from '../../elements/Button'
 import TradeType from './TradeType'
 import Input from '../../elements/Input'
@@ -53,16 +53,16 @@ export default function AdvancedTradeForm({
   initLeverage,
 }: AdvancedTradeFormProps) {
   const { t } = useTranslation('common')
-  const set = useMangoStore((s) => s.set)
+  const set = useStore((s) => s.set)
   const { ipAllowed, spotAllowed } = useIpAddress()
-  const connected = useMangoStore((s) => s.wallet.connected)
-  const actions = useMangoStore((s) => s.actions)
-  const groupConfig = useMangoStore((s) => s.selectedMangoGroup.config)
-  const marketConfig = useMangoStore((s) => s.selectedMarket.config)
-  const walletTokens = useMangoStore((s) => s.wallet.tokens)
-  const mangoAccount = useMangoStore((s) => s.selectedMangoAccount.current)
-  const mangoClient = useMangoStore((s) => s.connection.client)
-  const market = useMangoStore((s) => s.selectedMarket.current)
+  const connected = useStore((s) => s.wallet.connected)
+  const actions = useStore((s) => s.actions)
+  const groupConfig = useStore((s) => s.selectedMangoGroup.config)
+  const marketConfig = useStore((s) => s.selectedMarket.config)
+  const walletTokens = useStore((s) => s.wallet.tokens)
+  const mangoAccount = useStore((s) => s.selectedMangoAccount.current)
+  const mangoClient = useStore((s) => s.connection.client)
+  const market = useStore((s) => s.selectedMarket.current)
   const isPerpMarket = market instanceof PerpMarket
   const [reduceOnly, setReduceOnly] = useState(false)
   const [spotMargin, setSpotMargin] = useState(true)
@@ -71,8 +71,8 @@ export default function AdvancedTradeForm({
   const { takerFee, makerFee } = useFees()
   const { totalMsrm } = useSrmAccount()
 
-  const mangoGroup = useMangoStore((s) => s.selectedMangoGroup.current)
-  const mangoCache = useMangoStore((s) => s.selectedMangoGroup.cache)
+  const mangoGroup = useStore((s) => s.selectedMangoGroup.current)
+  const mangoCache = useStore((s) => s.selectedMangoGroup.cache)
   const marketIndex = getMarketIndexBySymbol(
     groupConfig,
     marketConfig.baseSymbol
@@ -93,7 +93,7 @@ export default function AdvancedTradeForm({
     tradeType,
     triggerPrice,
     triggerCondition,
-  } = useMangoStore((s) => s.tradeForm)
+  } = useStore((s) => s.tradeForm)
   const isLimitOrder = ['Limit', 'Stop Limit', 'Take Profit Limit'].includes(
     tradeType
   )
@@ -112,7 +112,7 @@ export default function AdvancedTradeForm({
   const [ioc, setIoc] = useState(false)
   const [submitting, setSubmitting] = useState(false)
 
-  const orderBookRef = useRef(useMangoStore.getState().selectedMarket.orderBook)
+  const orderBookRef = useRef(useStore.getState().selectedMarket.orderBook)
   const orderbook = orderBookRef.current
   const [maxSlippage, setMaxSlippage] = useLocalStorageStringState(
     MAX_SLIPPAGE_KEY,
@@ -132,7 +132,7 @@ export default function AdvancedTradeForm({
 
   useEffect(
     () =>
-      useMangoStore.subscribe(
+      useStore.subscribe(
         // @ts-ignore
         (orderBook) => (orderBookRef.current = orderBook),
         (state) => state.selectedMarket.orderBook
@@ -278,11 +278,11 @@ export default function AdvancedTradeForm({
     }
   }
 
-  const markPriceRef = useRef(useMangoStore.getState().selectedMarket.markPrice)
+  const markPriceRef = useRef(useStore.getState().selectedMarket.markPrice)
   const markPrice = markPriceRef.current
   useEffect(
     () =>
-      useMangoStore.subscribe(
+      useStore.subscribe(
         (markPrice) => (markPriceRef.current = markPrice as number),
         (state) => state.selectedMarket.markPrice
       ),
@@ -324,7 +324,7 @@ export default function AdvancedTradeForm({
   }
 
   const onSetBaseSize = (baseSize: number | '') => {
-    const { price } = useMangoStore.getState().tradeForm
+    const { price } = useStore.getState().tradeForm
     setBaseSize(baseSize)
     if (!baseSize) {
       setQuoteSize('')
@@ -538,13 +538,13 @@ export default function AdvancedTradeForm({
       return
     }
 
-    const mangoAccount = useMangoStore.getState().selectedMangoAccount.current
-    const mangoGroup = useMangoStore.getState().selectedMangoGroup.current
+    const mangoAccount = useStore.getState().selectedMangoAccount.current
+    const mangoGroup = useStore.getState().selectedMangoGroup.current
     const askInfo =
-      useMangoStore.getState().accountInfos[marketConfig.asksKey.toString()]
+      useStore.getState().accountInfos[marketConfig.asksKey.toString()]
     const bidInfo =
-      useMangoStore.getState().accountInfos[marketConfig.bidsKey.toString()]
-    const wallet = useMangoStore.getState().wallet.current
+      useStore.getState().accountInfos[marketConfig.bidsKey.toString()]
+    const wallet = useStore.getState().wallet.current
 
     if (!wallet || !mangoGroup || !mangoAccount || !market) return
     setSubmitting(true)

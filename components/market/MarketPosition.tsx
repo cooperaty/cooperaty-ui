@@ -1,6 +1,6 @@
 import { useCallback, useMemo, useState } from 'react'
 import { ElementTitle } from '../elements/styles'
-import useMangoStore from '../../stores/useMangoStore'
+import useStore from '../../stores/useStore'
 import { formatUsdValue } from '../../utils'
 import Button, { LinkButton } from '../elements/Button'
 import Tooltip from '../elements/Tooltip'
@@ -27,13 +27,13 @@ export const settlePnl = async (
   perpAccount: PerpAccount,
   t
 ) => {
-  const mangoAccount = useMangoStore.getState().selectedMangoAccount.current
-  const mangoGroup = useMangoStore.getState().selectedMangoGroup.current
-  const mangoCache = useMangoStore.getState().selectedMangoGroup.cache
-  const wallet = useMangoStore.getState().wallet.current
-  const actions = useMangoStore.getState().actions
+  const mangoAccount = useStore.getState().selectedMangoAccount.current
+  const mangoGroup = useStore.getState().selectedMangoGroup.current
+  const mangoCache = useStore.getState().selectedMangoGroup.cache
+  const wallet = useStore.getState().wallet.current
+  const actions = useStore.getState().actions
   const marketIndex = mangoGroup.getPerpMarketIndex(perpMarket.publicKey)
-  const mangoClient = useMangoStore.getState().connection.client
+  const mangoClient = useStore.getState().connection.client
 
   try {
     const txid = await mangoClient.settlePnl(
@@ -64,15 +64,15 @@ export const settlePnl = async (
 
 export default function MarketPosition() {
   const { t } = useTranslation('common')
-  const mangoGroup = useMangoStore((s) => s.selectedMangoGroup.current)
-  const mangoGroupConfig = useMangoStore((s) => s.selectedMangoGroup.config)
-  const mangoCache = useMangoStore((s) => s.selectedMangoGroup.cache)
+  const mangoGroup = useStore((s) => s.selectedMangoGroup.current)
+  const mangoGroupConfig = useStore((s) => s.selectedMangoGroup.config)
+  const mangoCache = useStore((s) => s.selectedMangoGroup.cache)
   const { mangoAccount, initialLoad } = useMangoAccount()
-  const selectedMarket = useMangoStore((s) => s.selectedMarket.current)
-  const marketConfig = useMangoStore((s) => s.selectedMarket.config)
-  const connected = useMangoStore((s) => s.wallet.connected)
-  const setMangoStore = useMangoStore((s) => s.set)
-  const price = useMangoStore((s) => s.tradeForm.price)
+  const selectedMarket = useStore((s) => s.selectedMarket.current)
+  const marketConfig = useStore((s) => s.selectedMarket.config)
+  const connected = useStore((s) => s.wallet.connected)
+  const setStore = useStore((s) => s.set)
+  const price = useStore((s) => s.tradeForm.price)
   const baseSymbol = marketConfig.baseSymbol
   const marketName = marketConfig.name
   const tradeHistory = useTradeHistory()
@@ -99,7 +99,7 @@ export default function MarketPosition() {
       : mangoGroup.getPrice(marketIndex, mangoCache).toNumber()
     const roundedSize = Math.round(size / step) * step
     const quoteSize = roundedSize * priceOrDefault
-    setMangoStore((state) => {
+    setStore((state) => {
       state.tradeForm.baseSize = roundedSize
       state.tradeForm.quoteSize = quoteSize.toFixed(2)
       state.tradeForm.side = side === 'buy' ? 'sell' : 'buy'

@@ -4,7 +4,7 @@ import Modal from '../elements/Modal'
 import Input from '../elements/Input'
 import AccountSelect from './AccountSelect'
 import { ElementTitle } from '../elements/styles'
-import useMangoStore from '../../stores/useMangoStore'
+import useStore from '../../stores/useStore'
 import Loading from '../elements/Loading'
 import Button from '../elements/Button'
 import InlineNotification from '../elements/InlineNotification'
@@ -32,10 +32,10 @@ const DepositModal: FunctionComponent<DepositModalProps> = ({
   const [submitting, setSubmitting] = useState(false)
   const [invalidAmountMessage, setInvalidAmountMessage] = useState('')
   const [depositPercentage, setDepositPercentage] = useState('')
-  const walletTokens = useMangoStore((s) => s.wallet.tokens)
-  const actions = useMangoStore((s) => s.actions)
+  const walletTokens = useStore((s) => s.wallet.tokens)
+  const actions = useStore((s) => s.actions)
   const [selectedAccount, setSelectedAccount] = useState(walletTokens[0])
-  const mangoAccount = useMangoStore((s) => s.selectedMangoAccount.current)
+  const mangoAccount = useStore((s) => s.selectedMangoAccount.current)
 
   useEffect(() => {
     if (tokenSymbol) {
@@ -58,7 +58,7 @@ const DepositModal: FunctionComponent<DepositModalProps> = ({
   }
 
   const handleDeposit = () => {
-    const mangoAccount = useMangoStore.getState().selectedMangoAccount.current
+    const mangoAccount = useStore.getState().selectedMangoAccount.current
 
     setSubmitting(true)
     deposit({

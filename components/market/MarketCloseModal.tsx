@@ -1,5 +1,5 @@
 import { FunctionComponent, useState } from 'react'
-import useMangoStore from '../../stores/useMangoStore'
+import useStore from '../../stores/useStore'
 import { PerpMarket, ZERO_BN } from '@blockworks-foundation/mango-client'
 import Button, { LinkButton } from '../elements/Button'
 import { notify } from '../../utils/notifications'
@@ -23,22 +23,22 @@ const MarketCloseModal: FunctionComponent<MarketCloseModalProps> = ({
 }) => {
   const { t } = useTranslation('common')
   const [submitting, setSubmitting] = useState(false)
-  const actions = useMangoStore((s) => s.actions)
-  const mangoClient = useMangoStore((s) => s.connection.client)
-  const config = useMangoStore.getState().selectedMarket.config
+  const actions = useStore((s) => s.actions)
+  const mangoClient = useStore((s) => s.connection.client)
+  const config = useStore.getState().selectedMarket.config
 
   async function handleMarketClose() {
-    const mangoAccount = useMangoStore.getState().selectedMangoAccount.current
-    const mangoGroup = useMangoStore.getState().selectedMangoGroup.current
-    const marketConfig = useMangoStore.getState().selectedMarket.config
+    const mangoAccount = useStore.getState().selectedMangoAccount.current
+    const mangoGroup = useStore.getState().selectedMangoGroup.current
+    const marketConfig = useStore.getState().selectedMarket.config
     const askInfo =
-      useMangoStore.getState().accountInfos[marketConfig.asksKey.toString()]
+      useStore.getState().accountInfos[marketConfig.asksKey.toString()]
     const bidInfo =
-      useMangoStore.getState().accountInfos[marketConfig.bidsKey.toString()]
-    const wallet = useMangoStore.getState().wallet.current
+      useStore.getState().accountInfos[marketConfig.bidsKey.toString()]
+    const wallet = useStore.getState().wallet.current
 
-    const orderbook = useMangoStore.getState().selectedMarket.orderBook
-    const markPrice = useMangoStore.getState().selectedMarket.markPrice
+    const orderbook = useStore.getState().selectedMarket.orderBook
+    const markPrice = useStore.getState().selectedMarket.markPrice
 
     // The reference price is the book mid if book is double sided; else mark price
     const bb = orderbook?.bids?.length > 0 && Number(orderbook.bids[0][0])

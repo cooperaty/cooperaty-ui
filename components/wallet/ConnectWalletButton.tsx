@@ -1,5 +1,5 @@
 import { useCallback, useState } from 'react'
-import useMangoStore from '../../stores/useMangoStore'
+import useStore from '../../stores/useStore'
 import { Menu } from '@headlessui/react'
 import {
   CurrencyDollarIcon,
@@ -21,9 +21,9 @@ import TraderAccountsModal from '../trader_account/TraderAccountsModal'
 
 const ConnectWalletButton = () => {
   const { t } = useTranslation('common')
-  const wallet = useMangoStore((s) => s.wallet.current)
-  const connected = useMangoStore((s) => s.wallet.connected)
-  const set = useMangoStore((s) => s.set)
+  const wallet = useStore((s) => s.wallet.current)
+  const connected = useStore((s) => s.wallet.connected)
+  const set = useStore((s) => s.set)
   const [showAccountsModal, setShowAccountsModal] = useState(false)
   const [selectedWallet, setSelectedWallet] = useState(DEFAULT_PROVIDER.url)
   const [savedProviderUrl] = useLocalStorageState(

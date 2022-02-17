@@ -1,6 +1,6 @@
 import { useCallback } from 'react'
 import { useBalances } from '../../hooks/useBalances'
-import useMangoStore from '../../stores/useMangoStore'
+import useStore from '../../stores/useStore'
 import Button, { LinkButton } from '../elements/Button'
 import { notify } from '../../utils/notifications'
 import { ArrowSmDownIcon, ExclamationIcon } from '@heroicons/react/outline'
@@ -40,15 +40,15 @@ const BalancesTable = ({ showZeroBalances = false }) => {
       )
       .sort((a, b) => Math.abs(+b.value) - Math.abs(+a.value))
   )
-  const actions = useMangoStore((s) => s.actions)
-  const mangoGroup = useMangoStore((s) => s.selectedMangoGroup.current)
-  const mangoGroupConfig = useMangoStore((s) => s.selectedMangoGroup.config)
-  const mangoClient = useMangoStore((s) => s.connection.client)
-  const selectedMarket = useMangoStore((s) => s.selectedMarket.current)
-  const marketConfig = useMangoStore((s) => s.selectedMarket.config)
-  const setMangoStore = useMangoStore((s) => s.set)
-  const price = useMangoStore((s) => s.tradeForm.price)
-  const mangoGroupCache = useMangoStore((s) => s.selectedMangoGroup.cache)
+  const actions = useStore((s) => s.actions)
+  const mangoGroup = useStore((s) => s.selectedMangoGroup.current)
+  const mangoGroupConfig = useStore((s) => s.selectedMangoGroup.config)
+  const mangoClient = useStore((s) => s.connection.client)
+  const selectedMarket = useStore((s) => s.selectedMarket.current)
+  const marketConfig = useStore((s) => s.selectedMarket.config)
+  const setStore = useStore((s) => s.set)
+  const price = useStore((s) => s.tradeForm.price)
+  const mangoGroupCache = useStore((s) => s.selectedMangoGroup.cache)
   const { width } = useViewport()
   const [submitting, setSubmitting] = useState(false)
   const isMobile = width ? width < breakpoints.md : false
@@ -64,7 +64,7 @@ const BalancesTable = ({ showZeroBalances = false }) => {
       : mangoGroup.getPrice(marketIndex, mangoGroupCache).toNumber()
     if (symbol === 'USDC') {
       const baseSize = Math.floor(size / priceOrDefault / step) * step
-      setMangoStore((state) => {
+      setStore((state) => {
         state.tradeForm.baseSize = baseSize
         state.tradeForm.quoteSize = (baseSize * priceOrDefault).toFixed(2)
         state.tradeForm.side = 'buy'
@@ -72,7 +72,7 @@ const BalancesTable = ({ showZeroBalances = false }) => {
     } else {
       const roundedSize = Math.round(size / step) * step
       const quoteSize = roundedSize * priceOrDefault
-      setMangoStore((state) => {
+      setStore((state) => {
         state.tradeForm.baseSize = roundedSize
         state.tradeForm.quoteSize = quoteSize.toFixed(2)
         state.tradeForm.side = 'sell'
@@ -91,9 +91,9 @@ const BalancesTable = ({ showZeroBalances = false }) => {
   }, [])
 
   async function handleSettleAll() {
-    const mangoAccount = useMangoStore.getState().selectedMangoAccount.current
-    const markets = useMangoStore.getState().selectedMangoGroup.markets
-    const wallet = useMangoStore.getState().wallet.current
+    const mangoAccount = useStore.getState().selectedMangoAccount.current
+    const markets = useStore.getState().selectedMangoGroup.markets
+    const wallet = useStore.getState().wallet.current
 
     try {
       setSubmitting(true)

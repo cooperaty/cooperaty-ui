@@ -1,10 +1,10 @@
 import { PerpMarket } from '@blockworks-foundation/mango-client'
-import useMangoStore from '../../../stores/useMangoStore'
+import useStore from '../../../stores/useStore'
 import MarketBalances from '../../market/MarketBalances'
 import MarketPosition from '../../market/MarketPosition'
 
 const UserMarketInfo = () => {
-  const selectedMarket = useMangoStore((s) => s.selectedMarket.current)
+  const selectedMarket = useStore((s) => s.selectedMarket.current)
   return selectedMarket instanceof PerpMarket ? (
     <MarketPosition />
   ) : (

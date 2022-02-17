@@ -2,25 +2,27 @@ import { useState } from 'react'
 import { Disclosure } from '@headlessui/react'
 import dynamic from 'next/dynamic'
 import { XIcon } from '@heroicons/react/outline'
-import useMangoStore from '../../stores/useMangoStore'
+import useStore from '../../stores/useStore'
 import { CandlesIcon } from '../elements/icons'
-import SwipeableTabs from './SwipeableTabs'
+import SwipeableTabs from '../mobile/SwipeableTabs'
 import FloatingElement from '../elements/FloatingElement'
-import Swipeable from './Swipeable'
-import PracticeHistoryTable from '../modules/user/PracticeHistoryTable'
+import Swipeable from '../mobile/Swipeable'
+import PracticeHistoryTable from './PracticeHistoryTable'
 import AccountPracticeInfo from '../trader_account/TraderAccountPracticeInfo'
-import SimplePracticeForm from '../modules/practice_form/SimplePracticeForm'
+import SimplePracticeForm from './SimplePracticeForm'
+import { useTranslation } from 'next-i18next'
 
-const TVChartContainer = dynamic(
-  () => import('../../components/TradingView/practiceChart'),
-  { ssr: false }
-)
+const TVChartContainer = dynamic(() => import('../tradingview/practiceChart'), {
+  ssr: false,
+})
 
 const MobilePracticePage = () => {
+  const { t } = useTranslation('common')
   const [viewIndex, setViewIndex] = useState(0)
-  const connected = useMangoStore((s) => s.wallet.connected)
-  const currentExercise = useMangoStore((s) => s.selectedExercise.current)
-  const exerciseType = currentExercise.type
+  const connected = useStore((s) => s.wallet.connected)
+  const currentExercise = useStore((s) => s.selectedExercise.current)
+
+  const isExerciseAvailable = !(currentExercise === null)
 
   const handleChangeViewIndex = (index) => {
     setViewIndex(index)
@@ -36,33 +38,43 @@ const MobilePracticePage = () => {
             alt=""
             width="30"
             height="30"
-            src={`/assets/icons/modalities/${exerciseType.toLowerCase()}.png`}
+            src={`${
+              isExerciseAvailable
+                ? `/assets/icons/modalities/${currentExercise.type.toLowerCase()}.png`
+                : 'unknown.svg'
+            }`}
             className="mr-2"
           />
           <div className="flex items-center">
-            <div className="font-semibold pr-0.5 text-xl">{exerciseType}</div>
+            <div className="font-semibold pr-0.5 text-xl">
+              {isExerciseAvailable
+                ? currentExercise.type
+                : t('no-exercise-available')}
+            </div>
           </div>
         </div>
-        <Disclosure defaultOpen={true}>
-          {({ open }) => (
-            <>
-              <Disclosure.Button>
-                <div className="absolute right-0 top-0 bg-th-bkg-4 flex items-center justify-center rounded-full w-8 h-8 text-th-fgd-1 focus:outline-none hover:text-th-primary">
-                  {open ? (
-                    <XIcon className="h-4 w-4" />
-                  ) : (
-                    <CandlesIcon className="h-5 w-5" />
-                  )}
-                </div>
-              </Disclosure.Button>
-              <Disclosure.Panel>
-                <div className="bg-th-bkg-2 h-96 mb-2 p-2 rounded-lg">
-                  <TVChartContainer />
-                </div>
-              </Disclosure.Panel>
-            </>
-          )}
-        </Disclosure>
+        {isExerciseAvailable && (
+          <Disclosure defaultOpen={true}>
+            {({ open }) => (
+              <>
+                <Disclosure.Button>
+                  <div className="absolute right-0 top-0 bg-th-bkg-4 flex items-center justify-center rounded-full w-8 h-8 text-th-fgd-1 focus:outline-none hover:text-th-primary">
+                    {open ? (
+                      <XIcon className="h-4 w-4" />
+                    ) : (
+                      <CandlesIcon className="h-5 w-5" />
+                    )}
+                  </div>
+                </Disclosure.Button>
+                <Disclosure.Panel>
+                  <div className="bg-th-bkg-2 h-96 mb-2 p-2 rounded-lg">
+                    <TVChartContainer />
+                  </div>
+                </Disclosure.Panel>
+              </>
+            )}
+          </Disclosure>
+        )}
       </div>
       <SwipeableTabs
         onChange={handleChangeViewIndex}

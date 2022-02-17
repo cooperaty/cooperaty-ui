@@ -12,7 +12,7 @@ import {
   ExternalLinkIcon,
   HeartIcon,
 } from '@heroicons/react/solid'
-import useMangoStore, { MNGO_INDEX } from '../../stores/useMangoStore'
+import useStore, { MNGO_INDEX } from '../../stores/useStore'
 import { abbreviateAddress, formatUsdValue, usdFormatter } from '../../utils'
 import { notify } from '../../utils/notifications'
 import { LinkButton } from '../elements/Button'
@@ -32,13 +32,13 @@ const I80F48_100 = I80F48.fromString('100')
 
 export default function AccountInfo() {
   const { t } = useTranslation('common')
-  const connected = useMangoStore((s) => s.wallet.connected)
-  const mangoGroup = useMangoStore((s) => s.selectedMangoGroup.current)
-  const mangoCache = useMangoStore((s) => s.selectedMangoGroup.cache)
+  const connected = useStore((s) => s.wallet.connected)
+  const mangoGroup = useStore((s) => s.selectedMangoGroup.current)
+  const mangoCache = useStore((s) => s.selectedMangoGroup.cache)
   const { mangoAccount, initialLoad } = useMangoAccount()
-  const marketConfig = useMangoStore((s) => s.selectedMarket.config)
-  const mangoClient = useMangoStore((s) => s.connection.client)
-  const actions = useMangoStore((s) => s.actions)
+  const marketConfig = useStore((s) => s.selectedMarket.config)
+  const mangoClient = useStore((s) => s.connection.client)
+  const actions = useStore((s) => s.actions)
   const { width } = useViewport()
   const isMobile = width ? width < breakpoints.sm : false
   const [redeeming, setRedeeming] = useState(false)
@@ -66,7 +66,7 @@ export default function AccountInfo() {
   // console.log('rerendering account info', mangoAccount, mngoAccrued.toNumber())
 
   const handleRedeemMngo = async () => {
-    const wallet = useMangoStore.getState().wallet.current
+    const wallet = useStore.getState().wallet.current
     const mngoNodeBank =
       mangoGroup.rootBankAccounts[MNGO_INDEX].nodeBankAccounts[0]
 

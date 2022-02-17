@@ -3,10 +3,9 @@ import { Responsive, WidthProvider } from 'react-grid-layout'
 import { round, max } from 'lodash'
 import MobileTradePage from './mobile/MobileTradePage'
 
-const TVChartContainer = dynamic(
-  () => import('../components/TradingView/index'),
-  { ssr: false }
-)
+const TVChartContainer = dynamic(() => import('./tradingview/index'), {
+  ssr: false,
+})
 import { useEffect, useState } from 'react'
 import FloatingElement from './elements/FloatingElement'
 import Orderbook from './modules/orderbook/Orderbook'
@@ -15,7 +14,7 @@ import UserMarketInfo from './modules/user/UserMarketInfo'
 import TradeForm from './modules/TradeForm'
 import UserInfo from './modules/user/UserInfo'
 import RecentMarketTrades from './modules/RecentMarketTrades'
-import useMangoStore from '../stores/useMangoStore'
+import useStore from '../stores/useStore'
 import useLocalStorageState from '../hooks/useLocalStorageState'
 import { useViewport } from '../hooks/useViewport'
 import MarketDetails from './market/MarketDetails'
@@ -81,7 +80,7 @@ const getCurrentBreakpoint = () => {
 }
 
 const TradePageGrid = () => {
-  const { uiLocked } = useMangoStore((s) => s.settings)
+  const { uiLocked } = useStore((s) => s.settings)
   const [savedLayouts, setSavedLayouts] = useLocalStorageState(
     GRID_LAYOUT_KEY,
     defaultLayouts

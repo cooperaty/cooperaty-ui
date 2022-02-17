@@ -1,6 +1,6 @@
 import { MangoAccount, TokenAccount } from '@blockworks-foundation/mango-client'
 import { PublicKey } from '@solana/web3.js'
-import useMangoStore from '../stores/useMangoStore'
+import useStore from '../stores/useStore'
 
 export async function deposit({
   amount,
@@ -13,10 +13,10 @@ export async function deposit({
   mangoAccount?: MangoAccount
   accountName?: string
 }) {
-  const mangoGroup = useMangoStore.getState().selectedMangoGroup.current
-  const wallet = useMangoStore.getState().wallet.current
+  const mangoGroup = useStore.getState().selectedMangoGroup.current
+  const wallet = useStore.getState().wallet.current
   const tokenIndex = mangoGroup.getTokenIndex(fromTokenAcc.mint)
-  const mangoClient = useMangoStore.getState().connection.client
+  const mangoClient = useStore.getState().connection.client
 
   if (mangoAccount) {
     return await mangoClient.deposit(
@@ -52,11 +52,11 @@ export async function withdraw({
   token: PublicKey
   allowBorrow: boolean
 }) {
-  const mangoAccount = useMangoStore.getState().selectedMangoAccount.current
-  const mangoGroup = useMangoStore.getState().selectedMangoGroup.current
-  const wallet = useMangoStore.getState().wallet.current
+  const mangoAccount = useStore.getState().selectedMangoAccount.current
+  const mangoGroup = useStore.getState().selectedMangoGroup.current
+  const wallet = useStore.getState().wallet.current
   const tokenIndex = mangoGroup.getTokenIndex(token)
-  const mangoClient = useMangoStore.getState().connection.client
+  const mangoClient = useStore.getState().connection.client
 
   return await mangoClient.withdraw(
     mangoGroup,

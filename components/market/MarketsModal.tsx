@@ -4,7 +4,7 @@ import { EyeIcon, EyeOffIcon } from '@heroicons/react/outline'
 import { ChevronRightIcon } from '@heroicons/react/solid'
 import Modal from '../elements/Modal'
 import useLocalStorageState from '../../hooks/useLocalStorageState'
-import useMangoStore from '../../stores/useMangoStore'
+import useStore from '../../stores/useStore'
 import { formatUsdValue } from '../../utils'
 import { LinkButton } from '../elements/Button'
 import { useTranslation } from 'next-i18next'
@@ -19,8 +19,8 @@ const MarketsModal = ({
   onClose?: (x?) => void
 }) => {
   const { t } = useTranslation('common')
-  const mangoGroup = useMangoStore((s) => s.selectedMangoGroup.current)
-  const mangoCache = useMangoStore((s) => s.selectedMangoGroup.cache)
+  const mangoGroup = useStore((s) => s.selectedMangoGroup.current)
+  const mangoCache = useStore((s) => s.selectedMangoGroup.cache)
   const [hiddenMarkets, setHiddenMarkets] = useLocalStorageState(
     'hiddenMarkets',
     []

@@ -6,7 +6,7 @@ import {
 import Input from '../elements/Input'
 import AccountSelect from './AccountSelect'
 import { ElementTitle } from '../elements/styles'
-import useMangoStore from '../../stores/useMangoStore'
+import useStore from '../../stores/useStore'
 import { getSymbolForTokenMintAddress, trimDecimals, sleep } from '../../utils'
 import Loading from '../elements/Loading'
 import Button from '../elements/Button'
@@ -31,8 +31,8 @@ const NewAccount: FunctionComponent<NewAccountProps> = ({
   const [depositPercentage, setDepositPercentage] = useState('')
   const [invalidNameMessage, setInvalidNameMessage] = useState('')
   const [name, setName] = useState('')
-  const walletTokens = useMangoStore((s) => s.wallet.tokens)
-  const actions = useMangoStore((s) => s.actions)
+  const walletTokens = useStore((s) => s.wallet.tokens)
+  const actions = useStore((s) => s.actions)
 
   const [selectedAccount, setSelectedAccount] = useState(walletTokens[0])
 

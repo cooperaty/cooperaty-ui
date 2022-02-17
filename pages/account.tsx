@@ -7,7 +7,7 @@ import {
   LinkIcon,
   PencilIcon,
 } from '@heroicons/react/outline'
-import useMangoStore, { serumProgramId } from '../stores/useMangoStore'
+import useStore, { serumProgramId } from '../stores/useStore'
 import { copyToClipboard } from '../utils'
 import PageBodyContainer from '../components/elements/PageBodyContainer'
 import TopBar from '../components/modules/TopBar'
@@ -45,14 +45,14 @@ export default function Account() {
   const [, setShowNameModal] = useState(false)
   const [isCopied, setIsCopied] = useState(false)
   const [resetOnLeave, setResetOnLeave] = useState(false)
-  const connected = useMangoStore((s) => s.wallet.connected)
-  const mangoAccount = useMangoStore((s) => s.selectedMangoAccount.current)
-  const mangoClient = useMangoStore((s) => s.connection.client)
-  const mangoGroup = useMangoStore((s) => s.selectedMangoGroup.current)
-  const wallet = useMangoStore((s) => s.wallet.current)
-  const isLoading = useMangoStore((s) => s.selectedMangoAccount.initialLoad)
-  const actions = useMangoStore((s) => s.actions)
-  const setMangoStore = useMangoStore((s) => s.set)
+  const connected = useStore((s) => s.wallet.connected)
+  const mangoAccount = useStore((s) => s.selectedMangoAccount.current)
+  const mangoClient = useStore((s) => s.connection.client)
+  const mangoGroup = useStore((s) => s.selectedMangoGroup.current)
+  const wallet = useStore((s) => s.wallet.current)
+  const isLoading = useStore((s) => s.selectedMangoAccount.initialLoad)
+  const actions = useStore((s) => s.actions)
+  const setStore = useStore((s) => s.set)
   const [viewIndex, setViewIndex] = useState(0)
   const [activeTab, setActiveTab] = useState(TABS[0])
   const { width } = useViewport()
@@ -86,7 +86,7 @@ export default function Account() {
             unownedMangoAccountPubkey,
             serumProgramId
           )
-          setMangoStore((state) => {
+          setStore((state) => {
             state.selectedMangoAccount.current = unOwnedMangoAccount
           })
           actions.fetchTradeHistory()
@@ -100,7 +100,7 @@ export default function Account() {
     if (pubkey) {
       loadUnownedMangoAccount()
     }
-  }, [pubkey, mangoGroup, mangoClient, setMangoStore, actions, router])
+  }, [pubkey, mangoGroup, mangoClient, setStore, actions, router])
 
   useEffect(() => {
     if (connected) {
@@ -111,7 +111,7 @@ export default function Account() {
   useEffect(() => {
     const handleRouteChange = () => {
       if (resetOnLeave) {
-        setMangoStore((state) => {
+        setStore((state) => {
           state.selectedMangoAccount.current = undefined
         })
       }
@@ -120,7 +120,7 @@ export default function Account() {
     return () => {
       router.events.off('routeChangeStart', handleRouteChange)
     }
-  }, [resetOnLeave, router.events, setMangoStore])
+  }, [resetOnLeave, router.events, setStore])
 
   useEffect(() => {
     if (isCopied) {

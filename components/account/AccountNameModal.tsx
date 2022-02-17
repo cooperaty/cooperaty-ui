@@ -1,5 +1,5 @@
 import { FunctionComponent, useState } from 'react'
-import useMangoStore from '../../stores/useMangoStore'
+import useStore from '../../stores/useStore'
 import {
   ExclamationCircleIcon,
   InformationCircleIcon,
@@ -26,13 +26,13 @@ const AccountNameModal: FunctionComponent<AccountNameModalProps> = ({
   const { t } = useTranslation('common')
   const [name, setName] = useState(accountName || '')
   const [invalidNameMessage, setInvalidNameMessage] = useState('')
-  const mangoGroup = useMangoStore((s) => s.selectedMangoGroup.current)
-  const mangoAccount = useMangoStore((s) => s.selectedMangoAccount.current)
-  const mangoClient = useMangoStore((s) => s.connection.client)
-  const actions = useMangoStore((s) => s.actions)
+  const mangoGroup = useStore((s) => s.selectedMangoGroup.current)
+  const mangoAccount = useStore((s) => s.selectedMangoAccount.current)
+  const mangoClient = useStore((s) => s.connection.client)
+  const actions = useStore((s) => s.actions)
 
   const submitName = async () => {
-    const wallet = useMangoStore.getState().wallet.current
+    const wallet = useStore.getState().wallet.current
 
     try {
       const txid = await mangoClient.addMangoAccountInfo(

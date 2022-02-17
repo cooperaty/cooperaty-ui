@@ -1,5 +1,5 @@
 import { ExternalLinkIcon, StarIcon } from '@heroicons/react/solid'
-import useMangoStore from '../../stores/useMangoStore'
+import useStore from '../../stores/useStore'
 import { ElementTitle } from '../elements/styles'
 import Tooltip from '../elements/Tooltip'
 import { useViewport } from '../../hooks/useViewport'
@@ -9,10 +9,8 @@ import useMangoAccount from '../../hooks/useMangoAccount'
 
 export default function TraderAccountPracticeInfo() {
   const { t } = useTranslation('common')
-  const connected = useMangoStore((s) => s.wallet.connected)
-  const selectedTraderAccount = useMangoStore(
-    (s) => s.selectedTraderAccount.current
-  )
+  const connected = useStore((s) => s.wallet.connected)
+  const selectedTraderAccount = useStore((s) => s.selectedTraderAccount.current)
   const { mangoAccount } = useMangoAccount()
   const { width } = useViewport()
   const isMobile = width ? width < breakpoints.sm : false

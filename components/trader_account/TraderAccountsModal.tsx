@@ -2,7 +2,7 @@ import React, { FunctionComponent, useEffect, useState } from 'react'
 import { RadioGroup } from '@headlessui/react'
 import { CheckCircleIcon, StarIcon } from '@heroicons/react/solid'
 import { PlusCircleIcon } from '@heroicons/react/outline'
-import useMangoStore, { TraderAccount } from '../../stores/useMangoStore'
+import useStore, { TraderAccount } from '../../stores/useStore'
 import useLocalStorageState from '../../hooks/useLocalStorageState'
 import Modal from '../elements/Modal'
 import { ElementTitle } from '../elements/styles'
@@ -26,16 +26,14 @@ const TraderAccountsModal: FunctionComponent<AccountsModalProps> = ({
   const { t } = useTranslation('common')
   const [showNewAccountForm, setShowNewAccountForm] = useState(false)
   const [newAccountPublicKey, setNewAccountPublicKey] = useState(null)
-  const traderAccounts = useMangoStore((s) => s.traderAccounts)
-  const selectedTraderAccount = useMangoStore(
-    (s) => s.selectedTraderAccount.current
-  )
-  const setMangoStore = useMangoStore((s) => s.set)
+  const traderAccounts = useStore((s) => s.traderAccounts)
+  const selectedTraderAccount = useStore((s) => s.selectedTraderAccount.current)
+  const setStore = useStore((s) => s.set)
   const [, setLastAccountViewed] = useLocalStorageState(LAST_TRADER_ACCOUNT_KEY)
 
   const handleTraderAccountChange = (traderAccount: TraderAccount) => {
     setLastAccountViewed(traderAccount.publicKey.toString())
-    setMangoStore((state) => {
+    setStore((state) => {
       state.selectedTraderAccount.current = traderAccount
     })
 
@@ -44,13 +42,13 @@ const TraderAccountsModal: FunctionComponent<AccountsModalProps> = ({
 
   useEffect(() => {
     if (newAccountPublicKey) {
-      setMangoStore((state) => {
+      setStore((state) => {
         state.selectedTraderAccount.current = traderAccounts.find(
           (ma) => ma.publicKey.toString() === newAccountPublicKey
         )
       })
     }
-  }, [traderAccounts, newAccountPublicKey, setMangoStore])
+  }, [traderAccounts, newAccountPublicKey, setStore])
 
   const handleNewTraderAccountCreation = (newAccountPublicKey) => {
     if (newAccountPublicKey) {

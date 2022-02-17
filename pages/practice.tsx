@@ -1,8 +1,8 @@
 import { useEffect } from 'react'
 import { useRouter } from 'next/router'
-import useMangoStore from '../stores/useMangoStore'
+import useStore from '../stores/useStore'
 import TopBar from '../components/modules/TopBar'
-import PracticePageGrid from '../components/PracticePageGrid'
+import PracticePageGrid from '../components/practice/PracticePageGrid'
 import { PageBodyWrapper } from '../components/elements/styles'
 import { serverSideTranslations } from 'next-i18next/serverSideTranslations'
 import { walletConnectedSelector } from '../stores/selectors'
@@ -17,7 +17,7 @@ export async function getStaticProps({ locale }) {
 }
 
 const PerpMarket = () => {
-  const connected = useMangoStore(walletConnectedSelector)
+  const connected = useStore(walletConnectedSelector)
   const router = useRouter()
 
   useEffect(() => {

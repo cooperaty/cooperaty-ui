@@ -2,7 +2,7 @@ import { useMemo, useState } from 'react'
 import { Listbox } from '@headlessui/react'
 import { ChevronDownIcon, ChevronUpIcon } from '@heroicons/react/solid'
 import { abbreviateAddress } from '../../utils'
-import useMangoStore, { WalletToken } from '../../stores/useMangoStore'
+import useStore, { WalletToken } from '../../stores/useStore'
 import { RefreshClockwiseIcon } from '../elements/icons'
 import useMangoGroupConfig from '../../hooks/useMangoGroupConfig'
 import { useTranslation } from 'next-i18next'
@@ -31,7 +31,7 @@ const AccountSelect = ({
     return tokenSymbols.filter((sym) => !symbolsForAccounts.includes(sym))
   }, [accounts, tokenSymbols])
 
-  const actions = useMangoStore((s) => s.actions)
+  const actions = useStore((s) => s.actions)
   const [loading, setLoading] = useState(false)
 
   const handleChange = (value: string) => {

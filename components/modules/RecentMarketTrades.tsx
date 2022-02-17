@@ -4,7 +4,7 @@ import useInterval from '../../hooks/useInterval'
 import ChartApi from '../../utils/chartDataConnector'
 import { ElementTitle } from '../elements/styles'
 import { getDecimalCount, isEqual } from '../../utils'
-import useMangoStore from '../../stores/useMangoStore'
+import useStore from '../../stores/useStore'
 import { useViewport } from '../../hooks/useViewport'
 import { breakpoints } from '../TradePageGrid'
 import { ExpandableRow } from '../elements/TableElements'
@@ -12,9 +12,9 @@ import { useTranslation } from 'next-i18next'
 
 export default function RecentMarketTrades() {
   const { t } = useTranslation('common')
-  const mangoConfig = useMangoStore((s) => s.selectedMangoGroup.config)
-  const marketConfig = useMangoStore((s) => s.selectedMarket.config)
-  const market = useMangoStore((s) => s.selectedMarket.current)
+  const mangoConfig = useStore((s) => s.selectedMangoGroup.config)
+  const marketConfig = useStore((s) => s.selectedMarket.config)
+  const market = useStore((s) => s.selectedMarket.current)
   const { width } = useViewport()
   const isMobile = width ? width < breakpoints.sm : false
   const [trades, setTrades] = useState([])

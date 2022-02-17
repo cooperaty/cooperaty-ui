@@ -5,7 +5,7 @@ import { useRouter } from 'next/router'
 import { useOpenOrders } from '../../hooks/useOpenOrders'
 import Button, { IconButton } from '../elements/Button'
 import Loading from '../elements/Loading'
-import useMangoStore from '../../stores/useMangoStore'
+import useStore from '../../stores/useStore'
 import { notify } from '../../utils/notifications'
 import SideBadge from '../market/SideBadge'
 import { Order, Market } from '@project-serum/serum/lib/market'
@@ -336,7 +336,7 @@ const OpenOrdersTable = () => {
   const [cancelId, setCancelId] = useState(null)
   const [modifyId, setModifyId] = useState(null)
   const [editOrderIndex, setEditOrderIndex] = useState(null)
-  const actions = useMangoStore((s) => s.actions)
+  const actions = useStore((s) => s.actions)
   const { width } = useViewport()
   const isMobile = width ? width < breakpoints.md : false
 
@@ -344,12 +344,11 @@ const OpenOrdersTable = () => {
     order: Order | PerpOrder | PerpTriggerOrder,
     market: Market | PerpMarket
   ) => {
-    const wallet = useMangoStore.getState().wallet.current
-    const selectedMangoGroup =
-      useMangoStore.getState().selectedMangoGroup.current
+    const wallet = useStore.getState().wallet.current
+    const selectedMangoGroup = useStore.getState().selectedMangoGroup.current
     const selectedMangoAccount =
-      useMangoStore.getState().selectedMangoAccount.current
-    const mangoClient = useMangoStore.getState().connection.client
+      useStore.getState().selectedMangoAccount.current
+    const mangoClient = useStore.getState().connection.client
     setCancelId(order.orderId)
     let txid
     try {
@@ -406,11 +405,11 @@ const OpenOrdersTable = () => {
     price: number,
     size: number
   ) => {
-    const mangoAccount = useMangoStore.getState().selectedMangoAccount.current
-    const mangoGroup = useMangoStore.getState().selectedMangoGroup.current
-    const mangoClient = useMangoStore.getState().connection.client
-    const { askInfo, bidInfo } = useMangoStore.getState().selectedMarket
-    const wallet = useMangoStore.getState().wallet.current
+    const mangoAccount = useStore.getState().selectedMangoAccount.current
+    const mangoGroup = useStore.getState().selectedMangoGroup.current
+    const mangoClient = useStore.getState().connection.client
+    const { askInfo, bidInfo } = useStore.getState().selectedMarket
+    const wallet = useStore.getState().wallet.current
 
     if (!wallet || !mangoGroup || !mangoAccount || !market) return
     setModifyId(order.orderId)

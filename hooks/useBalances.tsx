@@ -5,7 +5,7 @@ import {
   nativeToUi,
   QUOTE_INDEX,
 } from '@blockworks-foundation/mango-client'
-import useMangoStore from '../stores/useMangoStore'
+import useStore from '../stores/useStore'
 import { i80f48ToPercent } from '../utils/index'
 import { sumBy } from 'lodash'
 import { I80F48 } from '@blockworks-foundation/mango-client/lib/src/fixednum'
@@ -14,9 +14,9 @@ import useMangoAccount from './useMangoAccount'
 export function useBalances(): Balances[] {
   const balances = []
   const { mangoAccount } = useMangoAccount()
-  const mangoGroup = useMangoStore((s) => s.selectedMangoGroup.current)
-  const mangoGroupConfig = useMangoStore((s) => s.selectedMangoGroup.config)
-  const mangoCache = useMangoStore((s) => s.selectedMangoGroup.cache)
+  const mangoGroup = useStore((s) => s.selectedMangoGroup.current)
+  const mangoGroupConfig = useStore((s) => s.selectedMangoGroup.config)
+  const mangoCache = useStore((s) => s.selectedMangoGroup.cache)
 
   for (const {
     marketIndex,

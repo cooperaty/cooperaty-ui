@@ -1,6 +1,6 @@
 import { FunctionComponent } from 'react'
 import { PerpMarket } from '@blockworks-foundation/mango-client'
-import useMangoStore from '../../../stores/useMangoStore'
+import useStore from '../../../stores/useStore'
 import { useTranslation } from 'next-i18next'
 import { capitalize } from '../../../utils'
 
@@ -16,7 +16,7 @@ const OrderSideTabs: FunctionComponent<OrderSideTabsProps> = ({
   side,
 }) => {
   const { t } = useTranslation('common')
-  const market = useMangoStore((s) => s.selectedMarket.current)
+  const market = useStore((s) => s.selectedMarket.current)
   return (
     <div className={`md:border-b md:border-th-fgd-4 mb-3 relative -mt-2.5`}>
       <div

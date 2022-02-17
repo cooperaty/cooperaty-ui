@@ -3,7 +3,7 @@ import Link from 'next/link'
 import { abbreviateAddress } from '../../utils'
 import MenuItem from '../elements/MenuItem'
 import ThemeSwitch from '../elements/ThemeSwitch'
-import useMangoStore from '../../stores/useMangoStore'
+import useStore from '../../stores/useStore'
 import ConnectWalletButton from '../wallet/ConnectWalletButton'
 import LanguageSwitch from '../elements/LanguageSwitch'
 import { useTranslation } from 'next-i18next'
@@ -12,8 +12,8 @@ import TraderAccountsModal from '../trader_account/TraderAccountsModal'
 
 const TopBar = () => {
   const { t } = useTranslation('common')
-  const traderAccount = useMangoStore((s) => s.selectedTraderAccount.current)
-  const wallet = useMangoStore((s) => s.wallet.current)
+  const traderAccount = useStore((s) => s.selectedTraderAccount.current)
+  const wallet = useStore((s) => s.wallet.current)
   const [showAccountsModal, setShowAccountsModal] = useState(false)
 
   const handleCloseAccounts = useCallback(() => {

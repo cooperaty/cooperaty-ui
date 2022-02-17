@@ -1,5 +1,5 @@
 import React, { useCallback, useMemo, useState } from 'react'
-import useMangoStore from '../../stores/useMangoStore'
+import useStore from '../../stores/useStore'
 import usePrevious from '../../hooks/usePrevious'
 import useInterval from '../../hooks/useInterval'
 import ChartApi from '../../utils/chartDataConnector'
@@ -52,16 +52,16 @@ function parseOpenInterest(perpMarket: PerpMarket) {
 const MarketDetails = () => {
   const { t } = useTranslation('common')
   const oraclePrice = useOraclePrice()
-  const groupConfig = useMangoStore((s) => s.selectedMangoGroup.config)
-  const marketConfig = useMangoStore((s) => s.selectedMarket.config)
-  const selectedMarket = useMangoStore((s) => s.selectedMarket.current)
+  const groupConfig = useStore((s) => s.selectedMangoGroup.config)
+  const marketConfig = useStore((s) => s.selectedMarket.config)
+  const selectedMarket = useStore((s) => s.selectedMarket.current)
   const baseSymbol = marketConfig.baseSymbol
   const selectedMarketName = marketConfig.name
   const isPerpMarket = marketConfig.kind === 'perp'
 
   const previousMarketName: string = usePrevious(selectedMarketName)
-  const mangoAccount = useMangoStore((s) => s.selectedMangoAccount.current)
-  const connected = useMangoStore((s) => s.wallet.connected)
+  const mangoAccount = useStore((s) => s.selectedMangoAccount.current)
+  const connected = useStore((s) => s.wallet.connected)
   const { width } = useViewport()
   const isMobile = width ? width < breakpoints.sm : false
 

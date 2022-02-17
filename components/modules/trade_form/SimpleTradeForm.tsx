@@ -9,7 +9,7 @@ import {
 import { notify } from '../../../utils/notifications'
 import { calculateTradePrice, getDecimalCount, sleep } from '../../../utils'
 import { floorToDecimal, capitalize } from '../../../utils'
-import useMangoStore from '../../../stores/useMangoStore'
+import useStore from '../../../stores/useStore'
 import Button from '../../elements/Button'
 import Input from '../../elements/Input'
 import { Market } from '@project-serum/serum'
@@ -26,24 +26,24 @@ import { useTranslation } from 'next-i18next'
 
 export default function SimpleTradeForm({ initLeverage }) {
   const { t } = useTranslation('common')
-  const set = useMangoStore((s) => s.set)
+  const set = useStore((s) => s.set)
   const { ipAllowed, spotAllowed } = useIpAddress()
-  const connected = useMangoStore((s) => s.wallet.connected)
-  const actions = useMangoStore((s) => s.actions)
-  const groupConfig = useMangoStore((s) => s.selectedMangoGroup.config)
-  const marketConfig = useMangoStore((s) => s.selectedMarket.config)
-  const walletTokens = useMangoStore((s) => s.wallet.tokens)
-  const mangoAccount = useMangoStore((s) => s.selectedMangoAccount.current)
-  const mangoGroup = useMangoStore((s) => s.selectedMangoGroup.current)
-  const mangoClient = useMangoStore((s) => s.connection.client)
-  const mangoCache = useMangoStore((s) => s.selectedMangoGroup.cache)
+  const connected = useStore((s) => s.wallet.connected)
+  const actions = useStore((s) => s.actions)
+  const groupConfig = useStore((s) => s.selectedMangoGroup.config)
+  const marketConfig = useStore((s) => s.selectedMarket.config)
+  const walletTokens = useStore((s) => s.wallet.tokens)
+  const mangoAccount = useStore((s) => s.selectedMangoAccount.current)
+  const mangoGroup = useStore((s) => s.selectedMangoGroup.current)
+  const mangoClient = useStore((s) => s.connection.client)
+  const mangoCache = useStore((s) => s.selectedMangoGroup.cache)
   const marketIndex = getMarketIndexBySymbol(
     groupConfig,
     marketConfig.baseSymbol
   )
-  const market = useMangoStore((s) => s.selectedMarket.current)
+  const market = useStore((s) => s.selectedMarket.current)
   const { side, baseSize, quoteSize, price, triggerPrice, tradeType } =
-    useMangoStore((s) => s.tradeForm)
+    useStore((s) => s.tradeForm)
 
   const [postOnly, setPostOnly] = useState(false)
   const [ioc, setIoc] = useState(false)
@@ -56,12 +56,12 @@ export default function SimpleTradeForm({ initLeverage }) {
   const [spotMargin, setSpotMargin] = useState(false)
   const [insufficientSol, setinsufficientSol] = useState(false)
 
-  const orderBookRef = useRef(useMangoStore.getState().selectedMarket.orderBook)
+  const orderBookRef = useRef(useStore.getState().selectedMarket.orderBook)
   const orderbook = orderBookRef.current
 
   useEffect(
     () =>
-      useMangoStore.subscribe(
+      useStore.subscribe(
         // @ts-ignore
         (orderBook) => (orderBookRef.current = orderBook),
         (state) => state.selectedMarket.orderBook
@@ -134,11 +134,11 @@ export default function SimpleTradeForm({ initLeverage }) {
       s.tradeForm.tradeType = type
     })
 
-  const markPriceRef = useRef(useMangoStore.getState().selectedMarket.markPrice)
+  const markPriceRef = useRef(useStore.getState().selectedMarket.markPrice)
   const markPrice = markPriceRef.current
   useEffect(
     () =>
-      useMangoStore.subscribe(
+      useStore.subscribe(
         (markPrice) => (markPriceRef.current = markPrice as number),
         (state) => state.selectedMarket.markPrice
       ),
@@ -189,7 +189,7 @@ export default function SimpleTradeForm({ initLeverage }) {
   }
 
   const onSetBaseSize = (baseSize: number | '') => {
-    const { price } = useMangoStore.getState().tradeForm
+    const { price } = useStore.getState().tradeForm
     setPositionSizePercent('')
     setBaseSize(baseSize)
     if (!baseSize) {
@@ -272,10 +272,10 @@ export default function SimpleTradeForm({ initLeverage }) {
       return
     }
 
-    const mangoAccount = useMangoStore.getState().selectedMangoAccount.current
-    const mangoGroup = useMangoStore.getState().selectedMangoGroup.current
-    const { askInfo, bidInfo } = useMangoStore.getState().selectedMarket
-    const wallet = useMangoStore.getState().wallet.current
+    const mangoAccount = useStore.getState().selectedMangoAccount.current
+    const mangoGroup = useStore.getState().selectedMangoGroup.current
+    const { askInfo, bidInfo } = useStore.getState().selectedMarket
+    const wallet = useStore.getState().wallet.current
 
     if (!wallet || !mangoGroup || !mangoAccount || !market) return
     setSubmitting(true)

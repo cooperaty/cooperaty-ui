@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import useMangoStore from '../stores/useMangoStore'
+import useStore from '../stores/useStore'
 import {
   getMultipleAccounts,
   nativeToUi,
@@ -49,8 +49,8 @@ export function getFeeTier(msrmBalance: number, srmBalance: number): number {
 }
 
 const useSrmAccount = () => {
-  const mangoGroup = useMangoStore((s) => s.selectedMangoGroup.current)
-  const connection = useMangoStore((s) => s.connection.current)
+  const mangoGroup = useStore((s) => s.selectedMangoGroup.current)
+  const connection = useStore((s) => s.connection.current)
   const [srmAccount, setSrmAccount] = useState(null)
   const [msrmAccount, setMsrmAccount] = useState(null)
 

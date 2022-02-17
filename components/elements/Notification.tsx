@@ -5,15 +5,15 @@ import {
   InformationCircleIcon,
   XCircleIcon,
 } from '@heroicons/react/outline'
-import useMangoStore from '../../stores/useMangoStore'
+import useStore from '../../stores/useStore'
 import { Notification, notify } from '../../utils/notifications'
 import { useTranslation } from 'next-i18next'
 import Loading from './Loading'
 
 const NotificationList = () => {
   const { t } = useTranslation('common')
-  const notifications = useMangoStore((s) => s.notifications)
-  const walletTokens = useMangoStore((s) => s.wallet.tokens)
+  const notifications = useStore((s) => s.notifications)
+  const walletTokens = useStore((s) => s.wallet.tokens)
   const notEnoughSoLMessage = t('not-enough-sol')
 
   // if a notification is shown with {"InstructionError":[0,{"Custom":1}]} then
@@ -60,7 +60,7 @@ const NotificationList = () => {
 
 const Notification = ({ notification }: { notification: Notification }) => {
   const { t } = useTranslation('common')
-  const setMangoStore = useMangoStore((s) => s.set)
+  const setStore = useStore((s) => s.set)
   const { type, title, description, txid, show, id } = notification
 
   // overwrite the title if of the error message if it is a time out error
@@ -77,7 +77,7 @@ const Notification = ({ notification }: { notification: Notification }) => {
   // if the notification is a success, then hide the confirming tx notification with the same txid
   useEffect(() => {
     if ((type === 'error' || type === 'success') && txid) {
-      setMangoStore((s) => {
+      setStore((s) => {
         const newNotifications = s.notifications.map((n) =>
           n.txid === txid && n.type === 'confirm' ? { ...n, show: false } : n
         )
@@ -87,7 +87,7 @@ const Notification = ({ notification }: { notification: Notification }) => {
   }, [type, txid])
 
   const hideNotification = () => {
-    setMangoStore((s) => {
+    setStore((s) => {
       const newNotifications = s.notifications.map((n) =>
         n.id === id ? { ...n, show: false } : n
       )

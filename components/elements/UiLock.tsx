@@ -1,6 +1,6 @@
 import { LockClosedIcon, LockOpenIcon } from '@heroicons/react/outline'
 import { Transition } from '@headlessui/react'
-import useMangoStore from '../../stores/useMangoStore'
+import useStore from '../../stores/useStore'
 import ResetLayout from './ResetLayout'
 import Tooltip from './Tooltip'
 import { IconButton } from './Button'
@@ -8,8 +8,8 @@ import { useTranslation } from 'next-i18next'
 
 const UiLock = ({ className = '' }) => {
   const { t } = useTranslation('common')
-  const set = useMangoStore((s) => s.set)
-  const uiLocked = useMangoStore((s) => s.settings.uiLocked)
+  const set = useStore((s) => s.set)
+  const uiLocked = useStore((s) => s.settings.uiLocked)
 
   const handleClick = () => {
     set((state) => {

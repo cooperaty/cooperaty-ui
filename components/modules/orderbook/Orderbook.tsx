@@ -11,7 +11,7 @@ import {
 import { CumulativeSizeIcon, StepSizeIcon } from '../../elements/icons'
 import useMarkPrice from '../../../hooks/useMarkPrice'
 import { ElementTitle } from '../../elements/styles'
-import useMangoStore from '../../../stores/useMangoStore'
+import useStore from '../../../stores/useStore'
 import Tooltip from '../../elements/Tooltip'
 import GroupSize from './GroupSize'
 import { useOpenOrders } from '../../../hooks/useOpenOrders'
@@ -119,10 +119,10 @@ const hasOpenOrderForPriceGroup = (openOrderPrices, price, grouping) => {
 
 export default function Orderbook({ depth = 8 }) {
   const { t } = useTranslation('common')
-  const groupConfig = useMangoStore(mangoGroupConfigSelector)
-  const marketConfig = useMangoStore(marketConfigSelector)
-  const orderbook = useMangoStore(orderbookSelector)
-  const market = useMangoStore(marketSelector)
+  const groupConfig = useStore(mangoGroupConfigSelector)
+  const marketConfig = useStore(marketConfigSelector)
+  const orderbook = useStore(orderbookSelector)
+  const market = useStore(marketSelector)
   const markPrice = useMarkPrice()
   const openOrders = useOpenOrders()
   const openOrderPrices = openOrders?.length
@@ -600,7 +600,7 @@ const OrderbookRow = React.memo<any>(
     grouping,
   }) => {
     const element = useRef(null)
-    const setMangoStore = useMangoStore(setStoreSelector)
+    const setStore = useStore(setStoreSelector)
     const [showOrderbookFlash] = useLocalStorageState(ORDERBOOK_FLASH_KEY, true)
 
     useEffect(() => {
@@ -627,13 +627,13 @@ const OrderbookRow = React.memo<any>(
         : price
 
     const handlePriceClick = () => {
-      setMangoStore((state) => {
+      setStore((state) => {
         state.tradeForm.price = price
       })
     }
 
     const handleSizeClick = () => {
-      setMangoStore((state) => {
+      setStore((state) => {
         state.tradeForm.baseSize = size
       })
     }

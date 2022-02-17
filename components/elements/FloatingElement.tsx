@@ -1,7 +1,7 @@
 import React, { FunctionComponent } from 'react'
 // import styled from '@emotion/styled'
 import { LinkIcon } from '@heroicons/react/outline'
-import useMangoStore from '../../stores/useMangoStore'
+import useStore from '../../stores/useStore'
 import { MoveIcon } from './icons'
 import EmptyState from './EmptyState'
 import { useTranslation } from 'next-i18next'
@@ -38,9 +38,9 @@ const FloatingElement: FunctionComponent<FloatingElementProps> = ({
   showConnect,
 }) => {
   const { t } = useTranslation('common')
-  const { uiLocked } = useMangoStore((s) => s.settings)
-  const connected = useMangoStore((s) => s.wallet.connected)
-  const wallet = useMangoStore((s) => s.wallet.current)
+  const { uiLocked } = useStore((s) => s.settings)
+  const connected = useStore((s) => s.wallet.connected)
+  const wallet = useStore((s) => s.wallet.current)
   return (
     <div
       className={`thin-scroll bg-th-bkg-2 rounded-lg p-2.5 md:p-4 overflow-auto overflow-x-hidden relative ${className}`}

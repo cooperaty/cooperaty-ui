@@ -1,7 +1,7 @@
 import { useState, useEffect, useMemo } from 'react'
 import TradeHistoryTable from '../modules/user/TradeHistoryTable'
 import { useTranslation } from 'next-i18next'
-import useMangoStore from '../../stores/useMangoStore'
+import useStore from '../../stores/useStore'
 import { ArrowSmDownIcon, ExternalLinkIcon } from '@heroicons/react/solid'
 import { Table, TrHead, Th, TrBody, Td } from '../elements/TableElements'
 import { LinkButton } from '../elements/Button'
@@ -28,7 +28,7 @@ export default function AccountHistory() {
   const { t } = useTranslation('common')
   const [view, setView] = useState('Trades')
   const [history, setHistory] = useState(null)
-  const mangoAccount = useMangoStore((s) => s.selectedMangoAccount.current)
+  const mangoAccount = useStore((s) => s.selectedMangoAccount.current)
   const tradeHistory = useTradeHistory({ excludePerpLiquidations: true })
 
   const mangoAccountPk = useMemo(() => {
@@ -243,8 +243,8 @@ const parseActivityDetails = (activity_details, activity_type, perpMarket) => {
 
 const LiquidationHistoryTable = ({ history, view }) => {
   const { t } = useTranslation('common')
-  const markets = useMangoStore((s) => s.selectedMangoGroup.markets)
-  const groupConfig = useMangoStore((s) => s.selectedMangoGroup.config)
+  const markets = useStore((s) => s.selectedMangoGroup.markets)
+  const groupConfig = useStore((s) => s.selectedMangoGroup.config)
   const filteredHistory = useMemo(() => {
     return history?.length
       ? history.filter((h) => h.activity_type.includes('liquidate'))

@@ -5,7 +5,7 @@ import Modal from '../../elements/Modal'
 import { ElementTitle } from '../../elements/styles'
 import Button from '../../elements/Button'
 import Input from '../../elements/Input'
-import useMangoStore from '../../../stores/useMangoStore'
+import useStore from '../../../stores/useStore'
 import useLocalStorageState from '../../../hooks/useLocalStorageState'
 import Select from '../../elements/Select'
 import { useTranslation } from 'next-i18next'
@@ -183,7 +183,7 @@ const DefaultMarketSettings = ({ setSettingsView }) => {
 
 const RpcEndpointSettings = ({ setSettingsView }) => {
   const { t } = useTranslation('common')
-  const actions = useMangoStore((s) => s.actions)
+  const actions = useStore((s) => s.actions)
   const [rpcEndpointUrl, setRpcEndpointUrl] = useLocalStorageState(
     NODE_URL_KEY,
     NODE_URLS[0].value

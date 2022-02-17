@@ -1,6 +1,6 @@
 import { useEffect } from 'react'
 import { AccountInfo } from '@solana/web3.js'
-import useMangoStore from '../stores/useMangoStore'
+import useStore from '../stores/useStore'
 import useInterval from './useInterval'
 import { Orderbook as SpotOrderBook, Market } from '@project-serum/serum'
 import {
@@ -19,7 +19,6 @@ import {
 } from '../stores/selectors'
 
 const SECONDS = 1000
-const _SLOW_REFRESH_INTERVAL = 20 * SECONDS
 
 function decodeBook(market, accInfo: AccountInfo<Buffer>): number[][] {
   if (market && accInfo?.data) {
@@ -41,29 +40,27 @@ function decodeBook(market, accInfo: AccountInfo<Buffer>): number[][] {
 }
 
 const useHydrateStore = () => {
-  const setMangoStore = useMangoStore((s) => s.set)
-  const actions = useMangoStore(actionsSelector)
-  const markets = useMangoStore(marketsSelector)
-  const marketConfig = useMangoStore(marketConfigSelector)
-  const selectedMarket = useMangoStore(marketSelector)
-  const connection = useMangoStore(connectionSelector)
-  const mangoAccount = useMangoStore(mangoAccountSelector)
+  const setStore = useStore((s) => s.set)
+  const actions = useStore(actionsSelector)
+  const markets = useStore(marketsSelector)
+  const marketConfig = useStore(marketConfigSelector)
+  const selectedMarket = useStore(marketSelector)
+  const connection = useStore(connectionSelector)
+  const mangoAccount = useStore(mangoAccountSelector)
+  const loadNewExercise = useStore((s) => s.selectedExercise.loadNew)
+  const loadInitialExercise = useStore((s) => s.selectedExercise.initialLoad)
 
+  const connected = useStore((s) => s.wallet.connected)
+
+  // update exercise when on initial load or need to load new exercise
   useEffect(() => {
-    actions.fetchMangoGroup()
-  }, [actions])
+    if (loadNewExercise || loadInitialExercise) actions.fetchExercise()
+  }, [loadNewExercise, loadInitialExercise, connected])
 
-  useInterval(() => {
-    actions.fetchMangoGroup()
-  }, 120 * SECONDS)
-
-  useInterval(() => {
-    actions.fetchMangoGroupCache()
-  }, 12 * SECONDS)
-
+  // update orderbook when market changes
   useEffect(() => {
     const market = markets[marketConfig.publicKey.toString()]
-    setMangoStore((state) => {
+    setStore((state) => {
       state.selectedMarket.current = market
       state.selectedMarket.orderBook.bids = decodeBook(
         market,
@@ -74,44 +71,18 @@ const useHydrateStore = () => {
         state.accountInfos[marketConfig.asksKey.toString()]
       )
     })
-  }, [marketConfig, markets, setMangoStore])
-
-  useEffect(() => {
-    if (!mangoAccount) return
-    console.log('in mango account WS useEffect')
-    const subscriptionId = connection.onAccountChange(
-      mangoAccount.publicKey,
-      (info) => {
-        console.log('mango account WS update: ', info)
-
-        const decodedMangoAccount = MangoAccountLayout.decode(info?.data)
-        const newMangoAccount = Object.assign(mangoAccount, decodedMangoAccount)
-
-        // const lastSlot = useMangoStore.getState().connection.slot
-
-        setMangoStore((state) => {
-          state.selectedMangoAccount.current = newMangoAccount
-          state.selectedMangoAccount.lastUpdatedAt = new Date().toISOString()
-        })
-      }
-    )
-
-    return () => {
-      connection.removeAccountChangeListener(subscriptionId)
-    }
-  }, [mangoAccount])
+  }, [marketConfig, markets, setStore])
 
   // hydrate orderbook with all markets in mango group
   useEffect(() => {
     let previousBidInfo: AccountInfo<Buffer> | null = null
     let previousAskInfo: AccountInfo<Buffer> | null = null
     if (!marketConfig || !selectedMarket) return
-    //console.log('in orderbook WS useEffect')
 
     const bidSubscriptionId = connection.onAccountChange(
       marketConfig.bidsKey,
       (info, context) => {
-        const lastSlot = useMangoStore.getState().connection.slot
+        const lastSlot = useStore.getState().connection.slot
         if (
           (!previousBidInfo ||
             !previousBidInfo.data.equals(info.data) ||
@@ -119,7 +90,7 @@ const useHydrateStore = () => {
           context.slot > lastSlot
         ) {
           previousBidInfo = info
-          setMangoStore((state) => {
+          setStore((state) => {
             state.accountInfos[marketConfig.bidsKey.toString()] = info
             state.selectedMarket.orderBook.bids = decodeBook(
               selectedMarket,
@@ -132,7 +103,7 @@ const useHydrateStore = () => {
     const askSubscriptionId = connection.onAccountChange(
       marketConfig.asksKey,
       (info, context) => {
-        const lastSlot = useMangoStore.getState().connection.slot
+        const lastSlot = useStore.getState().connection.slot
         if (
           (!previousAskInfo ||
             !previousAskInfo.data.equals(info.data) ||
@@ -140,7 +111,7 @@ const useHydrateStore = () => {
           context.slot > lastSlot
         ) {
           previousAskInfo = info
-          setMangoStore((state) => {
+          setStore((state) => {
             state.accountInfos[marketConfig.asksKey.toString()] = info
             state.selectedMarket.orderBook.asks = decodeBook(
               selectedMarket,
@@ -155,16 +126,51 @@ const useHydrateStore = () => {
       connection.removeAccountChangeListener(bidSubscriptionId)
       connection.removeAccountChangeListener(askSubscriptionId)
     }
-  }, [marketConfig, selectedMarket, connection, setMangoStore])
+  }, [marketConfig, selectedMarket, connection, setStore])
 
-  // fetch filled trades for selected market
-  useInterval(() => {
-    actions.loadMarketFills()
-  }, _SLOW_REFRESH_INTERVAL)
-
+  // TODO: check if market fills are needed
+  // load market fills
   useEffect(() => {
     actions.loadMarketFills()
   }, [selectedMarket])
+
+  // TODO: check if trader account need a subscription id
+  // change subscription id when account changes
+  useEffect(() => {
+    if (!mangoAccount) return
+    console.log('in mango account WS useEffect')
+    const subscriptionId = connection.onAccountChange(
+      mangoAccount.publicKey,
+      (info) => {
+        console.log('mango account WS update: ', info)
+
+        const decodedMangoAccount = MangoAccountLayout.decode(info?.data)
+        const newMangoAccount = Object.assign(mangoAccount, decodedMangoAccount)
+
+        setStore((state) => {
+          state.selectedMangoAccount.current = newMangoAccount
+          state.selectedMangoAccount.lastUpdatedAt = new Date().toISOString()
+        })
+      }
+    )
+
+    return () => {
+      connection.removeAccountChangeListener(subscriptionId)
+    }
+  }, [mangoAccount])
+
+  useInterval(() => {
+    actions.fetchMangoGroup()
+    actions.fetchExercise()
+  }, 120 * SECONDS)
+
+  useInterval(() => {
+    actions.loadMarketFills()
+  }, 20 * SECONDS)
+
+  useInterval(() => {
+    actions.fetchMangoGroupCache()
+  }, 12 * SECONDS)
 }
 
 export default useHydrateStore
