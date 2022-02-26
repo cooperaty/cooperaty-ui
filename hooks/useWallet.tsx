@@ -69,7 +69,6 @@ export default function useWallet() {
   const endpoint = useStore((state) => state.connection.endpoint)
   const traderAccount = useStore((s) => s.selectedTraderAccount.current)
   const actions = useStore((s) => s.actions)
-  const cooperatyClient = useStore((s) => s.connection.cooperatyClient)
   const [savedProviderUrl, setSavedProviderUrl] = useLocalStorageState(
     PROVIDER_LOCAL_STORAGE_KEY,
     DEFAULT_PROVIDER.url
@@ -95,9 +94,6 @@ export default function useWallet() {
           endpoint
         ) as WalletAdapter
 
-        wallet.provider = cooperatyClient.getProvider(wallet)
-        wallet.program = cooperatyClient.getProgram(wallet)
-
         setStore((state) => {
           state.wallet.current = wallet
         })
@@ -118,6 +114,7 @@ export default function useWallet() {
   }, [provider, savedProviderUrl, endpoint])
 
   useEffect(() => {
+    actions.updateSDK()
     if (!wallet) return
     wallet.on('connect', async () => {
       setStore((state) => {
@@ -140,7 +137,7 @@ export default function useWallet() {
         title: t('wallet-disconnected'),
       })
     })
-  }, [wallet, setStore])
+  }, [wallet])
 
   useInterval(() => {
     if (connected && traderAccount) {

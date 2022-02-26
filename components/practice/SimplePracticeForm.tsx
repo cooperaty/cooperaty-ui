@@ -93,9 +93,8 @@ export default function SimplePracticeForm() {
 
     try {
       const txid = await cooperatyClient.addPrediction(
-        wallet,
         traderAccount,
-        currentExercise.account,
+        currentExercise,
         prediction,
         currentExercise.account.cid
       )

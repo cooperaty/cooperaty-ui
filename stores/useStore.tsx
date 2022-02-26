@@ -22,7 +22,14 @@ import {
   PerpMarketLayout,
   msrmMints,
 } from '@blockworks-foundation/mango-client'
-import { AccountInfo, Commitment, Connection, PublicKey } from '@solana/web3.js'
+import {
+  AccountInfo,
+  Commitment,
+  ConfirmOptions,
+  Connection,
+  Keypair,
+  PublicKey,
+} from '@solana/web3.js'
 import { EndpointInfo, WalletAdapter } from '../@types/types'
 import { isDefined, zipDict } from '../utils'
 import { Notification, notify } from '../utils/notifications'
@@ -32,10 +39,11 @@ import {
   NODE_URL_KEY,
 } from '../components/modules/settings/SettingsModal'
 import { MSRM_DECIMALS } from '@project-serum/serum/lib/token-instructions'
-import CooperatyClient from '../clients/cooperaty'
+import { TrainerSDK } from '../src'
 import Axios from 'axios'
 import { LAST_TRADER_ACCOUNT_KEY } from '../components/trader_account/TraderAccountsModal'
 import { BN } from '@project-serum/anchor'
+import { SignerWallet, SolanaProvider } from '@saberhq/solana-contrib'
 
 export class TraderAccount {
   publicKey: PublicKey
@@ -159,7 +167,7 @@ interface Store extends State {
     websocket: Connection
     endpoint: string
     client: MangoClient
-    cooperatyClient: CooperatyClient
+    cooperatyClient: TrainerSDK
     slot: number
   }
   selectedMarket: {
@@ -238,6 +246,17 @@ interface Store extends State {
   }
 }
 
+export const getProvider = (
+  connection: Connection,
+  wallet: SignerWallet | WalletAdapter = new SignerWallet(Keypair.generate())
+) => {
+  return SolanaProvider.load({
+    connection,
+    wallet,
+    opts: connection.commitment as ConfirmOptions,
+  })
+}
+
 const useStore = create<Store>((set, get) => {
   const rpcUrl =
     typeof window !== 'undefined' && CLUSTER === 'mainnet'
@@ -250,6 +269,7 @@ const useStore = create<Store>((set, get) => {
       : initialMarket
 
   const connection = new Connection(rpcUrl, 'processed' as Commitment)
+
   return {
     notificationIdCounter: 0,
     notifications: [],
@@ -259,7 +279,7 @@ const useStore = create<Store>((set, get) => {
       current: connection,
       websocket: WEBSOCKET_CONNECTION,
       client: new MangoClient(connection, programId),
-      cooperatyClient: new CooperatyClient(connection),
+      cooperatyClient: TrainerSDK.init(getProvider(connection)),
       endpoint: ENDPOINT.url,
       slot: 0,
     },
@@ -569,10 +589,9 @@ const useStore = create<Store>((set, get) => {
 
         if (wallet?.publicKey && connected) {
           try {
-            const traderAccounts = await cooperatyClient.getFilteredTraders(
-              wallet,
-              { user: wallet.publicKey }
-            )
+            const traderAccounts = await cooperatyClient.getFilteredTraders({
+              user: wallet.publicKey,
+            })
             console.log('traderAccounts', traderAccounts)
             if (traderAccounts.length > 0) {
               const sortedTraderAccounts = traderAccounts
@@ -626,10 +645,7 @@ const useStore = create<Store>((set, get) => {
 
         if (wallet?.publicKey && connected && selectedTraderAccount) {
           const reloadedTraderAccount =
-            await cooperatyClient.reloadTraderAccount(
-              wallet,
-              selectedTraderAccount
-            )
+            await cooperatyClient.reloadTraderAccount(selectedTraderAccount)
           set((state) => {
             state.selectedTraderAccount.current = reloadedTraderAccount
             state.selectedTraderAccount.lastUpdatedAt = new Date().toISOString()
@@ -637,41 +653,41 @@ const useStore = create<Store>((set, get) => {
           console.log('reloaded trader account', reloadedTraderAccount)
         }
       },
+      async updateSDK() {
+        const set = get().set
+        const wallet = get().wallet.current
+        const connection = get().connection.current
+        const newCooperatyClient = wallet
+          ? TrainerSDK.init(getProvider(connection, wallet))
+          : TrainerSDK.init(getProvider(connection))
+        set((state) => {
+          state.connection.cooperatyClient = newCooperatyClient
+        })
+      },
       async updateConnection(endpointUrl) {
         const set = get().set
         const newConnection = new Connection(endpointUrl, 'processed')
         const newMangoClient = new MangoClient(newConnection, programId)
-        const newCooperatyClient = new CooperatyClient(newConnection)
 
         set((state) => {
           state.connection.endpoint = endpointUrl
           state.connection.current = newConnection
           state.connection.client = newMangoClient
-          state.connection.cooperatyClient = newCooperatyClient
         })
+
+        this.updateSDK()
       },
       async fetchExercise() {
-        const wallet = get().wallet.current
-        const connected = get().wallet.connected
-        const endpoint = get().connection.endpoint
         const cooperatyClient = get().connection.cooperatyClient
-        const currentWallet =
-          wallet?.publicKey && connected
-            ? wallet
-            : cooperatyClient.getTemporalWallet(endpoint)
-
         const set = get().set
         const exerciseLoadInitial = get().selectedExercise.initialLoad
         const exerciseLoadNew = get().selectedExercise.initialLoad
         const exercisesHistory = get().exercisesHistory
 
         const getNewExercise = async () => {
-          const exercises = await cooperatyClient.getFilteredExercises(
-            currentWallet,
-            {
-              full: false,
-            }
-          )
+          const exercises: any[] = await cooperatyClient.getFilteredExercises({
+            full: false,
+          })
           const newExercises = exercises.filter(
             (exercise) => exercisesHistory.indexOf(exercise.publicKey) === -1
           )
@@ -715,7 +731,7 @@ const useStore = create<Store>((set, get) => {
           )
           exercise =
             lastExercisePublicKey != null
-              ? await cooperatyClient.reloadExercise(currentWallet, {
+              ? await cooperatyClient.reloadExercise({
                   publicKey: new PublicKey(lastExercisePublicKey),
                 })
               : await getNewExercise()

@@ -24,14 +24,13 @@ const NewTraderAccount: FunctionComponent<NewAccountProps> = ({
   const [submitting, setSubmitting] = useState(false)
   const [invalidNameMessage, setInvalidNameMessage] = useState('')
   const [name, setName] = useState('')
-  const wallet = useStore((s) => s.wallet.current)
   const actions = useStore((s) => s.actions)
   const cooperatyClient = useStore((s) => s.connection.cooperatyClient)
 
   const handleNewTraderAccount = () => {
     setSubmitting(true)
     cooperatyClient
-      .createTrader(wallet, name)
+      .createTrader(name)
       .then(async (traderAccount) => {
         await actions.fetchAllTraderAccounts()
         setSubmitting(false)
