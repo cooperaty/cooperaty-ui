@@ -39,7 +39,7 @@ import {
   NODE_URL_KEY,
 } from '../components/modules/settings/SettingsModal'
 import { MSRM_DECIMALS } from '@project-serum/serum/lib/token-instructions'
-import { TrainerSDK } from '../src'
+import { TrainerSDK } from '../sdk'
 import Axios from 'axios'
 import { LAST_TRADER_ACCOUNT_KEY } from '../components/trader_account/TraderAccountsModal'
 import { BN } from '@project-serum/anchor'

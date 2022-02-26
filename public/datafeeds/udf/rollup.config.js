@@ -23,7 +23,7 @@ module.exports = [
     ],
   },
   {
-    input: 'src/polyfills.es6',
+    input: 'sdk/polyfills.es6',
     sourceMap: false,
     context: 'window',
     output: {
