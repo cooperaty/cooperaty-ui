@@ -89,7 +89,7 @@ export default function Account() {
           setStore((state) => {
             state.selectedMangoAccount.current = unOwnedMangoAccount
           })
-          actions.fetchTradeHistory()
+          await actions.fetchTradeHistory()
           setResetOnLeave(true)
         }
       } catch (error) {

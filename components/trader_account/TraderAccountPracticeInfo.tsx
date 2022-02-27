@@ -16,7 +16,7 @@ export default function TraderAccountPracticeInfo() {
   const isMobile = width ? width < breakpoints.sm : false
 
   const ranking = selectedTraderAccount
-    ? selectedTraderAccount.account?.performance.toNumber()
+    ? selectedTraderAccount.account.performance.toNumber()
     : 0.0
 
   return (

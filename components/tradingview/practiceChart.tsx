@@ -29,25 +29,25 @@ export interface ChartContainerProps {
 
 const TVChartContainer = () => {
   const set = useStore((s) => s.set)
-  const prediction = useStore((s) => s.practiceForm.prediction)
-  const currentExercise = useStore((s) => s.selectedExercise.current)
+  const validation = useStore((s) => s.practiceForm.validation)
+  const currentExerciseChart = useStore((s) => s.selectedExercise.current.chart)
 
   const { theme } = useTheme()
   const { width } = useViewport()
   const isMobile = width ? width < breakpoints.sm : false
 
-  const setPrediction = (prediction) =>
+  const setValidation = (validation) =>
     set((s) => {
-      if (!Number.isNaN(parseFloat(prediction))) {
-        s.practiceForm.prediction = parseFloat(prediction)
+      if (!Number.isNaN(parseFloat(validation))) {
+        s.practiceForm.validation = parseFloat(validation)
       } else {
-        s.practiceForm.prediction = prediction
+        s.practiceForm.validation = validation
       }
     })
 
   // @ts-ignore
   const defaultProps: ChartContainerProps = {
-    symbol: currentExercise.type,
+    symbol: currentExerciseChart?.type,
     interval: '30' as ResolutionString,
     theme: 'Dark',
     containerId: 'tv_chart_container',
@@ -62,17 +62,19 @@ const TVChartContainer = () => {
   }
 
   const tvWidgetRef = useRef<IChartingLibraryWidget | null>(null)
-  const predictionLine = useRef<IOrderLineAdapter | null>(null)
+  const validationLine = useRef<IOrderLineAdapter | null>(null)
   const lastBarData = useRef<Record<string, number>>({})
 
   useEffect(() => {
-    const exerciseData = currentExercise.data.map((item) => {
+    console.log(currentExerciseChart)
+    if (!currentExerciseChart) return
+    const exerciseData = currentExerciseChart.bars.map((item) => {
       return Object.assign({}, item)
     })
     const datafeed = new Datafeed(exerciseData, ['1', '5', '15', '30'])
 
     const widgetOptions: ChartingLibraryWidgetOptions = {
-      symbol: currentExercise.type,
+      symbol: currentExerciseChart.type,
       // BEWARE: no trailing slash is expected in feed URL
       // tslint:disable-next-line:no-any
       // @ts-ignore
@@ -162,9 +164,9 @@ const TVChartContainer = () => {
         percent: lastBar.value[1],
         distance: lastBar.exTime - bars._items[bars._end - 2].exTime,
         takeProfitPrice:
-          lastBar.value[4] * (1 + currentExercise.position.takeProfit),
+          lastBar.value[4] * (1 + currentExerciseChart.position.takeProfit),
         stopLossPrice:
-          lastBar.value[4] * (1 - currentExercise.position.stopLoss),
+          lastBar.value[4] * (1 - currentExerciseChart.position.stopLoss),
       }
 
       // position shape
@@ -174,29 +176,30 @@ const TVChartContainer = () => {
           {
             time:
               lastBarData.current.time +
-              lastBarData.current.distance * currentExercise.position.bars,
+              lastBarData.current.distance *
+                currentExerciseChart.position.post_bars,
             price: lastBarData.current.close,
           },
         ],
         {
           // @ts-ignore
-          shape: currentExercise.position.direction,
+          shape: currentExerciseChart.position.direction,
           lock: true,
           overrides: {
             profitLevel:
               lastBarData.current.percent *
-              currentExercise.position.takeProfit *
+              currentExerciseChart.position.takeProfit *
               datafeed.priceScale,
             stopLevel:
               lastBarData.current.percent *
-              currentExercise.position.stopLoss *
+              currentExerciseChart.position.stopLoss *
               datafeed.priceScale,
           },
         }
       )
 
-      // prediction line
-      predictionLine.current = tvWidgetRef.current
+      // validation line
+      validationLine.current = tvWidgetRef.current
         .chart()
         .createOrderLine({ disableUndo: false })
         .onMove(function () {
@@ -218,7 +221,7 @@ const TVChartContainer = () => {
 
           console.log('New Price', newPrice)
 
-          const newPrediction = (
+          const newValidation = (
             (newPrice >= lastBarData.current.close
               ? (newPrice - lastBarData.current.close) /
                 (lastBarData.current.takeProfitPrice -
@@ -228,30 +231,30 @@ const TVChartContainer = () => {
                   lastBarData.current.close)) * 100
           ).toFixed(2)
 
-          console.log('New Prediction', newPrediction, prediction)
+          console.log('New Validation', newValidation, validation)
 
-          // TODO: Find a better approach to update the prediction line
-          setPrediction(newPrediction + 1)
-          setPrediction(newPrediction)
+          // TODO: Find a better approach to update the validation line
+          setValidation(newValidation + 1)
+          setValidation(newValidation)
         })
-        .setText('Prediction')
+        .setText('Validation')
         .setQuantity('0%')
         .setPrice(lastBarData.current.close)
     })
     //eslint-disable-next-line
-  }, [theme, isMobile, currentExercise])
+  }, [theme, isMobile, currentExerciseChart])
 
   useEffect(() => {
-    console.log('Prediction', predictionLine.current, prediction)
-    if (predictionLine.current != null && typeof prediction == 'number') {
-      predictionLine.current.setQuantity(prediction + '%')
-      const actualPrice = predictionLine.current.getPrice()
+    console.log('Validation', validationLine.current, validation)
+    if (validationLine.current != null && typeof validation == 'number') {
+      validationLine.current.setQuantity(validation + '%')
+      const actualPrice = validationLine.current.getPrice()
       let newPrice =
         lastBarData.current.close +
-        (prediction > 0
+        (validation > 0
           ? lastBarData.current.takeProfitPrice - lastBarData.current.close
           : lastBarData.current.close - lastBarData.current.stopLossPrice) *
-          (prediction / 100)
+          (validation / 100)
 
       console.log(
         'ACTUAL PRICE:',
@@ -259,8 +262,8 @@ const TVChartContainer = () => {
         'NEW PRICE:',
         newPrice,
         'PREDICTION',
-        prediction,
-        1 + prediction / 100
+        validation,
+        1 + validation / 100
       )
 
       if (newPrice > lastBarData.current.takeProfitPrice)
@@ -269,9 +272,9 @@ const TVChartContainer = () => {
         newPrice = lastBarData.current.stopLossPrice
 
       // @ts-ignore
-      if (newPrice !== actualPrice) predictionLine.current.setPrice(newPrice)
+      if (newPrice !== actualPrice) validationLine.current.setPrice(newPrice)
     }
-  }, [prediction])
+  }, [validation])
 
   return <div id={defaultProps.containerId} className="tradingview-chart" />
 }

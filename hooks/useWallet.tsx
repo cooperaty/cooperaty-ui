@@ -121,8 +121,8 @@ export default function useWallet() {
         state.wallet.connected = true
       })
       await actions.fetchAllTraderAccounts()
-      actions.fetchTradeHistory()
-      actions.fetchWalletTokens()
+      await actions.fetchTradeHistory()
+      await actions.fetchWalletTokens()
     })
     wallet.on('disconnect', () => {
       console.log('disconnecting wallet')

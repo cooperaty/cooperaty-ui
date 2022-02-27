@@ -379,7 +379,7 @@
 
   "cooperaty": "Cooperaty",
   "rank": "Rank",
-  "prediction": "Prediction",
+  "validation": "Validation",
   "change-exercise": "Change Exercise",
   "send-validation": "Send Validation",
   "league": "League",
@@ -391,9 +391,10 @@
   "create-trader-account": "Create Trader Account",
   "insufficient-sol": "You need 0.035 SOL to create a Trader Account.",
   "trader-name": "Trader Name",
-  "trader-account-info": "This account will store on-chain your trading performance (rank) and your last prediction results.",
+  "trader-account-info": "This account will store on-chain your trading performance (rank) and your last validation results.",
   "trader-accounts": "Trader Accounts",
   "create-trader-account-error": "Could not create trader account",
-  "prediction-successfully-placed": "Prediction successfully placed",
-  "no-exercise-available": "No exercise available, try again later"
+  "validation-successfully-placed": "Validation successfully placed",
+  "no-exercise-available": "No exercise available, try again later",
+  "missing-validation": "Missing validation"
 }

@@ -1,4 +1,5 @@
 import type { AnchorTypes } from '@saberhq/anchor-contrib'
+import type { PublicKey } from '@solana/web3.js'
 
 import type { TrainerIDL } from '../idls/trainer'
 
@@ -11,11 +12,22 @@ type TrainerTypes = AnchorTypes<
     exercise: ExerciseAccount
   },
   {
-    prediction: Prediction
+    validation: ValidationStruct
   }
 >
 
+export type TrainerProgram = TrainerTypes['Program']
+
 export type TraderAccount = TrainerTypes['Accounts']['Trader']
 export type ExerciseAccount = TrainerTypes['Accounts']['Exercise']
-export type Prediction = TrainerTypes['Defined']['Prediction']
-export type TrainerProgram = TrainerTypes['Program']
+
+export type ValidationStruct = TrainerTypes['Defined']['Validation']
+
+export interface ExerciseData {
+  publicKey: PublicKey
+  account: ExerciseAccount
+}
+export interface TraderData {
+  publicKey: PublicKey
+  account: TraderAccount
+}

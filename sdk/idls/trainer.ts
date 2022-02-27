@@ -1,5 +1,7 @@
+import { generateErrorMap } from '@saberhq/anchor-contrib'
+
 export type TrainerIDL = {
-  version: '0.0.0'
+  version: '0.1.0'
   name: 'trainer'
   instructions: [
     {
@@ -12,7 +14,7 @@ export type TrainerIDL = {
         },
         {
           name: 'user'
-          isMut: false
+          isMut: true
           isSigner: true
         },
         {
@@ -25,10 +27,6 @@ export type TrainerIDL = {
         {
           name: 'name'
           type: 'string'
-        },
-        {
-          name: 'bump'
-          type: 'u8'
         }
       ]
     },
@@ -42,7 +40,7 @@ export type TrainerIDL = {
         },
         {
           name: 'authority'
-          isMut: false
+          isMut: true
           isSigner: true
         },
         {
@@ -57,26 +55,17 @@ export type TrainerIDL = {
           type: 'string'
         },
         {
-          name: 'predictionsCapacity'
-          type: 'u8'
-        },
-        {
-          name: 'bump'
+          name: 'validationsCapacity'
           type: 'u8'
         }
       ]
     },
     {
-      name: 'addPrediction'
+      name: 'addValidation'
       accounts: [
         {
           name: 'exercise'
           isMut: true
-          isSigner: false
-        },
-        {
-          name: 'authority'
-          isMut: false
           isSigner: false
         },
         {
@@ -121,8 +110,8 @@ export type TrainerIDL = {
           type: 'i64'
         },
         {
-          name: 'solutionKey'
-          type: 'publicKey'
+          name: 'solutionCid'
+          type: 'string'
         },
         {
           name: 'cid'
@@ -131,7 +120,7 @@ export type TrainerIDL = {
       ]
     },
     {
-      name: 'checkPrediction'
+      name: 'checkValidation'
       accounts: [
         {
           name: 'exercise'
@@ -146,11 +135,6 @@ export type TrainerIDL = {
         {
           name: 'trader'
           isMut: true
-          isSigner: false
-        },
-        {
-          name: 'user'
-          isMut: false
           isSigner: false
         }
       ]
@@ -213,18 +197,18 @@ export type TrainerIDL = {
             type: 'i64'
           },
           {
-            name: 'solutionKey'
-            type: 'publicKey'
+            name: 'solutionCid'
+            type: 'string'
           },
           {
-            name: 'predictionsCapacity'
+            name: 'validationsCapacity'
             type: 'u8'
           },
           {
-            name: 'predictions'
+            name: 'validations'
             type: {
               vec: {
-                defined: 'Prediction'
+                defined: 'Validation'
               }
             }
           },
@@ -238,7 +222,7 @@ export type TrainerIDL = {
   ]
   types: [
     {
-      name: 'Prediction'
+      name: 'Validation'
       type: {
         kind: 'struct'
         fields: [
@@ -249,6 +233,10 @@ export type TrainerIDL = {
           {
             name: 'trader'
             type: 'publicKey'
+          },
+          {
+            name: 'user'
+            type: 'publicKey'
           }
         ]
       }
@@ -256,34 +244,39 @@ export type TrainerIDL = {
   ]
   errors: [
     {
-      code: 300
+      code: 6000
       name: 'WrongExerciseCreator'
       msg: 'Specified exercise creator does not match the pubkey in the exercise'
     },
     {
-      code: 301
+      code: 6001
       name: 'WrongUser'
       msg: 'Specified user does not match the pubkey in the trader'
     },
     {
-      code: 302
-      name: 'WrongPredictionIndex'
-      msg: 'Specified prediction index does not match the pubkey in the trader'
+      code: 6002
+      name: 'WrongValidationIndex'
+      msg: 'Specified validation index does not match the pubkey in the trader'
     },
     {
-      code: 303
-      name: 'DuplicatedPrediction'
-      msg: 'Trader have already added a prediction'
+      code: 6003
+      name: 'DuplicatedValidation'
+      msg: 'Trader have already added a validation'
     },
     {
-      code: 304
-      name: 'InvalidPredictionIndex'
-      msg: 'Invalid prediction index'
+      code: 6004
+      name: 'InvalidValidationIndex'
+      msg: 'Invalid validation index'
+    },
+    {
+      code: 6005
+      name: 'BumpNotFound'
+      msg: 'Bump not found'
     }
   ]
 }
 export const TrainerJSON: TrainerIDL = {
-  version: '0.0.0',
+  version: '0.1.0',
   name: 'trainer',
   instructions: [
     {
@@ -296,7 +289,7 @@ export const TrainerJSON: TrainerIDL = {
         },
         {
           name: 'user',
-          isMut: false,
+          isMut: true,
           isSigner: true,
         },
         {
@@ -310,10 +303,6 @@ export const TrainerJSON: TrainerIDL = {
           name: 'name',
           type: 'string',
         },
-        {
-          name: 'bump',
-          type: 'u8',
-        },
       ],
     },
     {
@@ -326,7 +315,7 @@ export const TrainerJSON: TrainerIDL = {
         },
         {
           name: 'authority',
-          isMut: false,
+          isMut: true,
           isSigner: true,
         },
         {
@@ -341,26 +330,17 @@ export const TrainerJSON: TrainerIDL = {
           type: 'string',
         },
         {
-          name: 'predictionsCapacity',
-          type: 'u8',
-        },
-        {
-          name: 'bump',
+          name: 'validationsCapacity',
           type: 'u8',
         },
       ],
     },
     {
-      name: 'addPrediction',
+      name: 'addValidation',
       accounts: [
         {
           name: 'exercise',
           isMut: true,
-          isSigner: false,
-        },
-        {
-          name: 'authority',
-          isMut: false,
           isSigner: false,
         },
         {
@@ -405,8 +385,8 @@ export const TrainerJSON: TrainerIDL = {
           type: 'i64',
         },
         {
-          name: 'solutionKey',
-          type: 'publicKey',
+          name: 'solutionCid',
+          type: 'string',
         },
         {
           name: 'cid',
@@ -415,7 +395,7 @@ export const TrainerJSON: TrainerIDL = {
       ],
     },
     {
-      name: 'checkPrediction',
+      name: 'checkValidation',
       accounts: [
         {
           name: 'exercise',
@@ -430,11 +410,6 @@ export const TrainerJSON: TrainerIDL = {
         {
           name: 'trader',
           isMut: true,
-          isSigner: false,
-        },
-        {
-          name: 'user',
-          isMut: false,
           isSigner: false,
         },
       ],
@@ -497,18 +472,18 @@ export const TrainerJSON: TrainerIDL = {
             type: 'i64',
           },
           {
-            name: 'solutionKey',
-            type: 'publicKey',
+            name: 'solutionCid',
+            type: 'string',
           },
           {
-            name: 'predictionsCapacity',
+            name: 'validationsCapacity',
             type: 'u8',
           },
           {
-            name: 'predictions',
+            name: 'validations',
             type: {
               vec: {
-                defined: 'Prediction',
+                defined: 'Validation',
               },
             },
           },
@@ -522,7 +497,7 @@ export const TrainerJSON: TrainerIDL = {
   ],
   types: [
     {
-      name: 'Prediction',
+      name: 'Validation',
       type: {
         kind: 'struct',
         fields: [
@@ -534,37 +509,45 @@ export const TrainerJSON: TrainerIDL = {
             name: 'trader',
             type: 'publicKey',
           },
+          {
+            name: 'user',
+            type: 'publicKey',
+          },
         ],
       },
     },
   ],
   errors: [
     {
-      code: 300,
+      code: 6000,
       name: 'WrongExerciseCreator',
       msg: 'Specified exercise creator does not match the pubkey in the exercise',
     },
     {
-      code: 301,
+      code: 6001,
       name: 'WrongUser',
       msg: 'Specified user does not match the pubkey in the trader',
     },
     {
-      code: 302,
-      name: 'WrongPredictionIndex',
-      msg: 'Specified prediction index does not match the pubkey in the trader',
+      code: 6002,
+      name: 'WrongValidationIndex',
+      msg: 'Specified validation index does not match the pubkey in the trader',
     },
     {
-      code: 303,
-      name: 'DuplicatedPrediction',
-      msg: 'Trader have already added a prediction',
+      code: 6003,
+      name: 'DuplicatedValidation',
+      msg: 'Trader have already added a validation',
     },
     {
-      code: 304,
-      name: 'InvalidPredictionIndex',
-      msg: 'Invalid prediction index',
+      code: 6004,
+      name: 'InvalidValidationIndex',
+      msg: 'Invalid validation index',
+    },
+    {
+      code: 6005,
+      name: 'BumpNotFound',
+      msg: 'Bump not found',
     },
   ],
 }
-import { generateErrorMap } from '@saberhq/anchor-contrib'
 export const TrainerErrors = generateErrorMap(TrainerJSON)

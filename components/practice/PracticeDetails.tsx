@@ -16,13 +16,13 @@ const PracticeDetails = () => {
   const { width } = useViewport()
 
   const isMobile = width ? width < breakpoints.sm : false
-  const isExerciseAvailable = !(currentExercise === null)
+  const isExerciseAvailable = currentExercise && currentExercise.chart
 
   const takeProfitPercentage = isExerciseAvailable
-    ? currentExercise.position.takeProfit * 100
+    ? currentExercise.chart?.position.takeProfit * 100
     : 0
   const stopLossPercentage = isExerciseAvailable
-    ? currentExercise.position.stopLoss * 100
+    ? currentExercise.chart?.position.stopLoss * 100
     : 0
 
   const reloadTraderAndExercise = async () => {
@@ -47,14 +47,14 @@ const PracticeDetails = () => {
               height="24"
               src={`${
                 isExerciseAvailable
-                  ? `/assets/icons/modalities/${currentExercise.type.toLowerCase()}.png`
+                  ? `/assets/icons/modalities/${currentExercise.chart.type.toLowerCase()}.png`
                   : 'unknown.svg'
               }`}
               className={`mr-2.5`}
             />
             <div className="font-semibold pr-0.5 text-xl">
               {isExerciseAvailable
-                ? currentExercise.type
+                ? currentExercise.chart?.type
                 : t('no-exercise-available')}
             </div>
           </div>

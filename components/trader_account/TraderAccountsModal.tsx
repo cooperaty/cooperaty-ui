@@ -2,7 +2,7 @@ import React, { FunctionComponent, useEffect, useState } from 'react'
 import { RadioGroup } from '@headlessui/react'
 import { CheckCircleIcon, StarIcon } from '@heroicons/react/solid'
 import { PlusCircleIcon } from '@heroicons/react/outline'
-import useStore, { TraderAccount } from '../../stores/useStore'
+import useStore from '../../stores/useStore'
 import useLocalStorageState from '../../hooks/useLocalStorageState'
 import Modal from '../elements/Modal'
 import { ElementTitle } from '../elements/styles'
@@ -11,6 +11,7 @@ import { useTranslation } from 'next-i18next'
 import NewTraderAccount from './NewTraderAccount'
 import Tooltip from '../elements/Tooltip'
 import { abbreviateAddress } from '../../utils'
+import { TraderData } from '../../sdk'
 
 export const LAST_TRADER_ACCOUNT_KEY = 'lastTraderAccountViewed-3.0'
 
@@ -31,7 +32,7 @@ const TraderAccountsModal: FunctionComponent<AccountsModalProps> = ({
   const setStore = useStore((s) => s.set)
   const [, setLastAccountViewed] = useLocalStorageState(LAST_TRADER_ACCOUNT_KEY)
 
-  const handleTraderAccountChange = (traderAccount: TraderAccount) => {
+  const handleTraderAccountChange = (traderAccount: TraderData) => {
     setLastAccountViewed(traderAccount.publicKey.toString())
     setStore((state) => {
       state.selectedTraderAccount.current = traderAccount
@@ -153,7 +154,7 @@ const TraderAccountsModal: FunctionComponent<AccountsModalProps> = ({
 const TraderAccountInfo = ({
   traderAccount,
 }: {
-  traderAccount: TraderAccount
+  traderAccount: TraderData
 }) => {
   const { t } = useTranslation('common')
   const ranking = traderAccount.account.performance.toNumber()

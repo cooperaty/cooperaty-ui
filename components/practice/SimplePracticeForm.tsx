@@ -33,18 +33,18 @@ export default function SimplePracticeForm() {
   const cooperatyClient = useStore((s) => s.connection.cooperatyClient)
   const traderAccount = useStore((s) => s.selectedTraderAccount.current)
   const currentExercise = useStore((s) => s.selectedExercise.current)
-  const prediction = useStore((s) => s.practiceForm.prediction)
+  const validation = useStore((s) => s.practiceForm.validation)
 
   const { t } = useTranslation('common')
   const [, setSubmitting] = useState(false)
-  const [predictionPercentage, setPredictionPercentage] = useState('0%')
+  const [validationPercentage, setValidationPercentage] = useState('0%')
   const [, setinsufficientSol] = useState(false)
-  const setPrediction = (prediction) =>
+  const setValidation = (validation) =>
     set((s) => {
-      if (!Number.isNaN(parseFloat(prediction))) {
-        s.practiceForm.prediction = parseFloat(prediction)
+      if (!Number.isNaN(parseFloat(validation))) {
+        s.practiceForm.validation = parseFloat(validation)
       } else {
-        s.practiceForm.prediction = prediction
+        s.practiceForm.validation = validation
       }
     })
 
@@ -52,19 +52,19 @@ export default function SimplePracticeForm() {
     currentExercise === null || currentExercise.state != 'active'
   const disabledValidationButton = traderAccount === null
 
-  const onSetPrediction = (prediction: number | '') => {
-    setPrediction(prediction)
+  const onSetValidation = (validation: number | '') => {
+    setValidation(validation)
   }
 
-  const onPredictionTypeChange = () => {
-    if (typeof prediction === 'number') {
-      setPrediction(-1 * prediction)
+  const onValidationTypeChange = () => {
+    if (typeof validation === 'number') {
+      setValidation(-1 * validation)
     }
   }
 
-  const onPredictionPercentChange = (predictionPercentage: string) => {
-    setPredictionPercentage(predictionPercentage)
-    setPrediction(parseInt(predictionPercentage.replace('%', '')))
+  const onValidationPercentChange = (validationPercentage: string) => {
+    setValidationPercentage(validationPercentage)
+    setValidation(parseInt(validationPercentage.replace('%', '')))
   }
 
   async function onSubmitChangeExercise() {
@@ -74,10 +74,10 @@ export default function SimplePracticeForm() {
     await actions.fetchExercise()
   }
 
-  async function onSubmitPrediction() {
-    if (!prediction) {
+  async function onSubmitValidation() {
+    if (!validation) {
       notify({
-        title: t('missing-prediction'),
+        title: t('missing-validation'),
         type: 'error',
       })
       return
@@ -87,22 +87,24 @@ export default function SimplePracticeForm() {
     const currentExercise = useStore.getState().selectedExercise.current
     const traderAccount = useStore.getState().selectedTraderAccount.current
 
-    if (!wallet || !traderAccount || !currentExercise) return
+    console.log(currentExercise)
+    if (!wallet || !traderAccount || !currentExercise || !currentExercise?.data)
+      return
 
     setSubmitting(true)
 
     try {
-      const txid = await cooperatyClient.addPrediction(
+      const txid = await cooperatyClient.addValidation(
         traderAccount,
-        currentExercise,
-        prediction,
-        currentExercise.account.cid
+        currentExercise.data,
+        validation,
+        currentExercise.data.account.cid
       )
 
-      notify({ title: t('prediction-successfully-placed'), txid })
+      notify({ title: t('validation-successfully-placed'), txid })
 
       set((s) => {
-        s.practiceForm.prediction = 0
+        s.practiceForm.validation = 0
         s.selectedExercise.loadNew = true
       })
     } catch (e) {
@@ -117,7 +119,7 @@ export default function SimplePracticeForm() {
     }
   }
 
-  // Check if the user has enough SOL to make the prediction
+  // Check if the user has enough SOL to make the validation
   useEffect(() => {
     const walletSol = walletTokens.find((a) => a.config.symbol === 'SOL')
     walletSol
@@ -125,51 +127,51 @@ export default function SimplePracticeForm() {
       : null
   }, [walletTokens])
 
-  // Update the prediction percentage list choices based on the sign of the current prediction
+  // Update the validation percentage list choices based on the sign of the current validation
   useEffect(() => {
-    const predictionPercentage = `${prediction}%`
-    const predictionPercentageList =
-      prediction >= 0
+    const validationPercentage = `${validation}%`
+    const validationPercentageList =
+      validation >= 0
         ? PREDICTION_PERCENT_LIST_PROFIT
         : PREDICTION_PERCENT_LIST_LOSS
-    if (predictionPercentageList.includes(predictionPercentage)) {
-      setPredictionPercentage(`${prediction}%`)
+    if (validationPercentageList.includes(validationPercentage)) {
+      setValidationPercentage(`${validation}%`)
     } else {
-      setPredictionPercentage(null)
+      setValidationPercentage(null)
     }
-  }, [prediction])
+  }, [validation])
 
   return (
     <div className="flex flex-col h-full">
-      <ElementTitle>{currentExercise?.type || 'Practice'}</ElementTitle>
+      <ElementTitle>{currentExercise?.chart?.type || 'Practice'}</ElementTitle>
       <div className="grid grid-cols-12 gap-2 text-left">
         <div className="col-span-6">
           <label className="text-xxs text-th-fgd-3">{t('type')}</label>
           <ButtonGroup
-            activeValue={prediction >= 0 ? 'Profit' : 'Loss'}
+            activeValue={validation >= 0 ? 'Profit' : 'Loss'}
             className="h-10"
-            onChange={() => onPredictionTypeChange()}
+            onChange={() => onValidationTypeChange()}
             values={['Loss', 'Profit']}
           />
         </div>
         <div className="col-span-6">
-          <label className="text-xxs text-th-fgd-3">{t('prediction')}</label>
+          <label className="text-xxs text-th-fgd-3">{t('validation')}</label>
           <Input
             type="number"
             min="0"
             max="100"
-            onChange={(e) => onSetPrediction(e.target.value)}
-            value={prediction}
+            onChange={(e) => onSetValidation(e.target.value)}
+            value={validation}
             placeholder="0"
             suffix="%"
           />
         </div>
         <div className="col-span-12 mt-1">
           <ButtonGroup
-            activeValue={predictionPercentage}
-            onChange={(p) => onPredictionPercentChange(p)}
+            activeValue={validationPercentage}
+            onChange={(p) => onValidationPercentChange(p)}
             values={
-              prediction >= 0
+              validation >= 0
                 ? PREDICTION_PERCENT_LIST_PROFIT
                 : PREDICTION_PERCENT_LIST_LOSS
             }
@@ -190,7 +192,7 @@ export default function SimplePracticeForm() {
             </Button>
             <Button
               disabled={disabledValidationButton}
-              onClick={onSubmitPrediction}
+              onClick={onSubmitValidation}
               className={`${
                 !disabledValidationButton
                   ? 'bg-th-bkg-2 border border-th-green hover:border-th-green-dark'

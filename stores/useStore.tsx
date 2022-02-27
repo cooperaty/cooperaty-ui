@@ -39,50 +39,31 @@ import {
   NODE_URL_KEY,
 } from '../components/modules/settings/SettingsModal'
 import { MSRM_DECIMALS } from '@project-serum/serum/lib/token-instructions'
-import { TrainerSDK } from '../sdk'
+import { TrainerSDK, TraderData, ExerciseData } from '../sdk'
 import Axios from 'axios'
 import { LAST_TRADER_ACCOUNT_KEY } from '../components/trader_account/TraderAccountsModal'
-import { BN } from '@project-serum/anchor'
 import { SignerWallet, SolanaProvider } from '@saberhq/solana-contrib'
 
-export class TraderAccount {
-  publicKey: PublicKey
-  account: {
-    user: PublicKey
-    name: string
-    performance: BN
-    bump: BN
-  }
-}
-
 export class Exercise {
-  publicKey: PublicKey
-  account: {
-    full: boolean
-    cid: string
-    authority: PublicKey
-    outcome: number
-    solutionKey: PublicKey
-    predictionsCapacity: number
-    predictions: any
-    bump: number
-  }
-  data: [
-    {
-      time: number
-      low: number
-      high: number
-      open: number
-      close: number
-      volume: number
+  data: ExerciseData
+  chart: {
+    bars: [
+      {
+        time: number
+        low: number
+        high: number
+        open: number
+        close: number
+        volume: number
+      }
+    ]
+    type: 'Scalping' | 'Swing'
+    position: {
+      direction: 'long_position' | 'short_position'
+      takeProfit: number
+      stopLoss: number
+      post_bars: number
     }
-  ]
-  type: 'Scalping' | 'Swing'
-  position: {
-    direction: 'long_position' | 'short_position'
-    takeProfit: number
-    stopLoss: number
-    bars: number
   }
   state: 'active' | 'answered' | 'skipped'
 }
@@ -227,14 +208,14 @@ interface Store extends State {
   }
 
   // Cooperaty
-  traderAccounts: TraderAccount[]
+  traderAccounts: TraderData[]
   selectedTraderAccount: {
-    current: TraderAccount | null
+    current: TraderData | null
     initialLoad: boolean
     lastUpdatedAt: number
   }
   practiceForm: {
-    prediction: number | ''
+    validation: number | ''
     practiceType: 'Loss' | 'Profit'
   }
   exercisesHistory: Exercise[]
@@ -675,7 +656,7 @@ const useStore = create<Store>((set, get) => {
           state.connection.client = newMangoClient
         })
 
-        this.updateSDK()
+        await this.updateSDK()
       },
       async fetchExercise() {
         const cooperatyClient = get().connection.cooperatyClient
@@ -694,21 +675,22 @@ const useStore = create<Store>((set, get) => {
           return newExercises.length > 0 ? newExercises[0] : null
         }
 
-        const setNewExercise = async (exercise) => {
+        const setNewExercise = async (exerciseData: ExerciseData) => {
           // TODO: throw error if no cid
-          const cid = exercise.account.cid
+          const cid = exerciseData.account.cid
 
           // TODO: throw error if now ipfs data
           const response = await Axios.get('https://ipfs.io/ipfs/' + cid)
 
-          exercise.position = response.data.position
-          exercise.data = response.data.candles
-
-          // TODO: add type to exercise
-          exercise.type = 'Scalping'
-
-          // TODO: add status by filtering exercises history
-          exercise.status = 'Active'
+          const exercise: Exercise = {
+            data: exerciseData,
+            chart: {
+              position: response.data.position,
+              type: 'Scalping', // TODO: add type to exercise
+              bars: response.data.candles,
+            },
+            state: 'active', // TODO: add state by filtering exercises history
+          }
 
           set((state) => {
             // @ts-ignore
@@ -719,7 +701,7 @@ const useStore = create<Store>((set, get) => {
           })
           localStorage.setItem(
             'last_exercise_account',
-            exercise.publicKey.toString()
+            exerciseData.publicKey.toString()
           )
         }
 
@@ -733,8 +715,9 @@ const useStore = create<Store>((set, get) => {
             lastExercisePublicKey != null
               ? await cooperatyClient.reloadExercise({
                   publicKey: new PublicKey(lastExercisePublicKey),
-                })
+                } as ExerciseData)
               : await getNewExercise()
+          console.log('exercise', exercise)
         } else if (exerciseLoadNew) {
           exercise = await getNewExercise()
         }
@@ -749,7 +732,7 @@ const useStore = create<Store>((set, get) => {
       lastUpdatedAt: 0,
     },
     practiceForm: {
-      prediction: 0,
+      validation: 0,
       practiceType: 'Profit',
     },
     exercisesHistory: [],
