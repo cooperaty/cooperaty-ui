@@ -381,6 +381,7 @@
   "rank": "Rank",
   "validation": "Validation",
   "change-exercise": "Change Exercise",
+  "load-exercise": "Load Exercise",
   "send-validation": "Send Validation",
   "league": "League",
   "practice": "Practice",
@@ -396,5 +397,10 @@
   "create-trader-account-error": "Could not create trader account",
   "validation-successfully-placed": "Validation successfully placed",
   "no-exercise-available": "No exercise available, try again later",
-  "missing-validation": "Missing validation"
+  "missing-validation": "Missing validation",
+  "view-all-exercises": "View all exercises",
+  "state": "State",
+  "active": "Active",
+  "answered": "Answered",
+  "skipped": "Skipped"
 }

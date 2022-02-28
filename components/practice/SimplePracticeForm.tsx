@@ -48,9 +48,9 @@ export default function SimplePracticeForm() {
       }
     })
 
-  const disabledChangeExerciseButton =
-    currentExercise === null || currentExercise.state != 'active'
-  const disabledValidationButton = traderAccount === null
+  const disabledChangeExerciseButton = traderAccount === null
+  const disabledValidationButton =
+    traderAccount === null || currentExercise.state != 'active'
 
   const onSetValidation = (validation: number | '') => {
     setValidation(validation)
@@ -69,7 +69,10 @@ export default function SimplePracticeForm() {
 
   async function onSubmitChangeExercise() {
     set((s) => {
+      if (currentExercise.state == 'active')
+        s.exercisesHistory.push({ ...currentExercise, state: 'skipped' })
       s.selectedExercise.current.state = 'skipped'
+      s.selectedExercise.loadNew = true
     })
     await actions.fetchExercise()
   }
@@ -104,7 +107,10 @@ export default function SimplePracticeForm() {
       notify({ title: t('validation-successfully-placed'), txid })
 
       set((s) => {
+        if (currentExercise.state == 'active')
+          s.exercisesHistory.push({ ...currentExercise, state: 'answered' })
         s.practiceForm.validation = 0
+        s.selectedExercise.current.state = 'answered'
         s.selectedExercise.loadNew = true
       })
     } catch (e) {
@@ -188,7 +194,9 @@ export default function SimplePracticeForm() {
                   : 'border border-th-bkg-4'
               } text-th-white hover:text-th-fgd-1 hover:bg-th-white w-full'`}
             >
-              <span>{t('change-exercise')}</span>
+              <span>
+                {currentExercise ? t('change-exercise') : t('load-exercise')}
+              </span>
             </Button>
             <Button
               disabled={disabledValidationButton}

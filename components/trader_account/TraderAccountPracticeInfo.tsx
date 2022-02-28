@@ -5,18 +5,16 @@ import Tooltip from '../elements/Tooltip'
 import { useViewport } from '../../hooks/useViewport'
 import { breakpoints } from '../TradePageGrid'
 import { useTranslation } from 'next-i18next'
-import useMangoAccount from '../../hooks/useMangoAccount'
 
 export default function TraderAccountPracticeInfo() {
   const { t } = useTranslation('common')
   const connected = useStore((s) => s.wallet.connected)
-  const selectedTraderAccount = useStore((s) => s.selectedTraderAccount.current)
-  const { mangoAccount } = useMangoAccount()
+  const traderAccount = useStore((s) => s.selectedTraderAccount.current)
   const { width } = useViewport()
   const isMobile = width ? width < breakpoints.sm : false
 
-  const ranking = selectedTraderAccount
-    ? selectedTraderAccount.account.performance.toNumber()
+  const ranking = traderAccount
+    ? traderAccount.account.performance.toNumber()
     : 0.0
 
   return (
@@ -29,7 +27,7 @@ export default function TraderAccountPracticeInfo() {
           <ElementTitle>
             <Tooltip
               content={
-                mangoAccount ? (
+                traderAccount ? (
                   <div>
                     {t('maint-health')}: {ranking.toFixed(4)}
                   </div>
@@ -46,7 +44,7 @@ export default function TraderAccountPracticeInfo() {
           <div className="flex justify-center text-xs -mt-2">
             <a
               className="flex items-center text-th-fgd-4 hover:text-th-primary"
-              href={`https://explorer.solana.com/address/${mangoAccount?.publicKey}`}
+              href={`https://explorer.solana.com/address/${traderAccount?.publicKey}`}
               target="_blank"
               rel="noopener noreferrer"
             >
@@ -59,7 +57,9 @@ export default function TraderAccountPracticeInfo() {
               <div className="font-normal text-th-fgd-3 leading-4">
                 {t('Name')}
               </div>
-              <div className="text-th-fgd-1">Scalper</div>
+              <div className="text-th-fgd-1">
+                {traderAccount?.account?.name}
+              </div>
             </div>
             <div className="flex justify-between pb-3">
               <div className="font-normal text-th-fgd-3 leading-4">

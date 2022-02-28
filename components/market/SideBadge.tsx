@@ -11,7 +11,7 @@ const SideBadge: FunctionComponent<SideBadgeProps> = ({ side }) => {
   return (
     <div
       className={`rounded inline-block ${
-        side === 'buy' || side === 'long'
+        side === 'buy' || side === 'long' || side === 'long_position'
           ? 'border border-th-green text-th-green'
           : 'border border-th-red text-th-red'
       }

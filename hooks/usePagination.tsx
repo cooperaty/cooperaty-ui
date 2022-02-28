@@ -104,6 +104,8 @@ const usePagination = (data = [], opts = {}) => {
     paginated: extractPage(page, perPage, data),
   })
 
+  console.log(state)
+
   return {
     firstPage: () => dispatch({ type: 'FIRST_PAGE' }),
     lastPage: () => dispatch({ type: 'LAST_PAGE' }),

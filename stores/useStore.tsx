@@ -658,71 +658,83 @@ const useStore = create<Store>((set, get) => {
 
         await this.updateSDK()
       },
-      async fetchExercise() {
-        const cooperatyClient = get().connection.cooperatyClient
+      async setNewExercise(exercise: Exercise) {
         const set = get().set
-        const exerciseLoadInitial = get().selectedExercise.initialLoad
-        const exerciseLoadNew = get().selectedExercise.initialLoad
+
+        // TODO: throw error if now ipfs data
+        const response = await Axios.get(
+          'https://ipfs.io/ipfs/' + exercise.data.account.cid
+        )
+
+        exercise.chart = {
+          position: response.data.position,
+          type: 'Scalping', // TODO: add type to exercise
+          bars: response.data.candles,
+        }
+
+        console.log('exercise', exercise)
+
+        if (!exercise.state) exercise.state = 'active'
+
+        set((state) => {
+          state.selectedExercise.current = exercise
+          state.selectedExercise.initialLoad = false
+          state.selectedExercise.loadNew = false
+          state.lastUpdatedAt = new Date().toISOString()
+        })
+        localStorage.setItem(
+          'last_exercise_account',
+          exercise.data.publicKey.toString()
+        )
+      },
+      async getNewExercise() {
+        const cooperatyClient = get().connection.cooperatyClient
         const exercisesHistory = get().exercisesHistory
 
-        const getNewExercise = async () => {
-          const exercises: any[] = await cooperatyClient.getFilteredExercises({
-            full: false,
+        const exercises: any[] = await cooperatyClient.getFilteredExercises({
+          full: false,
+        })
+        const newExercises = exercises.filter(
+          (exercise) =>
+            exercisesHistory.findIndex(
+              (pastExercise) =>
+                pastExercise.data.publicKey === exercise.publicKey
+            ) != -1
+        )
+
+        console.log('newExercises', newExercises)
+
+        if (newExercises.length == 0) {
+          notify({
+            title: 'No new exercises',
+            description: 'Try again later',
+            type: 'error',
           })
-          const newExercises = exercises.filter(
-            (exercise) => exercisesHistory.indexOf(exercise.publicKey) === -1
-          )
-          return newExercises.length > 0 ? newExercises[0] : null
+          return null
+        } else {
+          return newExercises[0]
         }
-
-        const setNewExercise = async (exerciseData: ExerciseData) => {
-          // TODO: throw error if no cid
-          const cid = exerciseData.account.cid
-
-          // TODO: throw error if now ipfs data
-          const response = await Axios.get('https://ipfs.io/ipfs/' + cid)
-
-          const exercise: Exercise = {
-            data: exerciseData,
-            chart: {
-              position: response.data.position,
-              type: 'Scalping', // TODO: add type to exercise
-              bars: response.data.candles,
-            },
-            state: 'active', // TODO: add state by filtering exercises history
-          }
-
-          set((state) => {
-            // @ts-ignore
-            state.selectedExercise.current = exercise
-            state.selectedExercise.initialLoad = false
-            state.selectedExercise.loadNew = false
-            state.lastUpdatedAt = new Date().toISOString()
-          })
-          localStorage.setItem(
-            'last_exercise_account',
-            exerciseData.publicKey.toString()
-          )
-        }
-
-        let exercise = null
+      },
+      async fetchExercise(exercise: Exercise = new Exercise()) {
+        const cooperatyClient = get().connection.cooperatyClient
+        const exerciseLoadInitial = get().selectedExercise.initialLoad
+        const exerciseLoadNew = get().selectedExercise.initialLoad
 
         if (exerciseLoadInitial) {
           const lastExercisePublicKey = localStorage.getItem(
             'last_exercise_account'
           )
-          exercise =
+          exercise.data =
             lastExercisePublicKey != null
               ? await cooperatyClient.reloadExercise({
                   publicKey: new PublicKey(lastExercisePublicKey),
                 } as ExerciseData)
-              : await getNewExercise()
-          console.log('exercise', exercise)
+              : await this.getNewExercise()
         } else if (exerciseLoadNew) {
-          exercise = await getNewExercise()
+          exercise.data = await this.getNewExercise()
         }
 
-        if (exercise != null) await setNewExercise(exercise)
+        if (exercise.data != null) await this.setNewExercise(exercise)
       },
     },
     traderAccounts: [],

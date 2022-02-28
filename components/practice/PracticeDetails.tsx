@@ -93,6 +93,16 @@ const PracticeDetails = () => {
                 <MarketDataLoader />
               )}
             </div>
+            <div className="flex items-center justify-between md:block">
+              <div className="text-th-fgd-3 tiny-text pb-0.5">{t('state')}</div>
+              {currentExercise.state ? (
+                <div className="font-semibold md:text-xs">
+                  {t(currentExercise.state)}
+                </div>
+              ) : (
+                <MarketDataLoader />
+              )}
+            </div>
           </div>
         )}
       </div>

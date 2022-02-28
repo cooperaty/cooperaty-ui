@@ -1,18 +1,15 @@
 import { useState } from 'react'
-import { useOpenOrders } from '../../../hooks/useOpenOrders'
-import usePerpPositions from '../../../hooks/usePerpPositions'
-import BalancesTable from '../../account/BalancesTable'
-import PracticeHistoryTable from '../../practice/PracticeHistoryTable'
-import ManualRefresh from '../../elements/ManualRefresh'
-import Tabs from '../../elements/Tabs'
-import useMangoAccount from '../../../hooks/useMangoAccount'
+import BalancesTable from '../account/BalancesTable'
+import PracticeHistoryTable from './PracticeHistoryTable'
+import ManualRefresh from '../elements/ManualRefresh'
+import Tabs from '../elements/Tabs'
+import useStore from '../../stores/useStore'
 
 const TABS = ['Practice History']
 
 const UserPracticeInfoTabs = ({ activeTab, setActiveTab }) => {
-  const openOrders = useOpenOrders()
-  const { openPositions } = usePerpPositions()
-  const { mangoAccount } = useMangoAccount()
+  const traderAccount = useStore((state) => state.selectedTraderAccount.current)
+  const exercisesHistory = useStore((state) => state.exercisesHistory)
 
   const handleTabChange = (tabName) => {
     setActiveTab(tabName)
@@ -24,16 +21,13 @@ const UserPracticeInfoTabs = ({ activeTab, setActiveTab }) => {
         activeTab={activeTab}
         onChange={handleTabChange}
         showCount={
-          openOrders && openPositions
-            ? [
-                { tabName: 'Orders', count: openOrders.length },
-                { tabName: 'Positions', count: openPositions.length },
-              ]
+          exercisesHistory
+            ? [{ tabName: 'Practice History', count: exercisesHistory.length }]
             : null
         }
         tabs={TABS}
       />
-      {mangoAccount ? (
+      {traderAccount ? (
         <div className="absolute right-0 top-0">
           <ManualRefresh />
         </div>
@@ -45,7 +39,7 @@ const UserPracticeInfoTabs = ({ activeTab, setActiveTab }) => {
 const TabContent = ({ activeTab }) => {
   switch (activeTab) {
     case 'Practice History':
-      return <PracticeHistoryTable numTrades={100} />
+      return <PracticeHistoryTable numExercises={50} />
     default:
       return <BalancesTable />
   }
