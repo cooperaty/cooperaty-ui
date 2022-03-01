@@ -17,6 +17,8 @@ export default function TraderAccountPracticeInfo() {
     ? traderAccount.account.performance.toNumber()
     : 0.0
 
+  console.log('connected', connected)
+
   return (
     <>
       <div

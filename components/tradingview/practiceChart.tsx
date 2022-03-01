@@ -30,7 +30,8 @@ export interface ChartContainerProps {
 const TVChartContainer = () => {
   const set = useStore((s) => s.set)
   const validation = useStore((s) => s.practiceForm.validation)
-  const currentExerciseChart = useStore((s) => s.selectedExercise.current.chart)
+  const currentExercise = useStore((s) => s.selectedExercise.current)
+  const currentExerciseChart = currentExercise.chart
 
   const { theme } = useTheme()
   const { width } = useViewport()
@@ -47,7 +48,7 @@ const TVChartContainer = () => {
 
   // @ts-ignore
   const defaultProps: ChartContainerProps = {
-    symbol: currentExerciseChart?.type,
+    symbol: currentExercise?.type,
     interval: '30' as ResolutionString,
     theme: 'Dark',
     containerId: 'tv_chart_container',
@@ -66,15 +67,14 @@ const TVChartContainer = () => {
   const lastBarData = useRef<Record<string, number>>({})
 
   useEffect(() => {
-    console.log(currentExerciseChart)
     if (!currentExerciseChart) return
-    const exerciseData = currentExerciseChart.bars.map((item) => {
+    const exerciseData = currentExerciseChart.candles.map((item) => {
       return Object.assign({}, item)
     })
     const datafeed = new Datafeed(exerciseData, ['1', '5', '15', '30'])
 
     const widgetOptions: ChartingLibraryWidgetOptions = {
-      symbol: currentExerciseChart.type,
+      symbol: currentExercise.type,
       // BEWARE: no trailing slash is expected in feed URL
       // tslint:disable-next-line:no-any
       // @ts-ignore
@@ -149,7 +149,7 @@ const TVChartContainer = () => {
 
     tvWidgetRef.current = tvWidget
     tvWidgetRef.current.onChartReady(function () {
-      console.log('TV', tvWidgetRef.current)
+      console.log('TRADINGVIEW', tvWidgetRef.current)
 
       // get last bar information
       // @ts-ignore
@@ -177,7 +177,7 @@ const TVChartContainer = () => {
             time:
               lastBarData.current.time +
               lastBarData.current.distance *
-                currentExerciseChart.position.post_bars,
+                currentExerciseChart.position.postBars,
             price: lastBarData.current.close,
           },
         ],
@@ -207,19 +207,10 @@ const TVChartContainer = () => {
           const actualPrice = this.getPrice()
           let newPrice = actualPrice
 
-          console.log(
-            'Actual Price',
-            actualPrice,
-            'TakeProfit',
-            lastBarData.current.takeProfitPrice
-          )
-
           if (actualPrice > lastBarData.current.takeProfitPrice)
             newPrice = lastBarData.current.takeProfitPrice
           else if (actualPrice < lastBarData.current.stopLossPrice)
             newPrice = lastBarData.current.stopLossPrice
-
-          console.log('New Price', newPrice)
 
           const newValidation = (
             (newPrice >= lastBarData.current.close
@@ -230,8 +221,6 @@ const TVChartContainer = () => {
                 (lastBarData.current.stopLossPrice -
                   lastBarData.current.close)) * 100
           ).toFixed(2)
-
-          console.log('New Validation', newValidation, validation)
 
           // TODO: Find a better approach to update the validation line
           setValidation(newValidation + 1)
@@ -245,7 +234,6 @@ const TVChartContainer = () => {
   }, [theme, isMobile, currentExerciseChart])
 
   useEffect(() => {
-    console.log('Validation', validationLine.current, validation)
     if (validationLine.current != null && typeof validation == 'number') {
       validationLine.current.setQuantity(validation + '%')
       const actualPrice = validationLine.current.getPrice()
@@ -255,16 +243,6 @@ const TVChartContainer = () => {
           ? lastBarData.current.takeProfitPrice - lastBarData.current.close
           : lastBarData.current.close - lastBarData.current.stopLossPrice) *
           (validation / 100)
-
-      console.log(
-        'ACTUAL PRICE:',
-        actualPrice,
-        'NEW PRICE:',
-        newPrice,
-        'PREDICTION',
-        validation,
-        1 + validation / 100
-      )
 
       if (newPrice > lastBarData.current.takeProfitPrice)
         newPrice = lastBarData.current.takeProfitPrice

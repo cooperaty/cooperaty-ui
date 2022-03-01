@@ -47,7 +47,7 @@ import { SignerWallet, SolanaProvider } from '@saberhq/solana-contrib'
 export class Exercise {
   data: ExerciseData
   chart: {
-    bars: [
+    candles: [
       {
         time: number
         low: number
@@ -57,15 +57,23 @@ export class Exercise {
         volume: number
       }
     ]
-    type: 'Scalping' | 'Swing'
     position: {
       direction: 'long_position' | 'short_position'
       takeProfit: number
       stopLoss: number
-      post_bars: number
+      postBars: number
     }
+    timeframe: string[]
   }
-  state: 'active' | 'answered' | 'skipped'
+  type: 'Scalping' | 'Swing'
+  state: 'active' | 'checking' | 'skipped' | 'expired' | 'success' | 'failed'
+  solution: {
+    cid: string
+    datetime: string
+    pair: string
+    exchange: string
+    outcome: number
+  }
 }
 
 export const ENDPOINTS: EndpointInfo[] = [
@@ -495,7 +503,6 @@ const useStore = create<Store>((set, get) => {
           state.selectedMangoAccount.current = reloadedMangoAccount
           state.selectedMangoAccount.lastUpdatedAt = new Date().toISOString()
         })
-        console.log('reloaded mango account', reloadedMangoAccount)
       },
       async reloadOrders() {
         const mangoAccount = get().selectedMangoAccount.current
@@ -565,6 +572,7 @@ const useStore = create<Store>((set, get) => {
         const set = get().set
         const connected = get().wallet.connected
         const cooperatyClient = get().connection.cooperatyClient
+        const selectedTraderAccount = get().selectedTraderAccount.current
         const wallet = get().wallet.current
         const actions = get().actions
 
@@ -573,7 +581,6 @@ const useStore = create<Store>((set, get) => {
             const traderAccounts = await cooperatyClient.getFilteredTraders({
               user: wallet.publicKey,
             })
-            console.log('traderAccounts', traderAccounts)
             if (traderAccounts.length > 0) {
               const sortedTraderAccounts = traderAccounts
                 .slice()
@@ -584,7 +591,7 @@ const useStore = create<Store>((set, get) => {
               set((state) => {
                 state.selectedTraderAccount.initialLoad = false
                 state.traderAccounts = sortedTraderAccounts
-                if (!state.selectedTraderAccount.current) {
+                if (!selectedTraderAccount) {
                   const lastTraderAccount = localStorage.getItem(
                     LAST_TRADER_ACCOUNT_KEY
                   )
@@ -594,6 +601,8 @@ const useStore = create<Store>((set, get) => {
                         ma.publicKey.toString() ===
                         JSON.parse(lastTraderAccount)
                     ) || sortedTraderAccounts[0]
+                  state.selectedTraderAccount.lastUpdatedAt =
+                    new Date().toISOString()
                 }
               })
             } else {
@@ -625,7 +634,7 @@ const useStore = create<Store>((set, get) => {
         const selectedTraderAccount = get().selectedTraderAccount.current
 
         if (wallet?.publicKey && connected && selectedTraderAccount) {
-          const reloadedTraderAccount =
+          const reloadedTraderAccount: TraderData =
             await cooperatyClient.reloadTraderAccount(selectedTraderAccount)
           set((state) => {
             state.selectedTraderAccount.current = reloadedTraderAccount
@@ -660,21 +669,40 @@ const useStore = create<Store>((set, get) => {
       },
       async setNewExercise(exercise: Exercise) {
         const set = get().set
+        let response: any
 
-        // TODO: throw error if now ipfs data
-        const response = await Axios.get(
-          'https://ipfs.io/ipfs/' + exercise.data.account.cid
-        )
+        try {
+          response = await Axios.get(
+            'https://ipfs.io/ipfs/' + exercise.data.account.cid
+          )
+        } catch (err) {
+          console.log('error getting ipfs data', err)
+          notify({
+            title: "Error getting exercise's chart",
+            description: 'Try again',
+            type: 'error',
+          })
+          set((s) => {
+            s.exercisesHistory.push({ ...exercise, state: 'skipped' })
+            s.selectedExercise.loadNew = false
+            s.selectedExercise.current = null
+          })
+          return
+        }
 
         exercise.chart = {
           position: response.data.position,
-          type: 'Scalping', // TODO: add type to exercise
-          bars: response.data.candles,
+          candles: response.data.candles,
+          timeframe: response.data.timeframe,
         }
-
-        console.log('exercise', exercise)
+        exercise.type = response.data.type ?? 'Scalping'
+        exercise.solution = {
+          cid: response.data.solutionCID ?? null,
+        } as Exercise['solution']
 
         if (!exercise.state) exercise.state = 'active'
+
+        console.log('NEW_EXERCISE', exercise)
 
         set((state) => {
           state.selectedExercise.current = exercise
@@ -694,31 +722,51 @@ const useStore = create<Store>((set, get) => {
         const exercises: any[] = await cooperatyClient.getFilteredExercises({
           full: false,
         })
+
+        console.log('preFilter', exercisesHistory)
+        console.log('preFilter', exercises)
+
         const newExercises = exercises.filter(
           (exercise) =>
-            exercisesHistory.findIndex(
-              (pastExercise) =>
-                pastExercise.data.publicKey === exercise.publicKey
-            ) != -1
+            exercisesHistory.findIndex((pastExercise) =>
+              pastExercise.data.publicKey.equals(exercise.publicKey)
+            ) === -1
         )
 
-        console.log('newExercises', newExercises)
+        console.log('AVAILABLE_EXERCISES', newExercises)
 
         if (newExercises.length == 0) {
-          notify({
-            title: 'No new exercises',
-            description: 'Try again later',
-            type: 'error',
-          })
-          return null
+          const historyWithoutSkippedExercises = exercisesHistory.filter(
+            (exercise) => exercise.state !== 'skipped'
+          )
+
+          if (historyWithoutSkippedExercises.length < exercisesHistory.length) {
+            set((s) => {
+              s.exercisesHistory = historyWithoutSkippedExercises
+            })
+            notify({
+              title: 'No new exercises',
+              description: 'Retrying with skipped exercises',
+              type: 'info',
+            })
+            return this.getNewExercise()
+          } else {
+            notify({
+              title: 'No new exercises',
+              description: 'Try again later',
+              type: 'error',
+            })
+            return null
+          }
         } else {
           return newExercises[0]
         }
       },
       async fetchExercise(exercise: Exercise = new Exercise()) {
+        const set = get().set
         const cooperatyClient = get().connection.cooperatyClient
         const exerciseLoadInitial = get().selectedExercise.initialLoad
-        const exerciseLoadNew = get().selectedExercise.initialLoad
+        const exerciseLoadNew = get().selectedExercise.loadNew
 
         if (exerciseLoadInitial) {
           const lastExercisePublicKey = localStorage.getItem(
@@ -734,7 +782,20 @@ const useStore = create<Store>((set, get) => {
           exercise.data = await this.getNewExercise()
         }
 
+        console.log('CREATE_EXERCISE', this.createExercise)
+
         if (exercise.data != null) await this.setNewExercise(exercise)
+        else {
+          set((state) => {
+            state.selectedExercise.initialLoad = false
+            state.selectedExercise.loadNew = false
+          })
+        }
+      },
+      async createExercise(cid: string) {
+        const cooperatyClient = get().connection.cooperatyClient
+
+        await cooperatyClient.createExercise(cid, 5)
       },
     },
     traderAccounts: [],

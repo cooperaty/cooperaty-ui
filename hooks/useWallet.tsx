@@ -13,6 +13,7 @@ import {
 import { WalletAdapter } from '../@types/types'
 import useInterval from './useInterval'
 import { useTranslation } from 'next-i18next'
+import { LAST_TRADER_ACCOUNT_KEY } from '../components/trader_account/TraderAccountsModal'
 
 const SECONDS = 1000
 const ASSET_URL =
@@ -117,6 +118,7 @@ export default function useWallet() {
     actions.updateSDK()
     if (!wallet) return
     wallet.on('connect', async () => {
+      console.log('connecting wallet')
       setStore((state) => {
         state.wallet.connected = true
       })
@@ -128,15 +130,19 @@ export default function useWallet() {
       console.log('disconnecting wallet')
       setStore((state) => {
         state.wallet.connected = false
-        state.mangoAccounts = []
-        state.selectedMangoAccount.current = null
-        state.tradeHistory = []
+        state.traderAccounts = []
+        state.selectedTraderAccount.current = null
+        state.exercisesHistory = []
       })
       notify({
         type: 'info',
         title: t('wallet-disconnected'),
       })
     })
+    const lastTraderAccount = localStorage.getItem(LAST_TRADER_ACCOUNT_KEY)
+    if (lastTraderAccount) {
+      wallet.connect()
+    }
   }, [wallet])
 
   useInterval(() => {

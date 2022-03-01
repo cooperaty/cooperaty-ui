@@ -47,14 +47,14 @@ const PracticeDetails = () => {
               height="24"
               src={`${
                 isExerciseAvailable
-                  ? `/assets/icons/modalities/${currentExercise.chart.type.toLowerCase()}.png`
+                  ? `/assets/icons/modalities/${currentExercise.type.toLowerCase()}.png`
                   : 'unknown.svg'
               }`}
               className={`mr-2.5`}
             />
             <div className="font-semibold pr-0.5 text-xl">
               {isExerciseAvailable
-                ? currentExercise.chart?.type
+                ? currentExercise.type
                 : t('no-exercise-available')}
             </div>
           </div>

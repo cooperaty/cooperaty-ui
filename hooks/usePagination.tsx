@@ -96,15 +96,12 @@ const paginationReducer = (state, action) => {
 
 const usePagination = (data = [], opts = {}) => {
   const { perPage, page } = { page: 0, perPage: 10, ...opts }
-
   const [state, dispatch] = useReducer(paginationReducer, {
     data,
     page,
     perPage,
     paginated: extractPage(page, perPage, data),
   })
-
-  console.log(state)
 
   return {
     firstPage: () => dispatch({ type: 'FIRST_PAGE' }),

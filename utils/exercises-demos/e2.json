@@ -2,7 +2,7 @@
   "candles": [
     {
       "time": 1635238800000,
-      "low": 62706.7,
+      "low": 64706.7,
       "high": 62706.7,
       "open": 62706.7,
       "close": 62706.7,
@@ -11770,10 +11770,11 @@
     }
   ],
   "position": {
-    "direction": "long_position",
-    "takeProfit": 0.03,
+    "direction": "short_position",
+    "takeProfit": 0.1,
     "stopLoss": 0.015,
-    "bars": 10
+    "postBars": 6
   },
+  "solutionCID": "abc",
   "timeframes": ["1", "5", "15", "30"]
 }

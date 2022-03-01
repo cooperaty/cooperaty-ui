@@ -54,6 +54,7 @@ const useHydrateStore = () => {
 
   // update exercise when on initial load or need to load new exercise
   useEffect(() => {
+    console.log('load', loadInitialExercise, loadNewExercise)
     if (loadNewExercise || loadInitialExercise) actions.fetchExercise()
   }, [loadNewExercise, loadInitialExercise, connected])
 
@@ -159,9 +160,9 @@ const useHydrateStore = () => {
     }
   }, [mangoAccount])
 
-  useInterval(() => {
-    actions.fetchMangoGroup()
-    actions.fetchExercise()
+  useInterval(async () => {
+    await actions.fetchMangoGroup()
+    await actions.fetchExercise()
   }, 120 * SECONDS)
 
   useInterval(() => {

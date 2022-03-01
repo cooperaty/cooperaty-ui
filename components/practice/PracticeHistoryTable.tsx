@@ -19,10 +19,17 @@ const PracticeHistoryTable = ({ numExercises }: { numExercises?: number }) => {
   const { asPath } = useRouter()
   const exercisesHistory = useStore((state) => state.exercisesHistory)
   const actions = useStore((state) => state.actions)
-  const { items, requestSort, sortConfig } = useSortableData(exercisesHistory)
+
+  const preFilteredExercises = exercisesHistory.filter(
+    (exercise) => exercise.state === 'checking'
+  )
+  console.log(preFilteredExercises)
+
+  const { items, requestSort, sortConfig } =
+    useSortableData(preFilteredExercises)
   const { width } = useViewport()
   const isMobile = width ? width < breakpoints.md : false
-  const filteredExercises = exercisesHistory
+  const filteredExercises = preFilteredExercises
     ? items.slice(0, numExercises)
     : items
 
@@ -39,16 +46,13 @@ const PracticeHistoryTable = ({ numExercises }: { numExercises?: number }) => {
 
   useEffect(() => {
     setData(filteredExercises)
-  }, [exercisesHistory])
-
-  console.log('Filtered exercises', filteredExercises)
-  console.log('Paginated data', paginatedData)
+  }, [preFilteredExercises])
 
   return (
     <div className={`flex flex-col sm:pb-4`}>
       <div className={`overflow-x-auto sm:-mx-6 lg:-mx-8`}>
         <div className={`align-middle inline-block min-w-full sm:px-6 lg:px-8`}>
-          {exercisesHistory && exercisesHistory.length ? (
+          {preFilteredExercises && preFilteredExercises.length ? (
             !isMobile ? (
               <>
                 <Table>
@@ -57,12 +61,12 @@ const PracticeHistoryTable = ({ numExercises }: { numExercises?: number }) => {
                       <Th>
                         <LinkButton
                           className="flex items-center no-underline font-normal"
-                          onClick={() => requestSort('chart.type')}
+                          onClick={() => requestSort('type')}
                         >
                           {t('type')}
                           <ArrowSmDownIcon
                             className={`default-transition flex-shrink-0 h-4 w-4 ml-1 ${
-                              sortConfig?.key === 'chart.type'
+                              sortConfig?.key === 'type'
                                 ? sortConfig.direction === 'ascending'
                                   ? 'transform rotate-180'
                                   : 'transform rotate-360'
@@ -164,10 +168,10 @@ const PracticeHistoryTable = ({ numExercises }: { numExercises?: number }) => {
                                   alt=""
                                   width="20"
                                   height="20"
-                                  src={`/assets/icons/modalities/${exercise.chart.type.toLowerCase()}.png`}
+                                  src={`/assets/icons/modalities/${exercise.type.toLowerCase()}.png`}
                                   className={`mr-2.5`}
                                 />
-                                <span>{exercise.chart.type}</span>
+                                <span>{exercise.type}</span>
                               </div>
                             </LinkButton>
                           </Td>
@@ -217,10 +221,10 @@ const PracticeHistoryTable = ({ numExercises }: { numExercises?: number }) => {
                                 alt=""
                                 width="16"
                                 height="16"
-                                src={`/assets/icons/modalities/${exercise.chart.type.toLowerCase()}.png`}
+                                src={`/assets/icons/modalities/${exercise.type.toLowerCase()}.png`}
                                 className={`mr-1.5`}
                               />
-                              {exercise.chart.type}
+                              {exercise.type}
                             </div>
                             <div className="text-th-fgd-3 text-xs">
                               <span

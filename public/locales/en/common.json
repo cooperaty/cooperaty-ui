@@ -401,6 +401,6 @@
   "view-all-exercises": "View all exercises",
   "state": "State",
   "active": "Active",
-  "answered": "Answered",
+  "checking": "Checking",
   "skipped": "Skipped"
 }

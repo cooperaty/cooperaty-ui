@@ -28,12 +28,12 @@ const MINIMUM_PREDICTION_FEE = 0.0001
 
 export default function SimplePracticeForm() {
   const set = useStore((s) => s.set)
-  const actions = useStore((s) => s.actions)
   const walletTokens = useStore((s) => s.wallet.tokens)
   const cooperatyClient = useStore((s) => s.connection.cooperatyClient)
   const traderAccount = useStore((s) => s.selectedTraderAccount.current)
-  const currentExercise = useStore((s) => s.selectedExercise.current)
+  const selectedExercise = useStore((s) => s.selectedExercise.current)
   const validation = useStore((s) => s.practiceForm.validation)
+  const loadNewExercise = useStore((s) => s.selectedExercise.loadNew)
 
   const { t } = useTranslation('common')
   const [, setSubmitting] = useState(false)
@@ -48,9 +48,11 @@ export default function SimplePracticeForm() {
       }
     })
 
-  const disabledChangeExerciseButton = traderAccount === null
+  const disabledChangeExerciseButton = traderAccount === null || loadNewExercise
   const disabledValidationButton =
-    traderAccount === null || currentExercise.state != 'active'
+    traderAccount === null ||
+    selectedExercise === null ||
+    selectedExercise.state != 'active'
 
   const onSetValidation = (validation: number | '') => {
     setValidation(validation)
@@ -67,14 +69,15 @@ export default function SimplePracticeForm() {
     setValidation(parseInt(validationPercentage.replace('%', '')))
   }
 
-  async function onSubmitChangeExercise() {
+  function onSubmitChangeExercise() {
     set((s) => {
-      if (currentExercise.state == 'active')
-        s.exercisesHistory.push({ ...currentExercise, state: 'skipped' })
-      s.selectedExercise.current.state = 'skipped'
+      if (selectedExercise) {
+        if (selectedExercise.state == 'active')
+          s.exercisesHistory.push({ ...selectedExercise, state: 'skipped' })
+        s.selectedExercise.current = null
+      }
       s.selectedExercise.loadNew = true
     })
-    await actions.fetchExercise()
   }
 
   async function onSubmitValidation() {
@@ -87,11 +90,15 @@ export default function SimplePracticeForm() {
     }
 
     const wallet = useStore.getState().wallet.current
-    const currentExercise = useStore.getState().selectedExercise.current
+    const selectedExercise = useStore.getState().selectedExercise.current
     const traderAccount = useStore.getState().selectedTraderAccount.current
 
-    console.log(currentExercise)
-    if (!wallet || !traderAccount || !currentExercise || !currentExercise?.data)
+    if (
+      !wallet ||
+      !traderAccount ||
+      !selectedExercise ||
+      !selectedExercise?.data
+    )
       return
 
     setSubmitting(true)
@@ -99,18 +106,18 @@ export default function SimplePracticeForm() {
     try {
       const txid = await cooperatyClient.addValidation(
         traderAccount,
-        currentExercise.data,
+        selectedExercise.data,
         validation,
-        currentExercise.data.account.cid
+        selectedExercise.data.account.cid
       )
 
       notify({ title: t('validation-successfully-placed'), txid })
 
       set((s) => {
-        if (currentExercise.state == 'active')
-          s.exercisesHistory.push({ ...currentExercise, state: 'answered' })
+        if (selectedExercise.state == 'active')
+          s.exercisesHistory.push({ ...selectedExercise, state: 'checking' })
         s.practiceForm.validation = 0
-        s.selectedExercise.current.state = 'answered'
+        s.selectedExercise.current.state = 'checking'
         s.selectedExercise.loadNew = true
       })
     } catch (e) {
@@ -149,7 +156,7 @@ export default function SimplePracticeForm() {
 
   return (
     <div className="flex flex-col h-full">
-      <ElementTitle>{currentExercise?.chart?.type || 'Practice'}</ElementTitle>
+      <ElementTitle>{selectedExercise?.type || 'Practice'}</ElementTitle>
       <div className="grid grid-cols-12 gap-2 text-left">
         <div className="col-span-6">
           <label className="text-xxs text-th-fgd-3">{t('type')}</label>
@@ -195,7 +202,7 @@ export default function SimplePracticeForm() {
               } text-th-white hover:text-th-fgd-1 hover:bg-th-white w-full'`}
             >
               <span>
-                {currentExercise ? t('change-exercise') : t('load-exercise')}
+                {selectedExercise ? t('change-exercise') : t('load-exercise')}
               </span>
             </Button>
             <Button
