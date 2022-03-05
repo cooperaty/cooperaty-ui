@@ -12,6 +12,40 @@ import { useViewport } from '../../hooks/useViewport'
 import { breakpoints } from '../practice/PracticePageGrid'
 import Datafeed from './datafeed'
 
+export const priceToValidation = (price: number, bar): number => {
+  let newValidation
+
+  if (price > bar.upperPrice) {
+    newValidation = 1
+  } else if (price < bar.lowerPrice) {
+    newValidation = -1
+  } else if (price >= bar.close) {
+    newValidation = (price - bar.close) / (bar.upperPrice - bar.close)
+  } else {
+    newValidation = (price - bar.close) / (bar.close - bar.lowerPrice)
+  }
+
+  return (bar.close < bar.takeProfitPrice ? 1 : -1) * newValidation * 100
+}
+
+export const validationToPrice = (validation: number, bar): number => {
+  validation /= 100
+
+  if (bar.close < bar.takeProfitPrice) {
+    if (validation > 0) {
+      return validation * (bar.upperPrice - bar.close) + bar.close
+    } else {
+      return validation * (bar.close - bar.lowerPrice) + bar.close
+    }
+  } else {
+    if (validation > 0) {
+      return validation * (bar.lowerPrice - bar.close) + bar.close
+    } else {
+      return validation * (bar.close - bar.upperPrice) + bar.close
+    }
+  }
+}
+
 export interface ChartContainerProps {
   symbol: ChartingLibraryWidgetOptions['symbol']
   interval: ChartingLibraryWidgetOptions['interval']
@@ -145,9 +179,8 @@ const TVChartContainer = () => {
           theme === 'Cooperaty' ? '#E54033' : '#CC2929',
       },
     }
-    const tvWidget = new widget(widgetOptions)
 
-    tvWidgetRef.current = tvWidget
+    tvWidgetRef.current = new widget(widgetOptions)
     tvWidgetRef.current.onChartReady(function () {
       console.log('TRADINGVIEW', tvWidgetRef.current)
 
@@ -157,17 +190,34 @@ const TVChartContainer = () => {
           .m_data.m_bars,
         lastBar = bars._items[bars._end - 1]
 
+      const long: boolean =
+        currentExerciseChart.position.direction == 'long_position'
+      const takeProfitPrice =
+        lastBar.value[4] *
+        (1 +
+          (long
+            ? currentExerciseChart.position.takeProfit
+            : -currentExerciseChart.position.takeProfit))
+      const stopLossPrice =
+        lastBar.value[4] *
+        (1 -
+          (long
+            ? currentExerciseChart.position.stopLoss
+            : -currentExerciseChart.position.stopLoss))
+
       lastBarData.current = {
         time: lastBar.exTime,
         open: lastBar.value[1],
         close: lastBar.value[4],
         percent: lastBar.value[1],
         distance: lastBar.exTime - bars._items[bars._end - 2].exTime,
-        takeProfitPrice:
-          lastBar.value[4] * (1 + currentExerciseChart.position.takeProfit),
-        stopLossPrice:
-          lastBar.value[4] * (1 - currentExerciseChart.position.stopLoss),
+        takeProfitPrice,
+        stopLossPrice,
+        upperPrice: long ? takeProfitPrice : stopLossPrice,
+        lowerPrice: long ? stopLossPrice : takeProfitPrice,
       }
+
+      console.log('lastBarData', lastBarData.current)
 
       // position shape
       tvWidgetRef.current.chart().createMultipointShape(
@@ -203,23 +253,9 @@ const TVChartContainer = () => {
         .chart()
         .createOrderLine({ disableUndo: false })
         .onMove(function () {
-          // @ts-ignore
-          const actualPrice = this.getPrice()
-          let newPrice = actualPrice
-
-          if (actualPrice > lastBarData.current.takeProfitPrice)
-            newPrice = lastBarData.current.takeProfitPrice
-          else if (actualPrice < lastBarData.current.stopLossPrice)
-            newPrice = lastBarData.current.stopLossPrice
-
-          const newValidation = (
-            (newPrice >= lastBarData.current.close
-              ? (newPrice - lastBarData.current.close) /
-                (lastBarData.current.takeProfitPrice -
-                  lastBarData.current.close)
-              : (lastBarData.current.close - newPrice) /
-                (lastBarData.current.stopLossPrice -
-                  lastBarData.current.close)) * 100
+          const newValidation = priceToValidation(
+            this.getPrice(),
+            lastBarData.current
           ).toFixed(2)
 
           // TODO: Find a better approach to update the validation line
@@ -235,22 +271,17 @@ const TVChartContainer = () => {
 
   useEffect(() => {
     if (validationLine.current != null && typeof validation == 'number') {
-      validationLine.current.setQuantity(validation + '%')
       const actualPrice = validationLine.current.getPrice()
-      let newPrice =
-        lastBarData.current.close +
-        (validation > 0
-          ? lastBarData.current.takeProfitPrice - lastBarData.current.close
-          : lastBarData.current.close - lastBarData.current.stopLossPrice) *
-          (validation / 100)
-
-      if (newPrice > lastBarData.current.takeProfitPrice)
-        newPrice = lastBarData.current.takeProfitPrice
-      else if (newPrice < lastBarData.current.stopLossPrice)
-        newPrice = lastBarData.current.stopLossPrice
-
-      // @ts-ignore
-      if (newPrice !== actualPrice) validationLine.current.setPrice(newPrice)
+      if (validation > 100) {
+        setValidation(100)
+      } else if (validation < -100) {
+        setValidation(-100)
+      } else {
+        const newPrice = validationToPrice(validation, lastBarData.current)
+        if (newPrice === actualPrice) return
+        validationLine.current.setQuantity(validation.toFixed(2) + '%')
+        validationLine.current.setPrice(newPrice)
+      }
     }
   }, [validation])
 

@@ -581,6 +581,7 @@ const useStore = create<Store>((set, get) => {
             const traderAccounts = await cooperatyClient.getFilteredTraders({
               user: wallet.publicKey,
             })
+            console.log(traderAccounts)
             if (traderAccounts.length > 0) {
               const sortedTraderAccounts = traderAccounts
                 .slice()
@@ -685,6 +686,7 @@ const useStore = create<Store>((set, get) => {
           set((s) => {
             s.exercisesHistory.push({ ...exercise, state: 'skipped' })
             s.selectedExercise.loadNew = false
+            s.selectedExercise.initialLoad = false
             s.selectedExercise.current = null
           })
           return
@@ -718,6 +720,7 @@ const useStore = create<Store>((set, get) => {
       async getNewExercise() {
         const cooperatyClient = get().connection.cooperatyClient
         const exercisesHistory = get().exercisesHistory
+        console.log('getNewExercise', exercisesHistory)
 
         const exercises: any[] = await cooperatyClient.getFilteredExercises({
           full: false,
@@ -772,6 +775,7 @@ const useStore = create<Store>((set, get) => {
           const lastExercisePublicKey = localStorage.getItem(
             'last_exercise_account'
           )
+          console.log('FETCH_EXERCISE', exercise, lastExercisePublicKey)
           exercise.data =
             lastExercisePublicKey != null
               ? await cooperatyClient.reloadExercise({

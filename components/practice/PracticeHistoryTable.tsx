@@ -46,7 +46,7 @@ const PracticeHistoryTable = ({ numExercises }: { numExercises?: number }) => {
 
   useEffect(() => {
     setData(filteredExercises)
-  }, [preFilteredExercises])
+  }, [exercisesHistory])
 
   return (
     <div className={`flex flex-col sm:pb-4`}>

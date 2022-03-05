@@ -57,6 +57,10 @@ export type TrainerIDL = {
         {
           name: 'validationsCapacity'
           type: 'u8'
+        },
+        {
+          name: 'timeout'
+          type: 'i64'
         }
       ]
     },
@@ -148,6 +152,27 @@ export type TrainerIDL = {
           type: 'string'
         }
       ]
+    },
+    {
+      name: 'closeExercise'
+      accounts: [
+        {
+          name: 'exercise'
+          isMut: true
+          isSigner: false
+        },
+        {
+          name: 'authority'
+          isMut: false
+          isSigner: true
+        }
+      ]
+      args: [
+        {
+          name: 'cid'
+          type: 'string'
+        }
+      ]
     }
   ]
   accounts: [
@@ -161,12 +186,20 @@ export type TrainerIDL = {
             type: 'publicKey'
           },
           {
-            name: 'name'
-            type: 'string'
-          },
-          {
             name: 'performance'
             type: 'u64'
+          },
+          {
+            name: 'ranking'
+            type: 'u64'
+          },
+          {
+            name: 'league'
+            type: 'u8'
+          },
+          {
+            name: 'name'
+            type: 'string'
           },
           {
             name: 'bump'
@@ -183,6 +216,10 @@ export type TrainerIDL = {
           {
             name: 'full'
             type: 'bool'
+          },
+          {
+            name: 'timeout'
+            type: 'i64'
           },
           {
             name: 'cid'
@@ -242,6 +279,93 @@ export type TrainerIDL = {
       }
     }
   ]
+  events: [
+    {
+      name: 'NewTraderEvent'
+      fields: [
+        {
+          name: 'user'
+          type: 'publicKey'
+          index: false
+        },
+        {
+          name: 'name'
+          type: 'string'
+          index: false
+        },
+        {
+          name: 'timestamp'
+          type: 'i64'
+          index: false
+        }
+      ]
+    },
+    {
+      name: 'NewExerciseEvent'
+      fields: [
+        {
+          name: 'cid'
+          type: 'string'
+          index: false
+        },
+        {
+          name: 'timeout'
+          type: 'i64'
+          index: false
+        },
+        {
+          name: 'timestamp'
+          type: 'i64'
+          index: false
+        }
+      ]
+    },
+    {
+      name: 'NewValidationEvent'
+      fields: [
+        {
+          name: 'exercise'
+          type: 'publicKey'
+          index: false
+        },
+        {
+          name: 'user'
+          type: 'publicKey'
+          index: false
+        },
+        {
+          name: 'index'
+          type: 'u8'
+          index: false
+        },
+        {
+          name: 'value'
+          type: 'i64'
+          index: false
+        },
+        {
+          name: 'timestamp'
+          type: 'i64'
+          index: false
+        }
+      ]
+    },
+    {
+      name: 'ExerciseValidatedEvent'
+      fields: [
+        {
+          name: 'exercise'
+          type: 'publicKey'
+          index: false
+        },
+        {
+          name: 'timestamp'
+          type: 'i64'
+          index: false
+        }
+      ]
+    }
+  ]
   errors: [
     {
       code: 6000
@@ -272,6 +396,16 @@ export type TrainerIDL = {
       code: 6005
       name: 'BumpNotFound'
       msg: 'Bump not found'
+    },
+    {
+      code: 6006
+      name: 'ExerciseTimeout'
+      msg: 'Exercise timeout'
+    },
+    {
+      code: 6007
+      name: 'ExerciseFull'
+      msg: 'Exercise full'
     }
   ]
 }
@@ -332,6 +466,10 @@ export const TrainerJSON: TrainerIDL = {
         {
           name: 'validationsCapacity',
           type: 'u8',
+        },
+        {
+          name: 'timeout',
+          type: 'i64',
         },
       ],
     },
@@ -424,6 +562,27 @@ export const TrainerJSON: TrainerIDL = {
         },
       ],
     },
+    {
+      name: 'closeExercise',
+      accounts: [
+        {
+          name: 'exercise',
+          isMut: true,
+          isSigner: false,
+        },
+        {
+          name: 'authority',
+          isMut: false,
+          isSigner: true,
+        },
+      ],
+      args: [
+        {
+          name: 'cid',
+          type: 'string',
+        },
+      ],
+    },
   ],
   accounts: [
     {
@@ -436,12 +595,20 @@ export const TrainerJSON: TrainerIDL = {
             type: 'publicKey',
           },
           {
-            name: 'name',
-            type: 'string',
-          },
-          {
             name: 'performance',
             type: 'u64',
+          },
+          {
+            name: 'ranking',
+            type: 'u64',
+          },
+          {
+            name: 'league',
+            type: 'u8',
+          },
+          {
+            name: 'name',
+            type: 'string',
           },
           {
             name: 'bump',
@@ -458,6 +625,10 @@ export const TrainerJSON: TrainerIDL = {
           {
             name: 'full',
             type: 'bool',
+          },
+          {
+            name: 'timeout',
+            type: 'i64',
           },
           {
             name: 'cid',
@@ -517,6 +688,93 @@ export const TrainerJSON: TrainerIDL = {
       },
     },
   ],
+  events: [
+    {
+      name: 'NewTraderEvent',
+      fields: [
+        {
+          name: 'user',
+          type: 'publicKey',
+          index: false,
+        },
+        {
+          name: 'name',
+          type: 'string',
+          index: false,
+        },
+        {
+          name: 'timestamp',
+          type: 'i64',
+          index: false,
+        },
+      ],
+    },
+    {
+      name: 'NewExerciseEvent',
+      fields: [
+        {
+          name: 'cid',
+          type: 'string',
+          index: false,
+        },
+        {
+          name: 'timeout',
+          type: 'i64',
+          index: false,
+        },
+        {
+          name: 'timestamp',
+          type: 'i64',
+          index: false,
+        },
+      ],
+    },
+    {
+      name: 'NewValidationEvent',
+      fields: [
+        {
+          name: 'exercise',
+          type: 'publicKey',
+          index: false,
+        },
+        {
+          name: 'user',
+          type: 'publicKey',
+          index: false,
+        },
+        {
+          name: 'index',
+          type: 'u8',
+          index: false,
+        },
+        {
+          name: 'value',
+          type: 'i64',
+          index: false,
+        },
+        {
+          name: 'timestamp',
+          type: 'i64',
+          index: false,
+        },
+      ],
+    },
+    {
+      name: 'ExerciseValidatedEvent',
+      fields: [
+        {
+          name: 'exercise',
+          type: 'publicKey',
+          index: false,
+        },
+        {
+          name: 'timestamp',
+          type: 'i64',
+          index: false,
+        },
+      ],
+    },
+  ],
   errors: [
     {
       code: 6000,
@@ -547,6 +805,16 @@ export const TrainerJSON: TrainerIDL = {
       code: 6005,
       name: 'BumpNotFound',
       msg: 'Bump not found',
+    },
+    {
+      code: 6006,
+      name: 'ExerciseTimeout',
+      msg: 'Exercise timeout',
+    },
+    {
+      code: 6007,
+      name: 'ExerciseFull',
+      msg: 'Exercise full',
     },
   ],
 }
