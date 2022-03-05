@@ -13,17 +13,34 @@ import Pagination from '../elements/Pagination'
 import usePagination from '../../hooks/usePagination'
 import useStore, { Exercise } from '../../stores/useStore'
 import { useEffect } from 'react'
+import useLocalStorageState from '../../hooks/useLocalStorageState'
+
+export const EXERCISES_HISTORY_STORAGE_KEY = 'exercisesHistory'
 
 const PracticeHistoryTable = ({ numExercises }: { numExercises?: number }) => {
   const { t } = useTranslation('common')
+  const setStore = useStore((s) => s.set)
   const { asPath } = useRouter()
+  const traderAccount = useStore((s) => s.selectedTraderAccount.current)
+  const [savedExercisesHistory, setSavedExercisesHistory] =
+    useLocalStorageState(
+      EXERCISES_HISTORY_STORAGE_KEY + (traderAccount?.publicKey ?? ''),
+      []
+    )
   const exercisesHistory = useStore((state) => state.exercisesHistory)
   const actions = useStore((state) => state.actions)
-
   const preFilteredExercises = exercisesHistory.filter(
     (exercise) => exercise.state === 'checking'
   )
   console.log(preFilteredExercises)
+
+  useEffect(() => {
+    if (savedExercisesHistory.length > 0) {
+      setStore((state) => {
+        state.exercisesHistory = savedExercisesHistory
+      })
+    }
+  }, [])
 
   const { items, requestSort, sortConfig } =
     useSortableData(preFilteredExercises)
@@ -46,6 +63,7 @@ const PracticeHistoryTable = ({ numExercises }: { numExercises?: number }) => {
 
   useEffect(() => {
     setData(filteredExercises)
+    setSavedExercisesHistory(exercisesHistory)
   }, [exercisesHistory])
 
   return (

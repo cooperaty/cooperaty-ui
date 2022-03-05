@@ -759,6 +759,9 @@ const useStore = create<Store>((set, get) => {
               description: 'Try again later',
               type: 'error',
             })
+            set((state) => {
+              state.selectedExercise.current = null
+            })
             return null
           }
         } else {
@@ -786,7 +789,7 @@ const useStore = create<Store>((set, get) => {
           exercise.data = await this.getNewExercise()
         }
 
-        console.log('CREATE_EXERCISE', this.createExercise)
+        console.log('CLIENT', cooperatyClient)
 
         if (exercise.data != null) await this.setNewExercise(exercise)
         else {
@@ -795,11 +798,6 @@ const useStore = create<Store>((set, get) => {
             state.selectedExercise.loadNew = false
           })
         }
-      },
-      async createExercise(cid: string) {
-        const cooperatyClient = get().connection.cooperatyClient
-
-        await cooperatyClient.createExercise(cid, 5)
       },
     },
     traderAccounts: [],

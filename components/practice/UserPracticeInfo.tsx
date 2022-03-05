@@ -21,7 +21,7 @@ const UserPracticeInfoTabs = ({ activeTab, setActiveTab }) => {
         activeTab={activeTab}
         onChange={handleTabChange}
         showCount={
-          exercisesHistory
+          exercisesHistory.length
             ? [{ tabName: 'Practice History', count: exercisesHistory.length }]
             : null
         }
