@@ -2,7 +2,7 @@ import { I80F48 } from '@blockworks-foundation/mango-client/lib/src/fixednum'
 import { TOKEN_MINTS } from '@project-serum/serum'
 import { PublicKey } from '@solana/web3.js'
 import BN from 'bn.js'
-import { Orderbook } from '../stores/useStore'
+import { Orderbook } from '../stores/types'
 import { MarketKind } from '@blockworks-foundation/mango-client'
 
 export async function sleep(ms) {

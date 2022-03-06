@@ -1,38 +1,22 @@
-import create, { State } from 'zustand'
+import create from 'zustand'
 import produce from 'immer'
 import { Market } from '@project-serum/serum'
 import {
-  IDS,
-  Config,
   MangoClient,
-  MangoGroup,
-  MangoAccount,
   MarketConfig,
   getMarketByBaseSymbolAndKind,
-  GroupConfig,
-  TokenConfig,
   getTokenAccountsByOwnerWithWrappedSol,
   getTokenByMint,
-  TokenAccount,
   nativeToUi,
-  MangoCache,
   PerpMarket,
   getAllMarkets,
   getMultipleAccounts,
   PerpMarketLayout,
   msrmMints,
 } from '@blockworks-foundation/mango-client'
-import {
-  AccountInfo,
-  Commitment,
-  ConfirmOptions,
-  Connection,
-  Keypair,
-  PublicKey,
-} from '@solana/web3.js'
-import { EndpointInfo, WalletAdapter } from '../@types/types'
+import { Commitment, Connection, PublicKey } from '@solana/web3.js'
 import { isDefined, zipDict } from '../utils'
-import { Notification, notify } from '../utils/notifications'
+import { notify } from '../utils/notifications'
 import {
   DEFAULT_MARKET_KEY,
   initialMarket,
@@ -42,209 +26,21 @@ import { MSRM_DECIMALS } from '@project-serum/serum/lib/token-instructions'
 import { TrainerSDK, TraderData, ExerciseData } from '../sdk'
 import Axios from 'axios'
 import { LAST_TRADER_ACCOUNT_KEY } from '../components/trader_account/TraderAccountsModal'
-import { SignerWallet, SolanaProvider } from '@saberhq/solana-contrib'
-
-export class Exercise {
-  data: ExerciseData
-  chart: {
-    candles: [
-      {
-        time: number
-        low: number
-        high: number
-        open: number
-        close: number
-        volume: number
-      }
-    ]
-    position: {
-      direction: 'long_position' | 'short_position'
-      takeProfit: number
-      stopLoss: number
-      postBars: number
-    }
-    timeframe: string[]
-  }
-  type: 'Scalping' | 'Swing'
-  state: 'active' | 'checking' | 'skipped' | 'expired' | 'success' | 'failed'
-  solution: {
-    cid: string
-    datetime: string
-    pair: string
-    exchange: string
-    outcome: number
-  }
-}
-
-export const ENDPOINTS: EndpointInfo[] = [
-  {
-    name: 'mainnet',
-    url: process.env.NEXT_PUBLIC_ENDPOINT || 'https://mango.rpcpool.com',
-    websocket: process.env.NEXT_PUBLIC_ENDPOINT || 'https://mango.rpcpool.com',
-    custom: false,
-  },
-  {
-    name: 'devnet',
-    url: 'https://api.devnet.solana.com',
-    websocket: 'https://api.devnet.solana.com',
-    custom: false,
-  },
-]
-
-type ClusterType = 'mainnet' | 'devnet'
-
-const CLUSTER = (process.env.NEXT_PUBLIC_CLUSTER as ClusterType) || 'mainnet'
-const ENDPOINT = ENDPOINTS.find((e) => e.name === CLUSTER)
-
-export const WEBSOCKET_CONNECTION = new Connection(
-  ENDPOINT.websocket,
-  'processed' as Commitment
-)
-
-const DEFAULT_MANGO_GROUP_NAME = process.env.NEXT_PUBLIC_GROUP || 'mainnet.1'
-export const DEFAULT_MANGO_GROUP_CONFIG = Config.ids().getGroup(
+import { Exercise, Store } from './types'
+import {
   CLUSTER,
-  DEFAULT_MANGO_GROUP_NAME
-)
-const defaultMangoGroupIds = IDS['groups'].find(
-  (group) => group.name === DEFAULT_MANGO_GROUP_NAME
-)
-export const MNGO_INDEX = defaultMangoGroupIds.oracles.findIndex(
-  (t) => t.symbol === 'MNGO'
-)
-
-export const programId = new PublicKey(defaultMangoGroupIds.mangoProgramId)
-export const serumProgramId = new PublicKey(defaultMangoGroupIds.serumProgramId)
-const mangoGroupPk = new PublicKey(defaultMangoGroupIds.publicKey)
+  DEFAULT_MANGO_GROUP_CONFIG,
+  DEFAULT_MANGO_GROUP_NAME,
+  ENDPOINT,
+  getProvider,
+  LAST_EXERCISE_LOCAL_STORAGE_KEY,
+  mangoGroupPk,
+  programId,
+  serumProgramId,
+  WEBSOCKET_CONNECTION,
+} from './constants'
 
 let traderAccountRetryAttempt = 0
-
-export const INITIAL_STATE = {
-  WALLET: {
-    providerUrl: null,
-    connected: false,
-    current: null,
-    tokens: [],
-  },
-}
-
-// an object with keys of Solana account addresses that we are
-// subscribing to with connection.onAccountChange() in the
-// useHydrateStore hook
-interface AccountInfoList {
-  [key: string]: AccountInfo<Buffer>
-}
-
-export interface WalletToken {
-  account: TokenAccount
-  config: TokenConfig
-  uiBalance: number
-}
-
-export interface Orderbook {
-  bids: number[][]
-  asks: number[][]
-}
-
-interface Store extends State {
-  notificationIdCounter: number
-  notifications: Array<Notification>
-  accountInfos: AccountInfoList
-  connection: {
-    cluster: ClusterType
-    current: Connection
-    websocket: Connection
-    endpoint: string
-    client: MangoClient
-    cooperatyClient: TrainerSDK
-    slot: number
-  }
-  selectedMarket: {
-    config: MarketConfig
-    current: Market | PerpMarket | null
-    markPrice: number
-    kind: string
-    askInfo: AccountInfo<Buffer> | null
-    bidInfo: AccountInfo<Buffer> | null
-    orderBook: Orderbook
-    fills: any[]
-  }
-  mangoGroups: Array<MangoGroup>
-  selectedMangoGroup: {
-    config: GroupConfig
-    name: string
-    current: MangoGroup | null
-    markets: {
-      [address: string]: Market | PerpMarket
-    }
-    cache: MangoCache | null
-  }
-  mangoAccounts: MangoAccount[]
-  selectedMangoAccount: {
-    current: MangoAccount | null
-    initialLoad: boolean
-    lastUpdatedAt: number
-  }
-  tradeForm: {
-    side: 'buy' | 'sell'
-    price: number | ''
-    baseSize: number | ''
-    quoteSize: number | ''
-    tradeType:
-      | 'Market'
-      | 'Limit'
-      | 'Stop Loss'
-      | 'Take Profit'
-      | 'Stop Limit'
-      | 'Take Profit Limit'
-    triggerPrice: number | ''
-    triggerCondition: 'above' | 'below'
-  }
-  wallet: {
-    providerUrl: string
-    connected: boolean
-    current: WalletAdapter | undefined
-    tokens: WalletToken[]
-  }
-  settings: {
-    uiLocked: boolean
-  }
-  tradeHistory: any[]
-  set: (x: any) => void
-  actions: {
-    [key: string]: (args?) => void
-  }
-
-  // Cooperaty
-  traderAccounts: TraderData[]
-  selectedTraderAccount: {
-    current: TraderData | null
-    initialLoad: boolean
-    lastUpdatedAt: number
-  }
-  practiceForm: {
-    validation: number | ''
-    practiceType: 'Loss' | 'Profit'
-  }
-  exercisesHistory: Exercise[]
-  selectedExercise: {
-    current: Exercise | null
-    initialLoad: boolean
-    loadNew: boolean
-    lastUpdatedAt: number
-  }
-}
-
-export const getProvider = (
-  connection: Connection,
-  wallet: SignerWallet | WalletAdapter = new SignerWallet(Keypair.generate())
-) => {
-  return SolanaProvider.load({
-    connection,
-    wallet,
-    opts: connection.commitment as ConfirmOptions,
-  })
-}
 
 const useStore = create<Store>((set, get) => {
   const rpcUrl =
@@ -260,18 +56,7 @@ const useStore = create<Store>((set, get) => {
   const connection = new Connection(rpcUrl, 'processed' as Commitment)
 
   return {
-    notificationIdCounter: 0,
-    notifications: [],
     accountInfos: {},
-    connection: {
-      cluster: CLUSTER,
-      current: connection,
-      websocket: WEBSOCKET_CONNECTION,
-      client: new MangoClient(connection, programId),
-      cooperatyClient: TrainerSDK.init(getProvider(connection)),
-      endpoint: ENDPOINT.url,
-      slot: 0,
-    },
     selectedMangoGroup: {
       config: DEFAULT_MANGO_GROUP_CONFIG,
       name: DEFAULT_MANGO_GROUP_NAME,
@@ -310,12 +95,47 @@ const useStore = create<Store>((set, get) => {
       triggerPrice: '',
       triggerCondition: 'above',
     },
-    wallet: INITIAL_STATE.WALLET,
+    tradeHistory: [],
+
+    // Useful
+    set: (fn) => set(produce(fn)),
+    notificationIdCounter: 0,
+    notifications: [],
+    connection: {
+      cluster: CLUSTER,
+      current: connection,
+      websocket: WEBSOCKET_CONNECTION,
+      client: new MangoClient(connection, programId),
+      cooperatyClient: TrainerSDK.init(getProvider(connection)),
+      endpoint: ENDPOINT.url,
+      slot: 0,
+    },
+    wallet: {
+      providerUrl: null,
+      connected: false,
+      current: null,
+      tokens: [],
+    },
     settings: {
       uiLocked: true,
     },
-    tradeHistory: [],
-    set: (fn) => set(produce(fn)),
+    traderAccounts: [],
+    selectedTraderAccount: {
+      current: null,
+      initialLoad: true,
+      lastUpdatedAt: 0,
+    },
+    practiceForm: {
+      validation: 0,
+      practiceType: 'Profit',
+    },
+    exercisesHistory: [],
+    selectedExercise: {
+      current: null,
+      initialLoad: true,
+      loadNew: false,
+      lastUpdatedAt: 0,
+    },
     actions: {
       async fetchWalletTokens() {
         const groupConfig = get().selectedMangoGroup.config
@@ -707,36 +527,35 @@ const useStore = create<Store>((set, get) => {
         console.log('NEW_EXERCISE', exercise)
 
         set((state) => {
-          state.selectedExercise.current = exercise
+          state.selectedExercise.current = { ...exercise } as Exercise
           state.selectedExercise.initialLoad = false
           state.selectedExercise.loadNew = false
           state.lastUpdatedAt = new Date().toISOString()
         })
         localStorage.setItem(
-          'last_exercise_account',
+          LAST_EXERCISE_LOCAL_STORAGE_KEY,
           exercise.data.publicKey.toString()
         )
       },
-      async getNewExercise() {
+      async getAvailableExercises() {
         const cooperatyClient = get().connection.cooperatyClient
         const exercisesHistory = get().exercisesHistory
-        console.log('getNewExercise', exercisesHistory)
 
         const exercises: any[] = await cooperatyClient.getFilteredExercises({
           full: false,
         })
 
-        console.log('preFilter', exercisesHistory)
-        console.log('preFilter', exercises)
-
-        const newExercises = exercises.filter(
+        return exercises.filter(
           (exercise) =>
             exercisesHistory.findIndex((pastExercise) =>
               pastExercise.data.publicKey.equals(exercise.publicKey)
             ) === -1
         )
-
-        console.log('AVAILABLE_EXERCISES', newExercises)
+      },
+      async getNewExercise() {
+        const exercisesHistory = get().exercisesHistory
+        const currentExercise = get().selectedExercise.current
+        const newExercises = await this.getAvailableExercises()
 
         if (newExercises.length == 0) {
           const historyWithoutSkippedExercises = exercisesHistory.filter(
@@ -757,11 +576,13 @@ const useStore = create<Store>((set, get) => {
             notify({
               title: 'No new exercises',
               description: 'Try again later',
-              type: 'error',
+              type: 'info',
             })
-            set((state) => {
-              state.selectedExercise.current = null
-            })
+            if (currentExercise != null) {
+              set((state) => {
+                state.selectedExercise.current = null
+              })
+            }
             return null
           }
         } else {
@@ -778,18 +599,32 @@ const useStore = create<Store>((set, get) => {
           const lastExercisePublicKey = localStorage.getItem(
             'last_exercise_account'
           )
-          console.log('FETCH_EXERCISE', exercise, lastExercisePublicKey)
-          exercise.data =
-            lastExercisePublicKey != null
-              ? await cooperatyClient.reloadExercise({
-                  publicKey: new PublicKey(lastExercisePublicKey),
-                } as ExerciseData)
-              : await this.getNewExercise()
+          if (lastExercisePublicKey != null) {
+            try {
+              exercise.data = await cooperatyClient.reloadExercise({
+                publicKey: new PublicKey(lastExercisePublicKey),
+              } as ExerciseData)
+            } catch (e) {
+              console.log('error reloading exercise', e.message)
+              if (e.message.includes('Error: Account does not exist')) {
+                notify({
+                  title: 'Last exercise is not available anymore',
+                  description: 'Retrying with a new exercise',
+                  type: 'info',
+                })
+                set((state) => {
+                  state.selectedExercise.current = null
+                })
+                localStorage.setItem('last_exercise_account', null)
+                return
+              }
+            }
+          } else {
+            exercise.data = await this.getNewExercise()
+          }
         } else if (exerciseLoadNew) {
           exercise.data = await this.getNewExercise()
         }
-
-        console.log('CLIENT', cooperatyClient)
 
         if (exercise.data != null) await this.setNewExercise(exercise)
         else {
@@ -799,23 +634,6 @@ const useStore = create<Store>((set, get) => {
           })
         }
       },
-    },
-    traderAccounts: [],
-    selectedTraderAccount: {
-      current: null,
-      initialLoad: true,
-      lastUpdatedAt: 0,
-    },
-    practiceForm: {
-      validation: 0,
-      practiceType: 'Profit',
-    },
-    exercisesHistory: [],
-    selectedExercise: {
-      current: null,
-      initialLoad: true,
-      loadNew: false,
-      lastUpdatedAt: 0,
     },
   }
 })

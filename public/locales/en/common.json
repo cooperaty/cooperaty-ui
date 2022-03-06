@@ -402,5 +402,10 @@
   "state": "State",
   "active": "Active",
   "checking": "Checking",
-  "skipped": "Skipped"
+  "skipped": "Skipped",
+  "exercise": "Exercise",
+  "new-exercise": "New Exercise",
+  "create-exercise": "Create Exercise",
+  "cid": "CID",
+  "create": "Create"
 }

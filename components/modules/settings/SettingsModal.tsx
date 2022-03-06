@@ -1,6 +1,5 @@
-import React, { useState } from 'react'
+import React, { useEffect, useState } from 'react'
 import { ChevronLeftIcon, ChevronRightIcon } from '@heroicons/react/solid'
-import useMangoGroupConfig from '../../../hooks/useMangoGroupConfig'
 import Modal from '../../elements/Modal'
 import { ElementTitle } from '../../elements/styles'
 import Button from '../../elements/Button'
@@ -10,17 +9,10 @@ import useLocalStorageState from '../../../hooks/useLocalStorageState'
 import Select from '../../elements/Select'
 import { useTranslation } from 'next-i18next'
 import Switch from '../../elements/Switch'
+import { ExerciseData } from '../../../sdk'
 
 const NODE_URLS = [
-  { label: 'Triton (RPC Pool)', value: 'https://mango.rpcpool.com' },
-  {
-    label: 'Genesys Go',
-    value: 'https://mango.genesysgo.net/',
-  },
-  {
-    label: 'Project Serum',
-    value: 'https://solana-api.projectserum.com/',
-  },
+  { label: 'Devnet', value: 'https://api.google.devnet.solana.com' },
   { label: 'Custom', value: '' },
 ]
 
@@ -38,14 +30,11 @@ export const initialMarket = {
 
 const SettingsModal = ({ isOpen, onClose }) => {
   const { t } = useTranslation('common')
+  const currentExercise = useStore((s) => s.selectedExercise.current)
   const [settingsView, setSettingsView] = useState('')
   const [rpcEndpointUrl] = useLocalStorageState(
     NODE_URL_KEY,
     NODE_URLS[0].value
-  )
-  const [defaultMarket] = useLocalStorageState(
-    DEFAULT_MARKET_KEY,
-    initialMarket
   )
   const [showOrderbookFlash, setShowOrderbookFlash] = useLocalStorageState(
     ORDERBOOK_FLASH_KEY,
@@ -71,21 +60,21 @@ const SettingsModal = ({ isOpen, onClose }) => {
         <div className="border-b border-th-bkg-4">
           <button
             className="border-t border-th-bkg-4 default-transition flex font-normal items-center justify-between py-3 text-th-fgd-1 w-full hover:text-th-primary focus:outline-none"
-            onClick={() => setSettingsView('Default Market')}
-          >
-            <span>{t('default-market')}</span>
-            <div className="flex items-center text-th-fgd-3 text-xs">
-              {defaultMarket.name}
-              <ChevronRightIcon className="h-5 ml-1 w-5 text-th-primary" />
-            </div>
-          </button>
-          <button
-            className="border-t border-th-bkg-4 default-transition flex font-normal items-center justify-between py-3 text-th-fgd-1 w-full hover:text-th-primary focus:outline-none"
             onClick={() => setSettingsView('RPC Endpoint')}
           >
             <span>{t('rpc-endpoint')}</span>
             <div className="flex items-center text-th-fgd-3 text-xs">
               {rpcEndpoint.label}
+              <ChevronRightIcon className="h-5 ml-1 w-5 text-th-primary" />
+            </div>
+          </button>
+          <button
+            className="border-t border-th-bkg-4 default-transition flex font-normal items-center justify-between py-3 text-th-fgd-1 w-full hover:text-th-primary focus:outline-none"
+            onClick={() => setSettingsView('Exercise')}
+          >
+            <span>{t('exercise')}</span>
+            <div className="flex items-center text-th-fgd-3 text-xs">
+              {currentExercise?.data.account.cid.slice(0, 30)}...
               <ChevronRightIcon className="h-5 ml-1 w-5 text-th-primary" />
             </div>
           </button>
@@ -115,70 +104,15 @@ export default React.memo(SettingsModal)
 
 const SettingsContent = ({ settingsView, setSettingsView }) => {
   switch (settingsView) {
-    case 'Default Market':
-      return <DefaultMarketSettings setSettingsView={setSettingsView} />
     case 'RPC Endpoint':
       return <RpcEndpointSettings setSettingsView={setSettingsView} />
+    case 'Exercise':
+      return <ExerciseSettings setSettingsView={setSettingsView} />
+    case 'New Exercise':
+      return <NewExerciseSettings setSettingsView={setSettingsView} />
     case '':
       return null
   }
-}
-
-const DefaultMarketSettings = ({ setSettingsView }) => {
-  const { t } = useTranslation('common')
-  const groupConfig = useMangoGroupConfig()
-  const allMarkets = [
-    ...groupConfig.spotMarkets,
-    ...groupConfig.perpMarkets,
-  ].sort((a, b) => a.name.localeCompare(b.name))
-  const [defaultMarket, setDefaultMarket] = useLocalStorageState(
-    DEFAULT_MARKET_KEY,
-    {
-      base: 'BTC',
-      kind: 'perp',
-      name: 'BTC-PERP',
-      path: '/market?name=BTC-PERP',
-    }
-  )
-  const handleSetDefaultMarket = (market) => {
-    const base = market.slice(0, -5)
-    const kind = market.includes('PERP') ? 'perp' : 'spot'
-
-    setDefaultMarket({
-      base: base,
-      kind: kind,
-      name: market,
-      path: `/market?name=${market}`,
-    })
-  }
-  const parsedDefaultMarket = defaultMarket
-  return (
-    <div>
-      <label className="block font-semibold mb-1 text-th-fgd-1 text-xs">
-        {t('default-market')}
-      </label>
-      <Select
-        value={parsedDefaultMarket.name}
-        onChange={(market) => handleSetDefaultMarket(market)}
-        className="w-full"
-      >
-        {allMarkets.map((market) => (
-          <Select.Option
-            key={market.name}
-            value={market.name}
-            className={`bg-th-bkg-1 relative rounded-md w-full px-3 py-3 cursor-pointer default-transition flex hover:bg-th-bkg-3 focus:outline-none`}
-          >
-            <div className="flex items-center justify-between w-full">
-              {market.name}
-            </div>
-          </Select.Option>
-        ))}
-      </Select>
-      <Button onClick={() => setSettingsView('')} className="mt-4 w-full">
-        <div className={`flex items-center justify-center`}>{t('save')}</div>
-      </Button>
-    </div>
-  )
 }
 
 const RpcEndpointSettings = ({ setSettingsView }) => {
@@ -196,7 +130,6 @@ const RpcEndpointSettings = ({ setSettingsView }) => {
     actions.updateConnection(endpointUrl)
     setSettingsView('')
   }
-
   const handleSelectEndpointUrl = (url) => {
     setRpcEndpointUrl(url)
   }
@@ -241,6 +174,138 @@ const RpcEndpointSettings = ({ setSettingsView }) => {
         className="mt-4 w-full"
       >
         <div className={`flex items-center justify-center`}>{t('save')}</div>
+      </Button>
+    </div>
+  )
+}
+
+const ExerciseSettings = ({ setSettingsView }) => {
+  const { t } = useTranslation('common')
+  const actions = useStore((s) => s.actions)
+  const currentExercise = useStore((s) => s.selectedExercise.current)
+  const cooperatyClient = useStore((s) => s.connection.cooperatyClient)
+  const [availableExercises, setAvailableExercises] = useState([])
+  const [exerciseCID, setExerciseCID] = useState('')
+
+  const getExercise = (exerciseCID) => {
+    return availableExercises.find(
+      (exercise) => exercise.account.cid === exerciseCID
+    )
+  }
+
+  const handleSetExercise = async (exerciseCID) => {
+    const exercise = getExercise(exerciseCID)
+    if (exercise != null) {
+      await actions.fetchExercise(exercise)
+      setSettingsView('')
+    }
+  }
+
+  const handleSelectExercise = (selectedExerciseCID) => {
+    if (selectedExerciseCID != null && selectedExerciseCID == 59) {
+      setExerciseCID(selectedExerciseCID)
+    }
+  }
+
+  const handleCloseExercise = async (exerciseCID) => {
+    const exercise = getExercise(exerciseCID)
+    if (exercise != null) {
+      await cooperatyClient.closeExercise(exercise)
+      setSettingsView('')
+    }
+  }
+
+  const setInitialAvailableExercises = async () => {
+    setAvailableExercises(await cooperatyClient.getFilteredExercises())
+    setExerciseCID(currentExercise.data.account.cid)
+  }
+
+  useEffect(() => {
+    if (currentExercise) {
+      setInitialAvailableExercises()
+    }
+  }, [])
+
+  return (
+    <div className="flex flex-col text-th-fgd-1">
+      <label className="block font-semibold mb-1 text-xs">
+        {t('exercise')}
+      </label>
+      <Select
+        value={exerciseCID}
+        onChange={(cid) => handleSelectExercise(cid)}
+        className="w-full"
+      >
+        <div className="space-y-2">
+          {availableExercises.map((exercise: ExerciseData) => (
+            <Select.Option
+              key={exercise.account.cid}
+              value={exercise.account.cid}
+              className={`bg-th-bkg-1 relative rounded-md w-full px-3 py-3 cursor-pointer default-transition flex hover:bg-th-bkg-3 focus:outline-none overflow-hidden`}
+            >
+              <div className="flex items-center justify-between w-full">
+                {exercise?.account.cid.slice(0, 30)}...
+              </div>
+            </Select.Option>
+          ))}
+        </div>
+      </Select>
+      <Button
+        onClick={() => setSettingsView('New Exercise')}
+        className="mt-4 w-full"
+      >
+        <div className={`flex items-center justify-center`}>
+          {t('create-exercise')}
+        </div>
+      </Button>
+      <Button
+        onClick={() => handleCloseExercise(exerciseCID)}
+        className="mt-4 w-full"
+      >
+        <div className={`flex items-center justify-center`}>{t('close')}</div>
+      </Button>
+      <Button
+        onClick={() => handleSetExercise(exerciseCID)}
+        className="mt-4 w-full"
+      >
+        <div className={`flex items-center justify-center`}>{t('save')}</div>
+      </Button>
+    </div>
+  )
+}
+
+const NewExerciseSettings = ({ setSettingsView }) => {
+  const { t } = useTranslation('common')
+  const cooperatyClient = useStore((s) => s.connection.cooperatyClient)
+  const [newExerciseCID, setNewExerciseCID] = useState('')
+
+  const handleCreateExercise = async (exerciseCID) => {
+    console.log(exerciseCID)
+    if (exerciseCID != null && exerciseCID.length == 59) {
+      await cooperatyClient.createExercise(exerciseCID)
+      setSettingsView('')
+    }
+  }
+
+  return (
+    <div className="flex flex-col text-th-fgd-1">
+      <label className="block font-semibold mb-1 text-xs">
+        {t('create-exercise')}
+      </label>
+      <div className="pt-4">
+        <label className="block font-semibold mb-1 text-xs">{t('cid')}</label>
+        <Input
+          type="text"
+          error={newExerciseCID == null || newExerciseCID.length !== 59}
+          value={newExerciseCID}
+          onChange={(e) => setNewExerciseCID(e.target.value)}
+        />
+      </div>
+      <Button
+        onClick={() => handleCreateExercise(newExerciseCID)}
+        className="mt-4 w-full"
+      >
+        <div className={`flex items-center justify-center`}>{t('create')}</div>
       </Button>
     </div>
   )

@@ -7,11 +7,10 @@ import {
   LinkIcon,
   PencilIcon,
 } from '@heroicons/react/outline'
-import useStore, { serumProgramId } from '../stores/useStore'
+import useStore from '../stores/useStore'
 import { copyToClipboard } from '../utils'
 import PageBodyContainer from '../components/elements/PageBodyContainer'
 import TopBar from '../components/modules/TopBar'
-import AccountOrders from '../components/account_page/AccountOrders'
 import AccountHistory from '../components/account_page/AccountHistory'
 import AccountOverview from '../components/account_page/AccountOverview'
 import Button from '../components/elements/Button'
@@ -27,6 +26,7 @@ import Select from '../components/elements/Select'
 import { useRouter } from 'next/router'
 import { PublicKey } from '@solana/web3.js'
 import TraderAccountsModal from '../components/trader_account/TraderAccountsModal'
+import { TraderData } from '../sdk'
 
 export async function getServerSideProps({ locale }) {
   return {
@@ -37,7 +37,7 @@ export async function getServerSideProps({ locale }) {
   }
 }
 
-const TABS = ['Portfolio', 'Orders', 'History', 'Interest', 'Funding']
+const TABS = ['Portfolio', 'History']
 
 export default function Account() {
   const { t } = useTranslation('common')
@@ -46,12 +46,10 @@ export default function Account() {
   const [isCopied, setIsCopied] = useState(false)
   const [resetOnLeave, setResetOnLeave] = useState(false)
   const connected = useStore((s) => s.wallet.connected)
-  const mangoAccount = useStore((s) => s.selectedMangoAccount.current)
-  const mangoClient = useStore((s) => s.connection.client)
-  const mangoGroup = useStore((s) => s.selectedMangoGroup.current)
+  const traderAccount = useStore((s) => s.selectedTraderAccount.current)
+  const cooperatyClient = useStore((s) => s.connection.cooperatyClient)
   const wallet = useStore((s) => s.wallet.current)
   const isLoading = useStore((s) => s.selectedMangoAccount.initialLoad)
-  const actions = useStore((s) => s.actions)
   const setStore = useStore((s) => s.set)
   const [viewIndex, setViewIndex] = useState(0)
   const [activeTab, setActiveTab] = useState(TABS[0])
@@ -78,29 +76,26 @@ export default function Account() {
   }, [])
 
   useEffect(() => {
-    async function loadUnownedMangoAccount() {
+    async function loadUnownedTraderAccount() {
       try {
-        const unownedMangoAccountPubkey = new PublicKey(pubkey)
-        if (mangoGroup) {
-          const unOwnedMangoAccount = await mangoClient.getMangoAccount(
-            unownedMangoAccountPubkey,
-            serumProgramId
-          )
-          setStore((state) => {
-            state.selectedMangoAccount.current = unOwnedMangoAccount
-          })
-          await actions.fetchTradeHistory()
-          setResetOnLeave(true)
-        }
+        const unownedTraderAccountPubkey = new PublicKey(pubkey)
+        const unOwnedMangoAccount = await cooperatyClient.reloadTraderAccount({
+          publicKey: unownedTraderAccountPubkey,
+        } as TraderData)
+        setStore((state) => {
+          state.selectedMangoAccount.current = unOwnedMangoAccount
+        })
+        // Fetch trades history
+        setResetOnLeave(true)
       } catch (error) {
         await router.push('/account')
       }
     }
 
     if (pubkey) {
-      loadUnownedMangoAccount()
+      loadUnownedTraderAccount()
     }
-  }, [pubkey, mangoGroup, mangoClient, setStore, actions, router])
+  }, [pubkey])
 
   useEffect(() => {
     if (connected) {
@@ -144,21 +139,21 @@ export default function Account() {
       <TopBar />
       <PageBodyContainer>
         <div className="flex flex-col md:flex-row md:items-end md:justify-between py-4 md:pb-4 md:pt-10">
-          {mangoAccount ? (
+          {traderAccount ? (
             <>
               <div className="pb-3 md:pb-0">
                 <h1
                   className={`font-semibold mb-1 mr-3 text-th-fgd-1 text-2xl`}
                 >
-                  {mangoAccount?.name || t('account')}
+                  {traderAccount?.account?.name || t('account')}
                 </h1>
                 <div className="flex items-center text-th-fgd-3 ">
                   <span className="text-xxs sm:text-xs">
-                    {mangoAccount.publicKey.toString()}
+                    {traderAccount?.publicKey.toString()}
                   </span>
                   <DuplicateIcon
                     className="cursor-pointer default-transition h-4 w-4 ml-1.5 hover:text-th-fgd-1"
-                    onClick={() => handleCopyPublicKey(mangoAccount.publicKey)}
+                    onClick={() => handleCopyPublicKey(traderAccount.publicKey)}
                   />
                   {isCopied ? (
                     <div className="ml-2 text-th-fgd-2 text-xs">Copied!</div>
@@ -176,12 +171,14 @@ export default function Account() {
                 >
                   <div className="flex items-center">
                     <PencilIcon className="h-4 w-4 mr-1.5" />
-                    {mangoAccount?.name ? t('edit-name') : t('add-name')}
+                    {traderAccount?.account.name
+                      ? t('edit-name')
+                      : t('add-name')}
                   </div>
                 </Button>
                 <a
                   className="bg-th-bkg-4 col-span-1 default-transition flex font-bold h-8 items-center justify-center pl-3 pr-3 rounded-full text-th-fgd-1 text-xs hover:text-th-fgd-1 hover:brightness-[1.15] focus:outline-none"
-                  href={`https://explorer.solana.com/address/${mangoAccount?.publicKey}`}
+                  href={`https://explorer.solana.com/address/${traderAccount?.publicKey}`}
                   target="_blank"
                   rel="noopener noreferrer"
                 >
@@ -198,7 +195,7 @@ export default function Account() {
             </>
           ) : null}
         </div>
-        {mangoAccount ? (
+        {traderAccount ? (
           !isMobile ? (
             <Tabs
               activeTab={activeTab}
@@ -221,7 +218,7 @@ export default function Account() {
           )
         ) : null}
         <div className="bg-th-bkg-2 p-4 sm:p-6 rounded-lg">
-          {mangoAccount ? (
+          {traderAccount ? (
             !isMobile ? (
               <TabContent activeTab={activeTab} />
             ) : (
@@ -231,9 +228,6 @@ export default function Account() {
               >
                 <div>
                   <AccountOverview />
-                </div>
-                <div>
-                  <AccountOrders />
                 </div>
                 <div>
                   <AccountHistory />
@@ -278,8 +272,6 @@ const TabContent = ({ activeTab }) => {
   switch (activeTab) {
     case 'Portfolio':
       return <AccountOverview />
-    case 'Orders':
-      return <AccountOrders />
     case 'History':
       return <AccountHistory />
     default:

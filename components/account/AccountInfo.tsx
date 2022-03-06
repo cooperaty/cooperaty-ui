@@ -1,9 +1,7 @@
 import {
   I80F48,
   nativeI80F48ToUi,
-  nativeToUi,
   QUOTE_INDEX,
-  ZERO_BN,
   ZERO_I80F48,
 } from '@blockworks-foundation/mango-client'
 import { useCallback, useState } from 'react'
@@ -12,10 +10,8 @@ import {
   ExternalLinkIcon,
   HeartIcon,
 } from '@heroicons/react/solid'
-import useStore, { MNGO_INDEX } from '../../stores/useStore'
+import useStore from '../../stores/useStore'
 import { abbreviateAddress, formatUsdValue, usdFormatter } from '../../utils'
-import { notify } from '../../utils/notifications'
-import { LinkButton } from '../elements/Button'
 import { ElementTitle } from '../elements/styles'
 import Tooltip from '../elements/Tooltip'
 import DepositModal from './DepositModal'
@@ -26,7 +22,6 @@ import { useViewport } from '../../hooks/useViewport'
 import { breakpoints } from '../TradePageGrid'
 import { useTranslation } from 'next-i18next'
 import useMangoAccount from '../../hooks/useMangoAccount'
-import Loading from '../elements/Loading'
 
 const I80F48_100 = I80F48.fromString('100')
 
@@ -37,11 +32,8 @@ export default function AccountInfo() {
   const mangoCache = useStore((s) => s.selectedMangoGroup.cache)
   const { mangoAccount, initialLoad } = useMangoAccount()
   const marketConfig = useStore((s) => s.selectedMarket.config)
-  const mangoClient = useStore((s) => s.connection.client)
-  const actions = useStore((s) => s.actions)
   const { width } = useViewport()
   const isMobile = width ? width < breakpoints.sm : false
-  const [redeeming, setRedeeming] = useState(false)
 
   const [showDepositModal, setShowDepositModal] = useState(false)
   const [showWithdrawModal, setShowWithdrawModal] = useState(false)
@@ -57,46 +49,6 @@ export default function AccountInfo() {
   const equity = mangoAccount
     ? mangoAccount.computeValue(mangoGroup, mangoCache)
     : ZERO_I80F48
-
-  const mngoAccrued = mangoAccount
-    ? mangoAccount.perpAccounts.reduce((acc, perpAcct) => {
-        return perpAcct.mngoAccrued.add(acc)
-      }, ZERO_BN)
-    : ZERO_BN
-  // console.log('rerendering account info', mangoAccount, mngoAccrued.toNumber())
-
-  const handleRedeemMngo = async () => {
-    const wallet = useStore.getState().wallet.current
-    const mngoNodeBank =
-      mangoGroup.rootBankAccounts[MNGO_INDEX].nodeBankAccounts[0]
-
-    try {
-      setRedeeming(true)
-      const txid = await mangoClient.redeemAllMngo(
-        mangoGroup,
-        mangoAccount,
-        wallet,
-        mangoGroup.tokens[MNGO_INDEX].rootBank,
-        mngoNodeBank.publicKey,
-        mngoNodeBank.vault
-      )
-      notify({
-        title: t('redeem-success'),
-        description: '',
-        txid,
-      })
-    } catch (e) {
-      notify({
-        title: t('redeem-failure'),
-        description: e.message,
-        txid: e.txid,
-        type: 'error',
-      })
-    } finally {
-      actions.reloadMangoAccount()
-      setRedeeming(false)
-    }
-  }
 
   const maintHealthRatio = mangoAccount
     ? mangoAccount.getHealthRatio(mangoGroup, mangoCache, 'Maint')
@@ -254,29 +206,7 @@ export default function AccountInfo() {
                   {t('mngo-rewards')}
                 </div>
               </Tooltip>
-              <div className={`flex items-center text-th-fgd-1`}>
-                {initialLoad ? (
-                  <DataLoader />
-                ) : mangoGroup ? (
-                  nativeToUi(
-                    mngoAccrued.toNumber(),
-                    mangoGroup.tokens[MNGO_INDEX].decimals
-                  )
-                ) : (
-                  0
-                )}
-                {redeeming ? (
-                  <Loading className="ml-2" />
-                ) : (
-                  <LinkButton
-                    onClick={handleRedeemMngo}
-                    className="ml-2 text-th-primary text-xs disabled:cursor-not-allowed disabled:opacity-60 disabled:hover:underline"
-                    disabled={mngoAccrued.eq(ZERO_BN)}
-                  >
-                    {t('claim')}
-                  </LinkButton>
-                )}
-              </div>
+              <div className={`flex items-center text-th-fgd-1`}>0</div>
             </div>
           </div>
           <div className="border border-th-bkg-4 rounded flex items-center my-2 sm:my-3 p-2.5">
