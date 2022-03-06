@@ -217,8 +217,6 @@ const TVChartContainer = () => {
         lowerPrice: long ? stopLossPrice : takeProfitPrice,
       }
 
-      console.log('lastBarData', lastBarData.current)
-
       // position shape
       tvWidgetRef.current.chart().createMultipointShape(
         [

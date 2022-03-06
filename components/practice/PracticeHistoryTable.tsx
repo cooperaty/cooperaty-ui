@@ -12,16 +12,17 @@ import { useTranslation } from 'next-i18next'
 import Pagination from '../elements/Pagination'
 import usePagination from '../../hooks/usePagination'
 import useStore from '../../stores/useStore'
-import { Exercise } from '../../stores/types'
+import { ExerciseHistoryItem } from '../../stores/types'
 import { useEffect } from 'react'
 import useLocalStorageState from '../../hooks/useLocalStorageState'
+import { historyItemToExercise } from '../../stores/constants'
 
 export const EXERCISES_HISTORY_STORAGE_KEY = 'exercisesHistory'
 
 const PracticeHistoryTable = ({ numExercises }: { numExercises?: number }) => {
   const { t } = useTranslation('common')
-  const setStore = useStore((s) => s.set)
   const { asPath } = useRouter()
+  const setStore = useStore((s) => s.set)
   const traderAccount = useStore((s) => s.selectedTraderAccount.current)
   const [savedExercisesHistory, setSavedExercisesHistory] =
     useLocalStorageState(
@@ -30,18 +31,10 @@ const PracticeHistoryTable = ({ numExercises }: { numExercises?: number }) => {
     )
   const exercisesHistory = useStore((state) => state.exercisesHistory)
   const actions = useStore((state) => state.actions)
-  const preFilteredExercises = exercisesHistory.filter(
-    (exercise) => exercise.state === 'checking'
-  )
-  console.log(preFilteredExercises)
 
-  useEffect(() => {
-    if (savedExercisesHistory.length > 0) {
-      setStore((state) => {
-        state.exercisesHistory = savedExercisesHistory
-      })
-    }
-  }, [])
+  const preFilteredExercises = savedExercisesHistory.filter(
+    (exercise) => exercise.state != 'sskipped'
+  )
 
   const { items, requestSort, sortConfig } =
     useSortableData(preFilteredExercises)
@@ -63,8 +56,10 @@ const PracticeHistoryTable = ({ numExercises }: { numExercises?: number }) => {
   } = usePagination(filteredExercises, { perPage: 500 })
 
   useEffect(() => {
-    setData(filteredExercises)
-    setSavedExercisesHistory(exercisesHistory)
+    if (traderAccount) {
+      setData(filteredExercises)
+      setSavedExercisesHistory(exercisesHistory)
+    }
   }, [exercisesHistory])
 
   return (
@@ -97,14 +92,12 @@ const PracticeHistoryTable = ({ numExercises }: { numExercises?: number }) => {
                       <Th>
                         <LinkButton
                           className="flex items-center no-underline font-normal"
-                          onClick={() =>
-                            requestSort('chart.direction.position')
-                          }
+                          onClick={() => requestSort('direction')}
                         >
                           {t('side')}
                           <ArrowSmDownIcon
                             className={`default-transition flex-shrink-0 h-4 w-4 ml-1 ${
-                              sortConfig?.key === 'chart.direction.position'
+                              sortConfig?.key === 'direction'
                                 ? sortConfig.direction === 'ascending'
                                   ? 'transform rotate-180'
                                   : 'transform rotate-360'
@@ -116,14 +109,12 @@ const PracticeHistoryTable = ({ numExercises }: { numExercises?: number }) => {
                       <Th>
                         <LinkButton
                           className="flex items-center no-underline font-normal"
-                          onClick={() =>
-                            requestSort('chart.position.takeProfit')
-                          }
+                          onClick={() => requestSort('takeProfit')}
                         >
                           {t('take-profit')}
                           <ArrowSmDownIcon
                             className={`default-transition flex-shrink-0 h-4 w-4 ml-1 ${
-                              sortConfig?.key === 'chart.position.takeProfit'
+                              sortConfig?.key === 'takeProfit'
                                 ? sortConfig.direction === 'ascending'
                                   ? 'transform rotate-180'
                                   : 'transform rotate-360'
@@ -135,12 +126,12 @@ const PracticeHistoryTable = ({ numExercises }: { numExercises?: number }) => {
                       <Th>
                         <LinkButton
                           className="flex items-center no-underline font-normal"
-                          onClick={() => requestSort('chart.position.stopLoss')}
+                          onClick={() => requestSort('stopLoss')}
                         >
                           {t('stop-loss')}
                           <ArrowSmDownIcon
                             className={`default-transition flex-shrink-0 h-4 w-4 ml-1 ${
-                              sortConfig?.key === 'chart.position.stopLoss'
+                              sortConfig?.key === 'stopLoss'
                                 ? sortConfig.direction === 'ascending'
                                   ? 'transform rotate-180'
                                   : 'transform rotate-360'
@@ -169,42 +160,47 @@ const PracticeHistoryTable = ({ numExercises }: { numExercises?: number }) => {
                     </TrHead>
                   </thead>
                   <tbody>
-                    {paginatedData.map((exercise: Exercise, index) => {
-                      return (
-                        <TrBody
-                          index={index}
-                          key={`${exercise.data.publicKey}`}
-                        >
-                          <Td>
-                            <LinkButton
-                              className="flex items-center no-underline font-normal"
-                              onClick={() =>
-                                actions.setNewExercise({ ...exercise })
-                              }
-                            >
-                              <div className="flex items-center">
-                                <img
-                                  alt=""
-                                  width="20"
-                                  height="20"
-                                  src={`/assets/icons/modalities/${exercise.type.toLowerCase()}.png`}
-                                  className={`mr-2.5`}
-                                />
-                                <span>{exercise.type}</span>
-                              </div>
-                            </LinkButton>
-                          </Td>
-                          <Td>
-                            <SideBadge
-                              side={exercise.chart.position.direction}
-                            />
-                          </Td>
-                          <Td>{exercise.chart.position.takeProfit}</Td>
-                          <Td>{exercise.chart.position.stopLoss}</Td>
-                          <Td>{t(exercise.state)}</Td>
-                        </TrBody>
-                      )
-                    })}
+                    {paginatedData.map(
+                      (exercise: ExerciseHistoryItem, index) => {
+                        return (
+                          <TrBody index={index} key={`${exercise.publicKey}`}>
+                            <Td>
+                              <LinkButton
+                                className="flex items-center no-underline font-normal"
+                                onClick={() => {
+                                  actions.setNewExercise(
+                                    historyItemToExercise(exercise)
+                                  )
+                                  setStore((state) => {
+                                    state.practiceForm.validation =
+                                      exercise.validation
+                                  })
+                                }}
+                              >
+                                <div className="flex items-center">
+                                  <img
+                                    alt=""
+                                    width="20"
+                                    height="20"
+                                    src={`/assets/icons/modalities/${exercise.type.toLowerCase()}.png`}
+                                    className={`mr-2.5`}
+                                  />
+                                  <span>{exercise.type}</span>
+                                </div>
+                              </LinkButton>
+                            </Td>
+                            <Td>
+                              <SideBadge
+                                side={exercise.direction.split('_')[0]}
+                              />
+                            </Td>
+                            <Td>{exercise.takeProfit}</Td>
+                            <Td>{exercise.stopLoss}</Td>
+                            <Td>{t(exercise.state)}</Td>
+                          </TrBody>
+                        )
+                      }
+                    )}
                   </tbody>
                 </Table>
                 {numExercises && items.length > numExercises ? (
@@ -227,7 +223,7 @@ const PracticeHistoryTable = ({ numExercises }: { numExercises?: number }) => {
                 )}
               </>
             ) : (
-              paginatedData.map((exercise: Exercise, index) => (
+              paginatedData.map((exercise: ExerciseHistoryItem, index) => (
                 <ExpandableRow
                   buttonTemplate={
                     <>
@@ -249,16 +245,13 @@ const PracticeHistoryTable = ({ numExercises }: { numExercises?: number }) => {
                               <span
                                 className={`mr-1
                                 ${
-                                  exercise.chart.position.direction ==
-                                  'long_position'
+                                  exercise.direction == 'long_position'
                                     ? 'text-th-green'
                                     : 'text-th-red'
                                 }
                               `}
                               >
-                                {exercise.chart.position.direction
-                                  .split('_')[0]
-                                  .toUpperCase()}
+                                {exercise.direction.split('_')[0].toUpperCase()}
                               </span>
                             </div>
                           </div>
@@ -274,13 +267,13 @@ const PracticeHistoryTable = ({ numExercises }: { numExercises?: number }) => {
                         <div className="pb-0.5 text-th-fgd-3 text-xs">
                           {t('take-profit')}
                         </div>
-                        {exercise.chart.position.takeProfit}
+                        {exercise.takeProfit}
                       </div>
                       <div className="text-left">
                         <div className="pb-0.5 text-th-fgd-3 text-xs">
                           {t('stop-loss')}
                         </div>
-                        {exercise.chart.position.stopLoss}
+                        {exercise.stopLoss}
                       </div>
                     </div>
                   }

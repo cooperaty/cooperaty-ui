@@ -6,6 +6,7 @@ import Input from '../elements/Input'
 import { ElementTitle } from '../elements/styles'
 import ButtonGroup from '../elements/ButtonGroup'
 import { useTranslation } from 'next-i18next'
+import { exerciseToHistoryItem } from '../../stores/constants'
 
 const PREDICTION_PERCENT_LIST_LOSS = [
   '0%',
@@ -73,7 +74,9 @@ export default function SimplePracticeForm() {
     set((s) => {
       if (selectedExercise) {
         if (selectedExercise.state == 'active')
-          s.exercisesHistory.push({ ...selectedExercise, state: 'skipped' })
+          s.exercisesHistory.push(
+            exerciseToHistoryItem(selectedExercise, 'skipped')
+          )
         s.selectedExercise.current = null
       }
       s.selectedExercise.loadNew = true
@@ -115,9 +118,10 @@ export default function SimplePracticeForm() {
 
       set((s) => {
         if (selectedExercise.state == 'active')
-          s.exercisesHistory.push({ ...selectedExercise, state: 'checking' })
+          s.exercisesHistory.push(
+            exerciseToHistoryItem(selectedExercise, 'checking', validation)
+          )
         s.practiceForm.validation = 0
-        s.selectedExercise.current.state = 'checking'
         s.selectedExercise.loadNew = true
       })
     } catch (e) {

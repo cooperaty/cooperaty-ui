@@ -17,6 +17,9 @@ import {
   marketSelector,
   marketsSelector,
 } from '../stores/selectors'
+import { EXERCISES_HISTORY_STORAGE_KEY } from '../components/practice/PracticeHistoryTable'
+import { Exercise } from '../stores/types'
+import { historyItemToExercise } from '../stores/constants'
 
 const SECONDS = 1000
 
@@ -47,6 +50,8 @@ const useHydrateStore = () => {
   const selectedMarket = useStore(marketSelector)
   const connection = useStore(connectionSelector)
   const mangoAccount = useStore(mangoAccountSelector)
+  const traderAccount = useStore((s) => s.selectedTraderAccount.current)
+  const currentExercise = useStore((s) => s.selectedExercise.current)
   const loadNewExercise = useStore((s) => s.selectedExercise.loadNew)
   const loadInitialExercise = useStore((s) => s.selectedExercise.initialLoad)
 
@@ -54,9 +59,39 @@ const useHydrateStore = () => {
 
   // update exercise when on initial load or need to load new exercise
   useEffect(() => {
-    console.log('load', loadInitialExercise, loadNewExercise)
     if (loadNewExercise || loadInitialExercise) actions.fetchExercise()
   }, [loadNewExercise, loadInitialExercise, connected])
+
+  useEffect(() => {
+    if (traderAccount) {
+      const savedExercisesHistory = JSON.parse(
+        localStorage.getItem(
+          EXERCISES_HISTORY_STORAGE_KEY + traderAccount.publicKey.toString()
+        ) || '[]'
+      )
+      if (savedExercisesHistory.length > 0) {
+        console.log('savedExercisesHistory', savedExercisesHistory)
+        setStore((state) => {
+          state.exercisesHistory = savedExercisesHistory as Exercise[]
+        })
+        if (currentExercise) {
+          const currentExerciseHistoryItem = savedExercisesHistory.find(
+            (item) =>
+              item.publicKey == currentExercise.data.publicKey.toString()
+          )
+          if (currentExerciseHistoryItem) {
+            actions.setNewExercise(
+              historyItemToExercise(currentExerciseHistoryItem)
+            )
+            setStore((state) => {
+              state.practiceForm.validation =
+                currentExerciseHistoryItem.validation
+            })
+          }
+        }
+      }
+    }
+  }, [traderAccount])
 
   // update orderbook when market changes
   useEffect(() => {

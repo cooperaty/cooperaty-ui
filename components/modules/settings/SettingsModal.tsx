@@ -280,7 +280,6 @@ const NewExerciseSettings = ({ setSettingsView }) => {
   const [newExerciseCID, setNewExerciseCID] = useState('')
 
   const handleCreateExercise = async (exerciseCID) => {
-    console.log(exerciseCID)
     if (exerciseCID != null && exerciseCID.length == 59) {
       await cooperatyClient.createExercise(exerciseCID)
       setSettingsView('')

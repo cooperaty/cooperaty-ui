@@ -16,6 +16,18 @@ import { Notification } from '../utils/notifications'
 import { Market } from '@project-serum/serum'
 import { WalletAdapter } from '../@types/types'
 
+export class ExerciseHistoryItem {
+  publicKey: string
+  cid: string
+  direction: 'long_position' | 'short_position'
+  takeProfit: number
+  stopLoss: number
+  postBars: number
+  type: 'Scalping' | 'Swing'
+  state: 'active' | 'checking' | 'skipped' | 'expired' | 'success' | 'failed'
+  validation: number
+}
+
 export class Exercise {
   data: ExerciseData
   chart: {
@@ -148,7 +160,7 @@ export interface Store extends State {
     validation: number | ''
     practiceType: 'Loss' | 'Profit'
   }
-  exercisesHistory: Exercise[]
+  exercisesHistory: ExerciseHistoryItem[]
   selectedExercise: {
     current: Exercise | null
     initialLoad: boolean

@@ -1,5 +1,5 @@
 import { EndpointInfo, WalletAdapter } from '../@types/types'
-import { ClusterType } from './types'
+import { ClusterType, Exercise, ExerciseHistoryItem } from './types'
 import {
   Commitment,
   ConfirmOptions,
@@ -9,6 +9,7 @@ import {
 } from '@solana/web3.js'
 import { Config, IDS } from '@blockworks-foundation/mango-client'
 import { SignerWallet, SolanaProvider } from '@saberhq/solana-contrib'
+import { ExerciseData } from '../sdk'
 
 export const ENDPOINTS: EndpointInfo[] = [
   {
@@ -54,3 +55,51 @@ export const getProvider = (
 }
 
 export const LAST_EXERCISE_LOCAL_STORAGE_KEY = 'last_exercise_account'
+
+export const exerciseToHistoryItem = (
+  exercise: Exercise,
+  state: string = exercise.state,
+  validation = 0
+): ExerciseHistoryItem => {
+  return {
+    publicKey: exercise.data.publicKey.toString(),
+    cid: exercise.data.account.cid,
+    direction: exercise.chart.position.direction,
+    takeProfit: exercise.chart.position.takeProfit,
+    stopLoss: exercise.chart.position.stopLoss,
+    postBars: exercise.chart.position.postBars,
+    type: exercise.type,
+    state,
+    validation,
+  } as ExerciseHistoryItem
+}
+
+export const historyItemToExercise = (item: ExerciseHistoryItem): Exercise => {
+  return {
+    data: {
+      publicKey: new PublicKey(item.publicKey),
+      account: {
+        cid: item.cid,
+      },
+    } as ExerciseData,
+    chart: {
+      candles: null,
+      position: {
+        direction: item.direction,
+        takeProfit: item.takeProfit,
+        stopLoss: item.stopLoss,
+        postBars: item.postBars,
+      },
+      timeframe: null,
+    },
+    type: item.type,
+    state: item.state,
+    solution: {
+      cid: null,
+      datetime: null,
+      pair: null,
+      exchange: null,
+      outcome: null,
+    },
+  }
+}

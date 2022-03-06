@@ -107,7 +107,7 @@ export default function AdvancedTradeForm({
 
   // TODO saml - create a tick box on the UI; Only available on perps
   // eslint-disable-next-line
-  const [postOnlySlide, setPostOnlySlide] = useState(false)
+  const [, setPostOnlySlide] = useState(false)
 
   const [postOnly, setPostOnly] = useState(false)
   const [ioc, setIoc] = useState(false)
@@ -380,16 +380,6 @@ export default function AdvancedTradeForm({
     }
   }
 
-  // TODO saml - use
-  // eslint-disable-next-line
-  const postOnlySlideOnChange = (checked) => {
-    if (checked) {
-      setIoc(false)
-      setPostOnly(false)
-    }
-    setPostOnlySlide(checked)
-  }
-
   const postOnChange = (checked) => {
     if (checked) {
       setIoc(false)
@@ -572,15 +562,6 @@ export default function AdvancedTradeForm({
       // spot market orders will sometimes not be ioc but limit
       const orderType = ioc ? 'ioc' : postOnly ? 'postOnly' : 'limit'
 
-      console.log(
-        'submit',
-        side,
-        baseSize.toString(),
-        orderPrice.toString(),
-        orderType,
-        market instanceof Market && 'spot',
-        isTriggerOrder && 'trigger'
-      )
       let txid
       if (market instanceof Market) {
         txid = await mangoClient.placeSpotOrder2(
