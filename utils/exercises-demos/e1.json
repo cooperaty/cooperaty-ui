@@ -11771,10 +11771,11 @@
   ],
   "position": {
     "direction": "long_position",
-    "takeProfit": 0.03,
-    "stopLoss": 0.015,
+    "takeProfit": 0.02,
+    "stopLoss": 0.01,
     "postBars": 6
   },
-  "solutionCID": "abc",
+  "type": "Scalping",
+  "solutionCID": "bafkreicdp2ms3okyxp2nasdcjaxmxvmdfbxx7wfvhhwqpynzqozpj2rtpq",
   "timeframes": ["1", "5", "15", "30"]
 }

@@ -114,10 +114,6 @@ export type TrainerIDL = {
           type: 'i64'
         },
         {
-          name: 'solutionCid'
-          type: 'string'
-        },
-        {
           name: 'cid'
           type: 'string'
         }
@@ -214,7 +210,7 @@ export type TrainerIDL = {
         kind: 'struct'
         fields: [
           {
-            name: 'full'
+            name: 'sealed'
             type: 'bool'
           },
           {
@@ -369,43 +365,53 @@ export type TrainerIDL = {
   errors: [
     {
       code: 6000
+      name: 'ValidationsCapacityTooSmall'
+      msg: 'Validations capacity too small, must be greater than 0'
+    },
+    {
+      code: 6001
+      name: 'ExpiredTimeout'
+      msg: 'Expired timeout, it must be in the future'
+    },
+    {
+      code: 6002
       name: 'WrongExerciseCreator'
       msg: 'Specified exercise creator does not match the pubkey in the exercise'
     },
     {
-      code: 6001
+      code: 6003
       name: 'WrongUser'
       msg: 'Specified user does not match the pubkey in the trader'
     },
     {
-      code: 6002
+      code: 6004
       name: 'WrongValidationIndex'
       msg: 'Specified validation index does not match the pubkey in the trader'
     },
     {
-      code: 6003
+      code: 6005
       name: 'DuplicatedValidation'
       msg: 'Trader have already added a validation'
     },
     {
-      code: 6004
+      code: 6006
       name: 'InvalidValidationIndex'
       msg: 'Invalid validation index'
     },
     {
-      code: 6005
+      code: 6007
       name: 'BumpNotFound'
       msg: 'Bump not found'
     },
     {
-      code: 6006
+      code: 6008
       name: 'ExerciseTimeout'
       msg: 'Exercise timeout'
     },
     {
-      code: 6007
-      name: 'ExerciseFull'
-      msg: 'Exercise full'
+      code: 6009
+      name: 'ExerciseSealed'
+      msg: 'Exercise sealed'
     }
   ]
 }
@@ -523,10 +529,6 @@ export const TrainerJSON: TrainerIDL = {
           type: 'i64',
         },
         {
-          name: 'solutionCid',
-          type: 'string',
-        },
-        {
           name: 'cid',
           type: 'string',
         },
@@ -623,7 +625,7 @@ export const TrainerJSON: TrainerIDL = {
         kind: 'struct',
         fields: [
           {
-            name: 'full',
+            name: 'sealed',
             type: 'bool',
           },
           {
@@ -778,43 +780,53 @@ export const TrainerJSON: TrainerIDL = {
   errors: [
     {
       code: 6000,
+      name: 'ValidationsCapacityTooSmall',
+      msg: 'Validations capacity too small, must be greater than 0',
+    },
+    {
+      code: 6001,
+      name: 'ExpiredTimeout',
+      msg: 'Expired timeout, it must be in the future',
+    },
+    {
+      code: 6002,
       name: 'WrongExerciseCreator',
       msg: 'Specified exercise creator does not match the pubkey in the exercise',
     },
     {
-      code: 6001,
+      code: 6003,
       name: 'WrongUser',
       msg: 'Specified user does not match the pubkey in the trader',
     },
     {
-      code: 6002,
+      code: 6004,
       name: 'WrongValidationIndex',
       msg: 'Specified validation index does not match the pubkey in the trader',
     },
     {
-      code: 6003,
+      code: 6005,
       name: 'DuplicatedValidation',
       msg: 'Trader have already added a validation',
     },
     {
-      code: 6004,
+      code: 6006,
       name: 'InvalidValidationIndex',
       msg: 'Invalid validation index',
     },
     {
-      code: 6005,
+      code: 6007,
       name: 'BumpNotFound',
       msg: 'Bump not found',
     },
     {
-      code: 6006,
+      code: 6008,
       name: 'ExerciseTimeout',
       msg: 'Exercise timeout',
     },
     {
-      code: 6007,
-      name: 'ExerciseFull',
-      msg: 'Exercise full',
+      code: 6009,
+      name: 'ExerciseSealed',
+      msg: 'Exercise sealed',
     },
   ],
 }

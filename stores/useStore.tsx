@@ -524,7 +524,10 @@ const useStore = create<Store>((set, get) => {
 
         if (!exercise.state) exercise.state = 'active'
 
+        console.log(typeof { ...exercise })
+
         set((state) => {
+          console.log(typeof state.selectedExercise.current)
           state.selectedExercise.current = { ...exercise } as Exercise
           state.selectedExercise.initialLoad = false
           state.selectedExercise.loadNew = false
@@ -535,6 +538,55 @@ const useStore = create<Store>((set, get) => {
           LAST_EXERCISE_LOCAL_STORAGE_KEY,
           exercise.data.publicKey.toString()
         )
+
+        const cooperatyClient = get().connection.cooperatyClient
+        if (exercise.state == 'active') {
+          cooperatyClient.onExerciseChange(
+            exercise.data.publicKey,
+            (exerciseAccount: ExerciseData['account']) => {
+              console.log('Exercise changed', exerciseAccount)
+              // if the exercise is not available anymore, change the state to expired
+              if (
+                exerciseAccount.sealed ||
+                exerciseAccount.outcome.toNumber() != 0
+              ) {
+                set((s) => {
+                  s.selectedExercise.current = {
+                    ...exercise,
+                    state: 'expired',
+                  }
+                })
+              }
+              // TODO: if the exercise has been checked, load the solution
+            }
+          )
+        } else if (exercise.state == 'checking') {
+          const traderAccount = get().selectedTraderAccount.current
+          cooperatyClient.onExerciseChange(
+            exercise.data.publicKey,
+            (exerciseAccount: ExerciseData['account']) => {
+              console.log('Exercise changed', exerciseAccount)
+              const outcome = exerciseAccount.outcome.toNumber()
+              if (outcome != 0) {
+                const validation = exerciseAccount.validations.filter(
+                  (validation) =>
+                    validation.trader.equals(traderAccount.publicKey)
+                )
+                if (validation.length == 1) {
+                  set((s) => {
+                    s.selectedExercise.current = {
+                      ...exercise,
+                      state:
+                        validation[0].value.toNumber() * outcome > 0
+                          ? 'success'
+                          : 'failed',
+                    }
+                  })
+                }
+              }
+            }
+          )
+        }
       },
       async getAvailableExercises() {
         const cooperatyClient = get().connection.cooperatyClient
@@ -542,7 +594,7 @@ const useStore = create<Store>((set, get) => {
 
         // get exercises' data from the blockchain
         const exercises: any[] = await cooperatyClient.getFilteredExercises({
-          full: false,
+          sealed: false,
         })
 
         // filter exercises that are already in history
@@ -586,10 +638,21 @@ const useStore = create<Store>((set, get) => {
               type: 'info',
             })
             if (currentExercise != null) {
+              console.log(
+                'currentExercise',
+                typeof currentExercise,
+                currentExercise
+              )
               set((s) => {
+                console.log(
+                  typeof s.selectedExercise.current,
+                  s.selectedExercise.current
+                )
+                console.log(typeof s.selectedExercise, s.selectedExercise)
                 s.selectedExercise.current = null
               })
             }
+            localStorage.setItem(LAST_EXERCISE_LOCAL_STORAGE_KEY, '')
             return null
           }
           // if there are available exercises, return the first

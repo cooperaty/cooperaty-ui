@@ -186,6 +186,8 @@ const ExerciseSettings = ({ setSettingsView }) => {
   const cooperatyClient = useStore((s) => s.connection.cooperatyClient)
   const [availableExercises, setAvailableExercises] = useState([])
   const [exerciseCID, setExerciseCID] = useState('')
+  const [addOutcome, setAddOutcome] = useState(false)
+  const [outcome, setOutcome] = useState(100)
 
   const getExercise = (exerciseCID) => {
     return availableExercises.find(
@@ -211,6 +213,32 @@ const ExerciseSettings = ({ setSettingsView }) => {
     const exercise = getExercise(exerciseCID)
     if (exercise != null) {
       await cooperatyClient.closeExercise(exercise)
+      setSettingsView('')
+    }
+  }
+
+  const handleSetOutcome = async (outcome) => {
+    if (outcome > 100) {
+      setOutcome(100)
+    } else if (outcome < -100) {
+      setOutcome(-100)
+    } else {
+      setOutcome(outcome)
+    }
+  }
+
+  const handleAddOutcomeExercise = async (exerciseCID) => {
+    const exercise = getExercise(exerciseCID)
+    if (exercise != null) {
+      await cooperatyClient.addOutcome(exercise, outcome)
+      setSettingsView('')
+    }
+  }
+
+  const handleCheckAllValidationsExercise = async (exerciseCID) => {
+    const exercise = getExercise(exerciseCID)
+    if (exercise != null) {
+      await cooperatyClient.checkAllValidations(exercise)
       setSettingsView('')
     }
   }
@@ -250,26 +278,72 @@ const ExerciseSettings = ({ setSettingsView }) => {
           ))}
         </div>
       </Select>
-      <Button
-        onClick={() => setSettingsView('New Exercise')}
-        className="mt-4 w-full"
-      >
-        <div className={`flex items-center justify-center`}>
-          {t('create-exercise')}
-        </div>
-      </Button>
-      <Button
-        onClick={() => handleCloseExercise(exerciseCID)}
-        className="mt-4 w-full"
-      >
-        <div className={`flex items-center justify-center`}>{t('close')}</div>
-      </Button>
-      <Button
-        onClick={() => handleSetExercise(exerciseCID)}
-        className="mt-4 w-full"
-      >
-        <div className={`flex items-center justify-center`}>{t('save')}</div>
-      </Button>
+      {addOutcome ? (
+        <>
+          <div className="pt-4">
+            <label className="block font-semibold mb-1 text-xs">
+              {t('outcome')}
+            </label>
+            <Input
+              type="number"
+              error={outcome == null || outcome == 0}
+              value={outcome}
+              onChange={(e) => handleSetOutcome(e.target.value)}
+            />
+          </div>
+          <Button
+            onClick={() => handleAddOutcomeExercise(outcome)}
+            className="mt-4 w-full"
+          >
+            <div className={`flex items-center justify-center`}>{t('add')}</div>
+          </Button>
+          <Button onClick={() => setAddOutcome(false)} className="mt-4 w-full">
+            <div className={`flex items-center justify-center`}>
+              {t('cancel')}
+            </div>
+          </Button>
+        </>
+      ) : (
+        <>
+          <Button
+            onClick={() => setSettingsView('New Exercise')}
+            className="mt-4 w-full"
+          >
+            <div className={`flex items-center justify-center`}>
+              {t('create-exercise')}
+            </div>
+          </Button>
+          <Button onClick={() => setAddOutcome(true)} className="mt-4 w-full">
+            <div className={`flex items-center justify-center`}>
+              {t('add-outcome')}
+            </div>
+          </Button>
+          <Button
+            onClick={() => handleCheckAllValidationsExercise(exerciseCID)}
+            className="mt-4 w-full"
+          >
+            <div className={`flex items-center justify-center`}>
+              {t('check-all-validations')}
+            </div>
+          </Button>
+          <Button
+            onClick={() => handleCloseExercise(exerciseCID)}
+            className="mt-4 w-full"
+          >
+            <div className={`flex items-center justify-center`}>
+              {t('close')}
+            </div>
+          </Button>
+          <Button
+            onClick={() => handleSetExercise(exerciseCID)}
+            className="mt-4 w-full"
+          >
+            <div className={`flex items-center justify-center`}>
+              {t('save')}
+            </div>
+          </Button>
+        </>
+      )}
     </div>
   )
 }
@@ -305,6 +379,12 @@ const NewExerciseSettings = ({ setSettingsView }) => {
         className="mt-4 w-full"
       >
         <div className={`flex items-center justify-center`}>{t('create')}</div>
+      </Button>
+      <Button
+        onClick={() => setSettingsView('Exercise')}
+        className="mt-4 w-full"
+      >
+        <div className={`flex items-center justify-center`}>{t('cancel')}</div>
       </Button>
     </div>
   )

@@ -11771,10 +11771,11 @@
   ],
   "position": {
     "direction": "short_position",
-    "takeProfit": 0.1,
+    "takeProfit": 0.035,
     "stopLoss": 0.015,
     "postBars": 6
   },
-  "solutionCID": "abc",
+  "solutionCID": "bafkreieg5w4g4lplv4ci43i7ppwcaznzue3focaclpm5ase4amgp56k7ya",
+  "type": "Swing",
   "timeframes": ["1", "5", "15", "30"]
 }

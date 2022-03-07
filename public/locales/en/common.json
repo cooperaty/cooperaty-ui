@@ -407,5 +407,9 @@
   "new-exercise": "New Exercise",
   "create-exercise": "Create Exercise",
   "cid": "CID",
-  "create": "Create"
+  "create": "Create",
+  "outcome": "Outcome",
+  "add-outcome": "Add Outcome",
+  "check-all-validations": "Check all validations",
+  "add": "Add"
 }

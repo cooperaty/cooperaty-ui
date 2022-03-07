@@ -110,8 +110,7 @@ export default function SimplePracticeForm() {
       const txid = await cooperatyClient.addValidation(
         traderAccount,
         selectedExercise.data,
-        validation,
-        selectedExercise.data.account.cid
+        validation
       )
 
       notify({ title: t('validation-successfully-placed'), txid })
