@@ -15,7 +15,6 @@ import useStore from '../../stores/useStore'
 import { ExerciseHistoryItem } from '../../stores/types'
 import { useEffect } from 'react'
 import useLocalStorageState from '../../hooks/useLocalStorageState'
-import { PublicKey } from '@solana/web3.js'
 
 export const EXERCISES_HISTORY_STORAGE_KEY = 'exercisesHistory'
 
@@ -163,14 +162,12 @@ const PracticeHistoryTable = ({ numExercises }: { numExercises?: number }) => {
                     {paginatedData.map(
                       (exercise: ExerciseHistoryItem, index) => {
                         return (
-                          <TrBody index={index} key={`${exercise.publicKey}`}>
+                          <TrBody index={index} key={`${exercise.cid}`}>
                             <Td>
                               <LinkButton
                                 className="flex items-center no-underline font-normal"
                                 onClick={() => {
-                                  actions.fetchExercise(
-                                    new PublicKey(exercise.publicKey)
-                                  )
+                                  actions.fetchExercise(exercise.cid)
                                   setStore((state) => {
                                     state.practiceForm.validation =
                                       exercise.validation

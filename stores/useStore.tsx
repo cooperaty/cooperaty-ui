@@ -2,17 +2,17 @@ import create from 'zustand'
 import produce from 'immer'
 import { Market } from '@project-serum/serum'
 import {
-  MangoClient,
-  MarketConfig,
+  getAllMarkets,
   getMarketByBaseSymbolAndKind,
+  getMultipleAccounts,
   getTokenAccountsByOwnerWithWrappedSol,
   getTokenByMint,
+  MangoClient,
+  MarketConfig,
+  msrmMints,
   nativeToUi,
   PerpMarket,
-  getAllMarkets,
-  getMultipleAccounts,
   PerpMarketLayout,
-  msrmMints,
 } from '@blockworks-foundation/mango-client'
 import { Commitment, Connection, PublicKey } from '@solana/web3.js'
 import { isDefined, zipDict } from '../utils'
@@ -23,16 +23,16 @@ import {
   NODE_URL_KEY,
 } from '../components/modules/settings/SettingsModal'
 import { MSRM_DECIMALS } from '@project-serum/serum/lib/token-instructions'
-import { TrainerSDK, TraderData, ExerciseData } from '../sdk'
+import { ExerciseData, TraderData, TrainerSDK } from '../sdk'
 import Axios from 'axios'
 import { LAST_TRADER_ACCOUNT_KEY } from '../components/trader_account/TraderAccountsModal'
 import { Exercise, ExerciseFile, Store } from './types'
 import {
   CLUSTER,
+  corruptedExerciseToHistoryItem,
   DEFAULT_MANGO_GROUP_CONFIG,
   DEFAULT_MANGO_GROUP_NAME,
   ENDPOINT,
-  exerciseDataToHistoryItem,
   getProvider,
   LAST_EXERCISE_LOCAL_STORAGE_KEY,
   mangoGroupPk,
@@ -513,33 +513,26 @@ const useStore = create<Store>((set, get) => {
             description: 'Try again',
             type: 'error',
           })
+          const set = get().set
+          set((state) => {
+            state.exercisesHistory.push(corruptedExerciseToHistoryItem(cid))
+            state.selectedExercise.current = null
+          })
           return null
         }
       },
-      async setNewExercise(
-        exerciseData: ExerciseData,
-        state: Exercise['state'] = 'active'
-      ) {
+      async setNewExercise({
+        exerciseData,
+        exerciseFile,
+        state,
+      }: {
+        exerciseData?: ExerciseData
+        exerciseFile?: ExerciseFile
+        state?: Exercise['state']
+      }) {
         const set = get().set
-        const exerciseFile: ExerciseFile = await this.getExerciseFile(
-          exerciseData.account.cid
-        )
-        console.log('Got exercise file', typeof exerciseFile, exerciseFile)
-
-        if (exerciseFile == null) {
-          set((s) => {
-            s.exercisesHistory.push(
-              exerciseDataToHistoryItem(exerciseData, 'skipped')
-            )
-            s.selectedExercise.loadNew = false
-            s.selectedExercise.initialLoad = false
-            s.selectedExercise.current = null
-          })
-          return
-        }
-
         const exercise: Exercise = {
-          data: exerciseData,
+          data: exerciseData ?? null,
           file: exerciseFile,
           state: state,
           solution: null, // TODO: add solution if available
@@ -629,7 +622,7 @@ const useStore = create<Store>((set, get) => {
           : exercises.filter(
               (exercise) =>
                 !exercisesHistory.filter((pastExercise) => {
-                  return pastExercise.publicKey == exercise.publicKey.toString()
+                  return pastExercise.cid == exercise.account.cid
                 }).length
             )
       },
@@ -664,18 +657,8 @@ const useStore = create<Store>((set, get) => {
               description: 'Try again later',
               type: 'info',
             })
-            if (currentExercise != null) {
-              console.log(
-                'currentExercise',
-                typeof currentExercise,
-                currentExercise
-              )
+            if (currentExercise) {
               set((s) => {
-                console.log(
-                  typeof s.selectedExercise.current,
-                  s.selectedExercise.current
-                )
-                console.log(typeof s.selectedExercise, s.selectedExercise)
                 s.selectedExercise.current = null
               })
             }
@@ -687,10 +670,7 @@ const useStore = create<Store>((set, get) => {
           return newExercises[0]
         }
       },
-      async loadExercise(
-        exercisePublicKey: PublicKey,
-        fromLocalStorage = false
-      ) {
+      async getExerciseData(exercisePublicKey: PublicKey) {
         const set = get().set
         const cooperatyClient = get().connection.cooperatyClient
         try {
@@ -701,13 +681,10 @@ const useStore = create<Store>((set, get) => {
           console.log('Error reloading exercise', e.message)
           // if there is no data (exercise deleted), load a new one
           if (e.message.includes('Error: Account does not exist')) {
-            let title = 'Error loading exercise'
-            if (fromLocalStorage) {
-              localStorage.setItem('last_exercise_account', null)
-              title = 'Last exercise is not available anymore'
-            }
+            return null
+          } else {
             notify({
-              title,
+              title: 'Error loading exercise',
               description: 'Retrying with a new exercise',
               type: 'info',
             })
@@ -717,43 +694,62 @@ const useStore = create<Store>((set, get) => {
           }
         }
       },
-      async fetchExercise(exercisePublicKey: PublicKey) {
+      async fetchExercise(exerciseCID, state: Exercise['state'] = 'active') {
         const set = get().set
         const exerciseLoadInitial = get().selectedExercise.initialLoad
         const exerciseLoadNew = get().selectedExercise.loadNew
         let exerciseData: ExerciseData = null
+        let exerciseFile: ExerciseFile = null
 
-        // first load of exercise, when the window is opened
+        // exercise loads priority
+        // 1. when the window is opened and cid in url path TODO
+        // 2. when the window is opened and cid on localstorage
+        // 3. when the window is opened and 1 / 2 fails, load a new exercise
+        // 3. when the user clicks on change exercise / load exercise button
+        // 4. when the user clicks on an exercise history item
+
         if (exerciseLoadInitial) {
-          // get the last exercise from local storage
-          const lastExercisePublicKey = localStorage.getItem(
-            'last_exercise_account'
-          )
-
-          // if there is an exercise saved in local storage, load it
-          // try to load the exercise data from the blockchain
-          if (exercisePublicKey) {
-            exerciseData = await this.loadExercise(
-              new PublicKey(exercisePublicKey)
-            )
-          } else if (lastExercisePublicKey) {
-            exerciseData = await this.loadExercise(
-              new PublicKey(lastExercisePublicKey),
-              true
-            )
-            // else load a new one from the blockchain
-          } else {
+          exerciseCID =
+            localStorage.getItem(LAST_EXERCISE_LOCAL_STORAGE_KEY) ?? null
+          if (!exerciseCID) {
             exerciseData = await this.getNewExercise()
+            if (exerciseData) {
+              exerciseCID = exerciseData.account.cid
+            }
           }
-          // else if user ask for a new exercise, load a new one from the blockchain
-        } else if (exerciseLoadNew) {
+        }
+        if (exerciseLoadNew) {
           exerciseData = await this.getNewExercise()
+          if (exerciseData) {
+            exerciseCID = exerciseData.account.cid
+          }
         }
 
-        // if exercise is not null, then we have a new exercise
-        if (exerciseData != null) await this.setNewExercise(exerciseData)
-        // if exercise is null, then we stop searching for new exercises
-        else {
+        if (exerciseCID) {
+          exerciseFile = await this.getExerciseFile(exerciseCID)
+          if (!exerciseFile) {
+            set((state) => {
+              state.exercisesHistory.push(
+                corruptedExerciseToHistoryItem(exerciseCID)
+              )
+              state.selectedExercise.current = null
+            })
+          }
+          if (!exerciseData) {
+            const filteredExercises = await this.getFilteredExercises({
+              cid: exerciseCID,
+            })
+            if (filteredExercises.length == 1) {
+              exerciseData = filteredExercises[0]
+            }
+          }
+        }
+
+        // if exercise file is not null, then we have a new exercise
+        if (exerciseCID && exerciseFile) {
+          await this.setNewExercise({ exerciseData, exerciseFile, state })
+          // if exercise is null, then we stop searching for new exercises
+        } else {
           set((state) => {
             state.selectedExercise.initialLoad = false
             state.selectedExercise.loadNew = false

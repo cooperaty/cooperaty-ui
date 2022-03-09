@@ -94,11 +94,10 @@ export class TrainerSDK {
 
   // PDA ADDRESS
 
-  async getExerciseAddress(authority: PublicKey, cid: string) {
+  async getExerciseAddress(cid: string) {
     const [exercisePublicKey] = await anchor.web3.PublicKey.findProgramAddress(
       [
         anchor.utils.bytes.utf8.encode('exercise'),
-        authority.toBuffer(),
         anchor.utils.bytes.utf8.encode(cid.slice(0, 32)),
         anchor.utils.bytes.utf8.encode(cid.slice(32, 64)),
       ],
@@ -107,9 +106,7 @@ export class TrainerSDK {
     return exercisePublicKey
   }
 
-  // INSTRUCTIONS
-
-  async createTrader(name: string, user = this.provider.wallet.publicKey) {
+  async getTraderAddress(name: string, user: PublicKey) {
     const [traderPublicKey] = await anchor.web3.PublicKey.findProgramAddress(
       [
         anchor.utils.bytes.utf8.encode('trader'),
@@ -118,6 +115,13 @@ export class TrainerSDK {
       ],
       this.program.programId
     )
+    return traderPublicKey
+  }
+
+  // INSTRUCTIONS
+
+  async createTrader(name: string, user = this.provider.wallet.publicKey) {
+    const traderPublicKey = await this.getTraderAddress(name, user)
 
     await this.program.rpc.createTrader(name, {
       accounts: {
@@ -139,7 +143,7 @@ export class TrainerSDK {
     timeout: number = new Date().getTime() + 60 * 60 * 24,
     authority = this.provider.wallet.publicKey
   ) {
-    const exercisePublicKey = await this.getExerciseAddress(authority, cid)
+    const exercisePublicKey = await this.getExerciseAddress(cid)
 
     await this.program.rpc.createExercise(
       cid,
@@ -231,7 +235,7 @@ export class TrainerSDK {
 
     for (let i = 0; i < cids.length; i++) {
       const cid = cids[i]
-      const exercisePublicKey = await this.getExerciseAddress(authority, cid)
+      const exercisePublicKey = await this.getExerciseAddress(cid)
 
       exercisesPublicKeys.push(exercisePublicKey)
 

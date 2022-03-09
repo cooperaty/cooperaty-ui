@@ -227,7 +227,7 @@ const ExerciseSettings = ({ setSettingsView }) => {
     }
   }
 
-  const handleAddOutcomeExercise = async (exerciseCID) => {
+  const handleAddOutcomeExercise = async (exerciseCID, outcome) => {
     const exercise = getExercise(exerciseCID)
     if (exercise != null) {
       await cooperatyClient.addOutcome(exercise, outcome)
@@ -292,7 +292,7 @@ const ExerciseSettings = ({ setSettingsView }) => {
             />
           </div>
           <Button
-            onClick={() => handleAddOutcomeExercise(outcome)}
+            onClick={() => handleAddOutcomeExercise(exerciseCID, outcome)}
             className="mt-4 w-full"
           >
             <div className={`flex items-center justify-center`}>{t('add')}</div>

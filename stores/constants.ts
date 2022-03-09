@@ -14,7 +14,6 @@ import {
 } from '@solana/web3.js'
 import { Config, IDS } from '@blockworks-foundation/mango-client'
 import { SignerWallet, SolanaProvider } from '@saberhq/solana-contrib'
-import { ExerciseData } from '../sdk'
 
 export const ENDPOINTS: EndpointInfo[] = [
   {
@@ -67,7 +66,6 @@ export const exerciseToHistoryItem = (
   validation = 0
 ): ExerciseHistoryItem => {
   return {
-    publicKey: exercise.data.publicKey.toString(),
     cid: exercise.data.account.cid,
     direction: exercise.file.position.direction,
     takeProfit: exercise.file.position.takeProfit,
@@ -79,20 +77,17 @@ export const exerciseToHistoryItem = (
   } as ExerciseHistoryItem
 }
 
-export const exerciseDataToHistoryItem = (
-  exercise: ExerciseData,
-  state: ExerciseState = 'corrupted',
-  validation = 0
+export const corruptedExerciseToHistoryItem = (
+  cid: string
 ): ExerciseHistoryItem => {
   return {
-    publicKey: exercise.publicKey.toString(),
-    cid: exercise.account.cid,
+    cid,
     direction: null,
     takeProfit: null,
     stopLoss: null,
     postBars: null,
     type: null,
-    state,
-    validation,
+    state: 'corrupted',
+    validation: 0,
   }
 }

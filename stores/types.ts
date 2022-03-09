@@ -26,7 +26,6 @@ export type ExerciseState =
   | 'corrupted'
 
 export interface ExerciseHistoryItem {
-  publicKey: string
   cid: string
   direction: 'long_position' | 'short_position'
   takeProfit: number
@@ -77,7 +76,7 @@ export interface ExerciseSolution {
 }
 
 export interface Exercise {
-  data: ExerciseData
+  data: ExerciseData | null
   file: ExerciseFile
   solution: ExerciseSolution | null
   state: ExerciseState
