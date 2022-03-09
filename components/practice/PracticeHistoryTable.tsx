@@ -15,7 +15,7 @@ import useStore from '../../stores/useStore'
 import { ExerciseHistoryItem } from '../../stores/types'
 import { useEffect } from 'react'
 import useLocalStorageState from '../../hooks/useLocalStorageState'
-import { historyItemToExercise } from '../../stores/constants'
+import { PublicKey } from '@solana/web3.js'
 
 export const EXERCISES_HISTORY_STORAGE_KEY = 'exercisesHistory'
 
@@ -33,7 +33,7 @@ const PracticeHistoryTable = ({ numExercises }: { numExercises?: number }) => {
   const actions = useStore((state) => state.actions)
 
   const preFilteredExercises = savedExercisesHistory.filter(
-    (exercise) => exercise.state != 'sskipped'
+    (exercise) => exercise.state != 'sskipped' // TODO: improve the history filter by type
   )
 
   const { items, requestSort, sortConfig } =
@@ -168,8 +168,8 @@ const PracticeHistoryTable = ({ numExercises }: { numExercises?: number }) => {
                               <LinkButton
                                 className="flex items-center no-underline font-normal"
                                 onClick={() => {
-                                  actions.setNewExercise(
-                                    historyItemToExercise(exercise)
+                                  actions.fetchExercise(
+                                    new PublicKey(exercise.publicKey)
                                   )
                                   setStore((state) => {
                                     state.practiceForm.validation =
@@ -182,7 +182,7 @@ const PracticeHistoryTable = ({ numExercises }: { numExercises?: number }) => {
                                     alt=""
                                     width="20"
                                     height="20"
-                                    src={`/assets/icons/modalities/${exercise.type.toLowerCase()}.png`}
+                                    src={`/assets/icons/modalities/${exercise.type?.toLowerCase()}.png`}
                                     className={`mr-2.5`}
                                   />
                                   <span>{exercise.type}</span>
@@ -191,7 +191,7 @@ const PracticeHistoryTable = ({ numExercises }: { numExercises?: number }) => {
                             </Td>
                             <Td>
                               <SideBadge
-                                side={exercise.direction.split('_')[0]}
+                                side={exercise.direction?.split('_')[0]}
                               />
                             </Td>
                             <Td>{exercise.takeProfit}</Td>
@@ -236,7 +236,7 @@ const PracticeHistoryTable = ({ numExercises }: { numExercises?: number }) => {
                                 alt=""
                                 width="16"
                                 height="16"
-                                src={`/assets/icons/modalities/${exercise.type.toLowerCase()}.png`}
+                                src={`/assets/icons/modalities/${exercise.type?.toLowerCase()}.png`}
                                 className={`mr-1.5`}
                               />
                               {exercise.type}

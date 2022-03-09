@@ -26,13 +26,13 @@ import { MSRM_DECIMALS } from '@project-serum/serum/lib/token-instructions'
 import { TrainerSDK, TraderData, ExerciseData } from '../sdk'
 import Axios from 'axios'
 import { LAST_TRADER_ACCOUNT_KEY } from '../components/trader_account/TraderAccountsModal'
-import { Exercise, Store } from './types'
+import { Exercise, ExerciseFile, Store } from './types'
 import {
   CLUSTER,
   DEFAULT_MANGO_GROUP_CONFIG,
   DEFAULT_MANGO_GROUP_NAME,
   ENDPOINT,
-  exerciseToHistoryItem,
+  exerciseDataToHistoryItem,
   getProvider,
   LAST_EXERCISE_LOCAL_STORAGE_KEY,
   mangoGroupPk,
@@ -487,15 +487,25 @@ const useStore = create<Store>((set, get) => {
 
         await this.updateSDK()
       },
-      async setNewExercise(exercise: Exercise) {
-        const set = get().set
-        let response: any
-
-        // try getting the exercise chart from ipfs
+      async getExerciseFile(cid: string) {
         try {
-          response = await Axios.get(
-            'https://ipfs.io/ipfs/' + exercise.data.account.cid
-          )
+          const data = (
+            await Axios.get<ExerciseFile>('https://ipfs.io/ipfs/' + cid)
+          )?.data
+          if (
+            data &&
+            data.position &&
+            data.candles &&
+            data.timeframes?.length &&
+            data.type &&
+            data.solutionCID
+          ) {
+            console.log('Got IPFS data', data)
+            return data as ExerciseFile
+          } else {
+            console.log('Invalid IPFS data', data)
+            throw new Error('Invalid IPFS data')
+          }
         } catch (err) {
           console.log('Error getting IPFS data', err)
           notify({
@@ -503,8 +513,24 @@ const useStore = create<Store>((set, get) => {
             description: 'Try again',
             type: 'error',
           })
+          return null
+        }
+      },
+      async setNewExercise(
+        exerciseData: ExerciseData,
+        state: Exercise['state'] = 'active'
+      ) {
+        const set = get().set
+        const exerciseFile: ExerciseFile = await this.getExerciseFile(
+          exerciseData.account.cid
+        )
+        console.log('Got exercise file', typeof exerciseFile, exerciseFile)
+
+        if (exerciseFile == null) {
           set((s) => {
-            s.exercisesHistory.push(exerciseToHistoryItem(exercise, 'skipped'))
+            s.exercisesHistory.push(
+              exerciseDataToHistoryItem(exerciseData, 'skipped')
+            )
             s.selectedExercise.loadNew = false
             s.selectedExercise.initialLoad = false
             s.selectedExercise.current = null
@@ -512,23 +538,18 @@ const useStore = create<Store>((set, get) => {
           return
         }
 
-        exercise.chart = {
-          position: response.data.position,
-          candles: response.data.candles,
-          timeframe: response.data.timeframe,
+        const exercise: Exercise = {
+          data: exerciseData,
+          file: exerciseFile,
+          state: state,
+          solution: null, // TODO: add solution if available
         }
-        exercise.type = response.data.type ?? 'Scalping'
-        exercise.solution = {
-          cid: response.data.solutionCID ?? null,
-        } as Exercise['solution']
 
-        if (!exercise.state) exercise.state = 'active'
-
-        console.log(typeof { ...exercise })
+        console.log('Setting new exercice', exercise)
 
         set((state) => {
           console.log(typeof state.selectedExercise.current)
-          state.selectedExercise.current = { ...exercise } as Exercise
+          state.selectedExercise.current = exercise
           state.selectedExercise.initialLoad = false
           state.selectedExercise.loadNew = false
           state.lastUpdatedAt = new Date().toISOString()
@@ -597,22 +618,28 @@ const useStore = create<Store>((set, get) => {
           sealed: false,
         })
 
+        // get exercises' data from the blockchain
+        const exercises2: any[] = await cooperatyClient.getFilteredExercises()
+
+        console.log('Exercises', exercises, exercises2)
+
         // filter exercises that are already in history
         return !exercisesHistory.length
           ? exercises
           : exercises.filter(
               (exercise) =>
-                exercisesHistory.filter((pastExercise) => {
-                  pastExercise.publicKey != exercise.publicKey.toString()
-                }).length > 0
+                !exercisesHistory.filter((pastExercise) => {
+                  return pastExercise.publicKey == exercise.publicKey.toString()
+                }).length
             )
       },
       async getNewExercise() {
+        const set = get().set
         const exercisesHistory = get().exercisesHistory
         const currentExercise = get().selectedExercise.current
         const newExercises = await this.getAvailableExercises()
 
-        console.log('newExercises', newExercises)
+        console.log('Getting available exercises', newExercises)
 
         // if there is no available exercises, try remove from history the skipped exercises
         if (newExercises.length == 0) {
@@ -660,11 +687,41 @@ const useStore = create<Store>((set, get) => {
           return newExercises[0]
         }
       },
-      async fetchExercise(exercise: Exercise = new Exercise()) {
+      async loadExercise(
+        exercisePublicKey: PublicKey,
+        fromLocalStorage = false
+      ) {
         const set = get().set
         const cooperatyClient = get().connection.cooperatyClient
+        try {
+          return await cooperatyClient.reloadExercise({
+            publicKey: new PublicKey(exercisePublicKey),
+          } as ExerciseData)
+        } catch (e) {
+          console.log('Error reloading exercise', e.message)
+          // if there is no data (exercise deleted), load a new one
+          if (e.message.includes('Error: Account does not exist')) {
+            let title = 'Error loading exercise'
+            if (fromLocalStorage) {
+              localStorage.setItem('last_exercise_account', null)
+              title = 'Last exercise is not available anymore'
+            }
+            notify({
+              title,
+              description: 'Retrying with a new exercise',
+              type: 'info',
+            })
+            set((state) => {
+              state.selectedExercise.current = null
+            })
+          }
+        }
+      },
+      async fetchExercise(exercisePublicKey: PublicKey) {
+        const set = get().set
         const exerciseLoadInitial = get().selectedExercise.initialLoad
         const exerciseLoadNew = get().selectedExercise.loadNew
+        let exerciseData: ExerciseData = null
 
         // first load of exercise, when the window is opened
         if (exerciseLoadInitial) {
@@ -674,39 +731,27 @@ const useStore = create<Store>((set, get) => {
           )
 
           // if there is an exercise saved in local storage, load it
-          if (lastExercisePublicKey != null) {
-            // try to load the exercise data from the blockchain
-            try {
-              exercise.data = await cooperatyClient.reloadExercise({
-                publicKey: new PublicKey(lastExercisePublicKey),
-              } as ExerciseData)
-            } catch (e) {
-              console.log('Error reloading exercise', e.message)
-              // if there is no data (exercise deleted), load a new one
-              if (e.message.includes('Error: Account does not exist')) {
-                notify({
-                  title: 'Last exercise is not available anymore',
-                  description: 'Retrying with a new exercise',
-                  type: 'info',
-                })
-                set((state) => {
-                  state.selectedExercise.current = null
-                })
-                localStorage.setItem('last_exercise_account', null)
-                return
-              }
-            }
+          // try to load the exercise data from the blockchain
+          if (exercisePublicKey) {
+            exerciseData = await this.loadExercise(
+              new PublicKey(exercisePublicKey)
+            )
+          } else if (lastExercisePublicKey) {
+            exerciseData = await this.loadExercise(
+              new PublicKey(lastExercisePublicKey),
+              true
+            )
             // else load a new one from the blockchain
           } else {
-            exercise.data = await this.getNewExercise()
+            exerciseData = await this.getNewExercise()
           }
           // else if user ask for a new exercise, load a new one from the blockchain
         } else if (exerciseLoadNew) {
-          exercise.data = await this.getNewExercise()
+          exerciseData = await this.getNewExercise()
         }
 
         // if exercise is not null, then we have a new exercise
-        if (exercise.data != null) await this.setNewExercise(exercise)
+        if (exerciseData != null) await this.setNewExercise(exerciseData)
         // if exercise is null, then we stop searching for new exercises
         else {
           set((state) => {

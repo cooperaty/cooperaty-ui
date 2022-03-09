@@ -40,7 +40,7 @@ const MobilePracticePage = () => {
             height="30"
             src={`${
               isExerciseAvailable
-                ? `/assets/icons/modalities/${currentExercise.type.toLowerCase()}.png`
+                ? `/assets/icons/modalities/${currentExercise.file.type.toLowerCase()}.png`
                 : 'unknown.svg'
             }`}
             className="mr-2"
@@ -48,7 +48,7 @@ const MobilePracticePage = () => {
           <div className="flex items-center">
             <div className="font-semibold pr-0.5 text-xl">
               {isExerciseAvailable
-                ? currentExercise.type
+                ? currentExercise.file.type
                 : t('no-exercise-available')}
             </div>
           </div>

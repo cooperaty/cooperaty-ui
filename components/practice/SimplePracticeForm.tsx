@@ -159,7 +159,7 @@ export default function SimplePracticeForm() {
 
   return (
     <div className="flex flex-col h-full">
-      <ElementTitle>{selectedExercise?.type || 'Practice'}</ElementTitle>
+      <ElementTitle>{selectedExercise?.file.type || 'Practice'}</ElementTitle>
       <div className="grid grid-cols-12 gap-2 text-left">
         <div className="col-span-6">
           <label className="text-xxs text-th-fgd-3">{t('type')}</label>

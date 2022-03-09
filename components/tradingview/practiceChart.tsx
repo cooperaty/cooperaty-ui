@@ -65,7 +65,7 @@ const TVChartContainer = () => {
   const set = useStore((s) => s.set)
   const validation = useStore((s) => s.practiceForm.validation)
   const currentExercise = useStore((s) => s.selectedExercise.current)
-  const currentExerciseChart = currentExercise.chart
+  const currentExerciseChart = currentExercise.file
 
   const { theme } = useTheme()
   const { width } = useViewport()
@@ -82,7 +82,7 @@ const TVChartContainer = () => {
 
   // @ts-ignore
   const defaultProps: ChartContainerProps = {
-    symbol: currentExercise?.type,
+    symbol: currentExercise?.file.type,
     interval: '30' as ResolutionString,
     theme: 'Dark',
     containerId: 'tv_chart_container',
@@ -108,7 +108,7 @@ const TVChartContainer = () => {
     const datafeed = new Datafeed(exerciseData, ['1', '5', '15', '30'])
 
     const widgetOptions: ChartingLibraryWidgetOptions = {
-      symbol: currentExercise.type,
+      symbol: currentExercise.file.type,
       // BEWARE: no trailing slash is expected in feed URL
       // tslint:disable-next-line:no-any
       // @ts-ignore

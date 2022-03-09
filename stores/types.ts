@@ -16,7 +16,16 @@ import { Notification } from '../utils/notifications'
 import { Market } from '@project-serum/serum'
 import { WalletAdapter } from '../@types/types'
 
-export class ExerciseHistoryItem {
+export type ExerciseState =
+  | 'active'
+  | 'checking'
+  | 'skipped'
+  | 'expired'
+  | 'success'
+  | 'failed'
+  | 'corrupted'
+
+export interface ExerciseHistoryItem {
   publicKey: string
   cid: string
   direction: 'long_position' | 'short_position'
@@ -24,40 +33,54 @@ export class ExerciseHistoryItem {
   stopLoss: number
   postBars: number
   type: 'Scalping' | 'Swing'
-  state: 'active' | 'checking' | 'skipped' | 'expired' | 'success' | 'failed'
+  state: ExerciseState
   validation: number
 }
 
-export class Exercise {
-  data: ExerciseData
-  chart: {
-    candles: [
-      {
-        time: number
-        low: number
-        high: number
-        open: number
-        close: number
-        volume: number
-      }
-    ]
-    position: {
-      direction: 'long_position' | 'short_position'
-      takeProfit: number
-      stopLoss: number
-      postBars: number
+export interface ExerciseFile {
+  candles: [
+    {
+      time: number
+      low: number
+      high: number
+      open: number
+      close: number
+      volume: number
     }
-    timeframe: string[]
+  ]
+  position: {
+    direction: 'long_position' | 'short_position'
+    takeProfit: number
+    stopLoss: number
+    postBars: number
   }
+  timeframes: string[]
   type: 'Scalping' | 'Swing'
-  state: 'active' | 'checking' | 'skipped' | 'expired' | 'success' | 'failed'
-  solution: {
-    cid: string
-    datetime: string
-    pair: string
-    exchange: string
-    outcome: number
-  }
+  solutionCID: string
+}
+
+export interface ExerciseSolution {
+  candles: [
+    {
+      time: number
+      low: number
+      high: number
+      open: number
+      close: number
+      volume: number
+    }
+  ]
+  datetime: string
+  pair: string
+  exchange: string
+  outcome: number
+}
+
+export interface Exercise {
+  data: ExerciseData
+  file: ExerciseFile
+  solution: ExerciseSolution | null
+  state: ExerciseState
 }
 
 // an object with keys of Solana account addresses that we are

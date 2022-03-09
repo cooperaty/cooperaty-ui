@@ -18,8 +18,7 @@ import {
   marketsSelector,
 } from '../stores/selectors'
 import { EXERCISES_HISTORY_STORAGE_KEY } from '../components/practice/PracticeHistoryTable'
-import { Exercise } from '../stores/types'
-import { historyItemToExercise } from '../stores/constants'
+import { ExerciseHistoryItem } from '../stores/types'
 
 const SECONDS = 1000
 
@@ -70,22 +69,25 @@ const useHydrateStore = () => {
         ) || '[]'
       )
       if (savedExercisesHistory.length > 0) {
-        console.log('savedExercisesHistory', savedExercisesHistory)
+        console.log(
+          'Loading saved exercises history',
+          savedExercisesHistory,
+          currentExercise
+        )
         setStore((state) => {
-          state.exercisesHistory = savedExercisesHistory as Exercise[]
+          state.exercisesHistory = savedExercisesHistory
         })
         if (currentExercise) {
           const currentExerciseHistoryItem = savedExercisesHistory.find(
             (item) =>
               item.publicKey == currentExercise.data.publicKey.toString()
-          )
+          ) as ExerciseHistoryItem
           if (currentExerciseHistoryItem) {
-            actions.setNewExercise(
-              historyItemToExercise(currentExerciseHistoryItem)
-            )
             setStore((state) => {
               state.practiceForm.validation =
                 currentExerciseHistoryItem.validation
+              state.selectedExercise.current.state =
+                currentExerciseHistoryItem.state
             })
           }
         }

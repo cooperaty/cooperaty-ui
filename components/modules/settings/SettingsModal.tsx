@@ -204,7 +204,7 @@ const ExerciseSettings = ({ setSettingsView }) => {
   }
 
   const handleSelectExercise = (selectedExerciseCID) => {
-    if (selectedExerciseCID != null && selectedExerciseCID == 59) {
+    if (selectedExerciseCID != null && selectedExerciseCID.length == 59) {
       setExerciseCID(selectedExerciseCID)
     }
   }
@@ -245,12 +245,12 @@ const ExerciseSettings = ({ setSettingsView }) => {
 
   const setInitialAvailableExercises = async () => {
     setAvailableExercises(await cooperatyClient.getFilteredExercises())
-    setExerciseCID(currentExercise.data.account.cid)
   }
 
   useEffect(() => {
+    setInitialAvailableExercises()
     if (currentExercise) {
-      setInitialAvailableExercises()
+      setExerciseCID(currentExercise.data.account.cid)
     }
   }, [])
 

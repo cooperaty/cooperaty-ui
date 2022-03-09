@@ -1,5 +1,10 @@
 import { EndpointInfo, WalletAdapter } from '../@types/types'
-import { ClusterType, Exercise, ExerciseHistoryItem } from './types'
+import {
+  ClusterType,
+  Exercise,
+  ExerciseHistoryItem,
+  ExerciseState,
+} from './types'
 import {
   Commitment,
   ConfirmOptions,
@@ -58,48 +63,36 @@ export const LAST_EXERCISE_LOCAL_STORAGE_KEY = 'last_exercise_account'
 
 export const exerciseToHistoryItem = (
   exercise: Exercise,
-  state: string = exercise.state,
+  state: ExerciseState = exercise.state,
   validation = 0
 ): ExerciseHistoryItem => {
   return {
     publicKey: exercise.data.publicKey.toString(),
     cid: exercise.data.account.cid,
-    direction: exercise.chart.position.direction,
-    takeProfit: exercise.chart.position.takeProfit,
-    stopLoss: exercise.chart.position.stopLoss,
-    postBars: exercise.chart.position.postBars,
-    type: exercise.type,
+    direction: exercise.file.position.direction,
+    takeProfit: exercise.file.position.takeProfit,
+    stopLoss: exercise.file.position.stopLoss,
+    postBars: exercise.file.position.postBars,
+    type: exercise.file.type,
     state,
     validation,
   } as ExerciseHistoryItem
 }
 
-export const historyItemToExercise = (item: ExerciseHistoryItem): Exercise => {
+export const exerciseDataToHistoryItem = (
+  exercise: ExerciseData,
+  state: ExerciseState = 'corrupted',
+  validation = 0
+): ExerciseHistoryItem => {
   return {
-    data: {
-      publicKey: new PublicKey(item.publicKey),
-      account: {
-        cid: item.cid,
-      },
-    } as ExerciseData,
-    chart: {
-      candles: null,
-      position: {
-        direction: item.direction,
-        takeProfit: item.takeProfit,
-        stopLoss: item.stopLoss,
-        postBars: item.postBars,
-      },
-      timeframe: null,
-    },
-    type: item.type,
-    state: item.state,
-    solution: {
-      cid: null,
-      datetime: null,
-      pair: null,
-      exchange: null,
-      outcome: null,
-    },
+    publicKey: exercise.publicKey.toString(),
+    cid: exercise.account.cid,
+    direction: null,
+    takeProfit: null,
+    stopLoss: null,
+    postBars: null,
+    type: null,
+    state,
+    validation,
   }
 }
