@@ -54,7 +54,6 @@ export default class Datafeed {
       onErrorCallback(e)
     }
   }
-
   calculateHistoryDepth() {}
   unsubscribeBars() {}
   subscribeBars() {}

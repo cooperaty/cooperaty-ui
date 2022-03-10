@@ -32,7 +32,7 @@ const PracticeHistoryTable = ({ numExercises }: { numExercises?: number }) => {
   const actions = useStore((state) => state.actions)
 
   const preFilteredExercises = savedExercisesHistory.filter(
-    (exercise) => exercise.state != 'sskipped' // TODO: improve the history filter by type
+    (exercise) => exercise.state != 'skipped' // TODO: improve the history filter by type
   )
 
   const { items, requestSort, sortConfig } =
@@ -55,6 +55,11 @@ const PracticeHistoryTable = ({ numExercises }: { numExercises?: number }) => {
   } = usePagination(filteredExercises, { perPage: 500 })
 
   useEffect(() => {
+    console.log(
+      'Setting exercises history list',
+      filteredExercises,
+      exercisesHistory
+    )
     if (traderAccount) {
       setData(filteredExercises)
       setSavedExercisesHistory(exercisesHistory)
@@ -65,7 +70,7 @@ const PracticeHistoryTable = ({ numExercises }: { numExercises?: number }) => {
     <div className={`flex flex-col sm:pb-4`}>
       <div className={`overflow-x-auto sm:-mx-6 lg:-mx-8`}>
         <div className={`align-middle inline-block min-w-full sm:px-6 lg:px-8`}>
-          {preFilteredExercises && preFilteredExercises.length ? (
+          {paginatedData && paginatedData.length ? (
             !isMobile ? (
               <>
                 <Table>
@@ -167,7 +172,11 @@ const PracticeHistoryTable = ({ numExercises }: { numExercises?: number }) => {
                               <LinkButton
                                 className="flex items-center no-underline font-normal"
                                 onClick={() => {
-                                  actions.fetchExercise(exercise.cid)
+                                  // @ts-ignore
+                                  actions.fetchExercise(
+                                    exercise.cid,
+                                    exercise.state
+                                  )
                                   setStore((state) => {
                                     state.practiceForm.validation =
                                       exercise.validation

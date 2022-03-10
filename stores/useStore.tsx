@@ -26,7 +26,7 @@ import { MSRM_DECIMALS } from '@project-serum/serum/lib/token-instructions'
 import { ExerciseData, TraderData, TrainerSDK } from '../sdk'
 import Axios from 'axios'
 import { LAST_TRADER_ACCOUNT_KEY } from '../components/trader_account/TraderAccountsModal'
-import { Exercise, ExerciseFile, Store } from './types'
+import { Exercise, ExerciseFile, ExerciseSolution, Store } from './types'
 import {
   CLUSTER,
   corruptedExerciseToHistoryItem,
@@ -487,121 +487,6 @@ const useStore = create<Store>((set, get) => {
 
         await this.updateSDK()
       },
-      async getExerciseFile(cid: string) {
-        try {
-          const data = (
-            await Axios.get<ExerciseFile>('https://ipfs.io/ipfs/' + cid)
-          )?.data
-          if (
-            data &&
-            data.position &&
-            data.candles &&
-            data.timeframes?.length &&
-            data.type &&
-            data.solutionCID
-          ) {
-            console.log('Got IPFS data', data)
-            return data as ExerciseFile
-          } else {
-            console.log('Invalid IPFS data', data)
-            throw new Error('Invalid IPFS data')
-          }
-        } catch (err) {
-          console.log('Error getting IPFS data', err)
-          notify({
-            title: "Error getting exercise's chart",
-            description: 'Try again',
-            type: 'error',
-          })
-          const set = get().set
-          set((state) => {
-            state.exercisesHistory.push(corruptedExerciseToHistoryItem(cid))
-            state.selectedExercise.current = null
-          })
-          return null
-        }
-      },
-      async setNewExercise({
-        exerciseData,
-        exerciseFile,
-        state,
-      }: {
-        exerciseData?: ExerciseData
-        exerciseFile?: ExerciseFile
-        state?: Exercise['state']
-      }) {
-        const set = get().set
-        const exercise: Exercise = {
-          data: exerciseData ?? null,
-          file: exerciseFile,
-          state: state,
-          solution: null, // TODO: add solution if available
-        }
-
-        console.log('Setting new exercice', exercise)
-
-        set((state) => {
-          console.log(typeof state.selectedExercise.current)
-          state.selectedExercise.current = exercise
-          state.selectedExercise.initialLoad = false
-          state.selectedExercise.loadNew = false
-          state.lastUpdatedAt = new Date().toISOString()
-        })
-
-        localStorage.setItem(
-          LAST_EXERCISE_LOCAL_STORAGE_KEY,
-          exercise.data.publicKey.toString()
-        )
-
-        const cooperatyClient = get().connection.cooperatyClient
-        if (exercise.state == 'active') {
-          cooperatyClient.onExerciseChange(
-            exercise.data.publicKey,
-            (exerciseAccount: ExerciseData['account']) => {
-              console.log('Exercise changed', exerciseAccount)
-              // if the exercise is not available anymore, change the state to expired
-              if (
-                exerciseAccount.sealed ||
-                exerciseAccount.outcome.toNumber() != 0
-              ) {
-                set((s) => {
-                  s.selectedExercise.current = {
-                    ...exercise,
-                    state: 'expired',
-                  }
-                })
-              }
-              // TODO: if the exercise has been checked, load the solution
-            }
-          )
-        } else if (exercise.state == 'checking') {
-          const traderAccount = get().selectedTraderAccount.current
-          cooperatyClient.onExerciseChange(
-            exercise.data.publicKey,
-            (exerciseAccount: ExerciseData['account']) => {
-              console.log('Exercise changed', exerciseAccount)
-              const outcome = exerciseAccount.outcome.toNumber()
-              if (outcome != 0) {
-                const validation = exerciseAccount.validations.filter(
-                  (validation) =>
-                    validation.trader.equals(traderAccount.publicKey)
-                )
-                if (validation.length == 1) {
-                  set((s) => {
-                    s.selectedExercise.current = {
-                      ...exercise,
-                      state:
-                        validation[0].value.toNumber() * outcome > 0
-                          ? 'success'
-                          : 'failed',
-                    }
-                  })
-                }
-              }
-            }
-          )
-        }
-      },
       async getAvailableExercises() {
         const cooperatyClient = get().connection.cooperatyClient
         const exercisesHistory = get().exercisesHistory
@@ -625,6 +510,126 @@ const useStore = create<Store>((set, get) => {
                   return pastExercise.cid == exercise.account.cid
                 }).length
             )
+      },
+      async getExerciseFile(cid: string) {
+        try {
+          const data = (
+            await Axios.get<ExerciseFile>('https://ipfs.io/ipfs/' + cid)
+          )?.data
+          if (
+            data &&
+            data.position &&
+            data.candles &&
+            data.timeframes?.length &&
+            data.type &&
+            data.solutionCID
+          ) {
+            console.log('Got IPFS exercise data', data)
+            return data as ExerciseFile
+          } else {
+            console.log('Invalid IPFS exercise data', data)
+            throw new Error('Invalid IPFS exercise data')
+          }
+        } catch (err) {
+          console.log('Error getting IPFS exercise data', err)
+          notify({
+            title: "Error getting exercise's chart",
+            description: 'Try again',
+            type: 'error',
+          })
+          const set = get().set
+          set((state) => {
+            state.exercisesHistory.push(corruptedExerciseToHistoryItem(cid))
+            state.selectedExercise.current = null
+          })
+          return null
+        }
+      },
+      async getExerciseSolution(cid: string) {
+        try {
+          const data = (
+            await Axios.get<ExerciseSolution>('https://ipfs.io/ipfs/' + cid)
+          )?.data
+          if (
+            data &&
+            data.candles &&
+            data.outcome &&
+            data.exchange &&
+            data.datetime &&
+            data.pair
+          ) {
+            console.log('Got IPFS solution data', data)
+            return data as ExerciseSolution
+          } else {
+            console.log('Invalid IPFS solution data', data)
+            throw new Error('Invalid IPFS solution data')
+          }
+        } catch (err) {
+          console.log('Error getting IPFS solution data', err)
+          return null
+        }
+      },
+      async getExerciseData(exercisePublicKey: PublicKey) {
+        const set = get().set
+        const cooperatyClient = get().connection.cooperatyClient
+        try {
+          return await cooperatyClient.reloadExercise({
+            publicKey: new PublicKey(exercisePublicKey),
+          } as ExerciseData)
+        } catch (e) {
+          console.log('Error reloading exercise', e.message)
+          // if there is no data (exercise deleted), load a new one
+          if (e.message.includes('Error: Account does not exist')) {
+            return null
+          } else {
+            notify({
+              title: 'Error loading exercise',
+              description: 'Retrying with a new exercise',
+              type: 'info',
+            })
+            set((state) => {
+              state.selectedExercise.current = null
+            })
+          }
+        }
+      },
+      async setNewExercise({
+        exerciseData,
+        exerciseFile,
+        state,
+        exerciseCID,
+      }: {
+        exerciseData?: ExerciseData
+        exerciseFile: ExerciseFile
+        state: Exercise['state']
+        exerciseCID: string
+      }) {
+        const set = get().set
+        const exerciseSolution: ExerciseSolution | null =
+          ((exerciseData && exerciseData.account?.outcome) || !exerciseData) &&
+          exerciseFile?.solutionCID
+            ? await this.getExerciseSolution(exerciseFile.solutionCID)
+            : null
+
+        const exercise: Exercise = {
+          data: exerciseData ?? null,
+          file: exerciseFile,
+          state: state,
+          cid: exerciseCID,
+          solution: exerciseSolution,
+        }
+
+        console.log('Setting new exercice', exercise)
+
+        set((state) => {
+          console.log(typeof state.selectedExercise.current)
+          state.selectedExercise.current = exercise
+          state.selectedExercise.initialLoad = false
+          state.selectedExercise.loadNew = false
+          state.lastUpdatedAt = new Date().toISOString()
+        })
+
+        localStorage.setItem(LAST_EXERCISE_LOCAL_STORAGE_KEY, exerciseCID)
       },
       async getNewExercise() {
         const set = get().set
@@ -670,32 +675,9 @@ const useStore = create<Store>((set, get) => {
           return newExercises[0]
         }
       },
-      async getExerciseData(exercisePublicKey: PublicKey) {
-        const set = get().set
-        const cooperatyClient = get().connection.cooperatyClient
-        try {
-          return await cooperatyClient.reloadExercise({
-            publicKey: new PublicKey(exercisePublicKey),
-          } as ExerciseData)
-        } catch (e) {
-          console.log('Error reloading exercise', e.message)
-          // if there is no data (exercise deleted), load a new one
-          if (e.message.includes('Error: Account does not exist')) {
-            return null
-          } else {
-            notify({
-              title: 'Error loading exercise',
-              description: 'Retrying with a new exercise',
-              type: 'info',
-            })
-            set((state) => {
-              state.selectedExercise.current = null
-            })
-          }
-        }
-      },
       async fetchExercise(exerciseCID, state: Exercise['state'] = 'active') {
         const set = get().set
+        const coopeartyClient = get().connection.cooperatyClient
         const exerciseLoadInitial = get().selectedExercise.initialLoad
         const exerciseLoadNew = get().selectedExercise.loadNew
         let exerciseData: ExerciseData = null
@@ -717,8 +699,7 @@ const useStore = create<Store>((set, get) => {
               exerciseCID = exerciseData.account.cid
             }
           }
-        }
-        if (exerciseLoadNew) {
+        } else if (exerciseLoadNew) {
           exerciseData = await this.getNewExercise()
           if (exerciseData) {
             exerciseCID = exerciseData.account.cid
@@ -736,9 +717,10 @@ const useStore = create<Store>((set, get) => {
             })
           }
           if (!exerciseData) {
-            const filteredExercises = await this.getFilteredExercises({
-              cid: exerciseCID,
-            })
+            const filteredExercises =
+              await coopeartyClient.getFilteredExercises({
+                cid: exerciseCID,
+              })
             if (filteredExercises.length == 1) {
               exerciseData = filteredExercises[0]
             }
@@ -747,7 +729,12 @@ const useStore = create<Store>((set, get) => {
 
         // if exercise file is not null, then we have a new exercise
         if (exerciseCID && exerciseFile) {
-          await this.setNewExercise({ exerciseData, exerciseFile, state })
+          await this.setNewExercise({
+            exerciseData,
+            exerciseFile,
+            state,
+            exerciseCID,
+          })
           // if exercise is null, then we stop searching for new exercises
         } else {
           set((state) => {

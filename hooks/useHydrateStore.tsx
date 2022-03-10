@@ -53,6 +53,7 @@ const useHydrateStore = () => {
   const currentExercise = useStore((s) => s.selectedExercise.current)
   const loadNewExercise = useStore((s) => s.selectedExercise.loadNew)
   const loadInitialExercise = useStore((s) => s.selectedExercise.initialLoad)
+  const cooperatyClient = useStore((s) => s.connection.cooperatyClient)
 
   const connected = useStore((s) => s.wallet.connected)
 
@@ -63,7 +64,7 @@ const useHydrateStore = () => {
 
   useEffect(() => {
     if (traderAccount) {
-      const savedExercisesHistory = JSON.parse(
+      const savedExercisesHistory: ExerciseHistoryItem[] = JSON.parse(
         localStorage.getItem(
           EXERCISES_HISTORY_STORAGE_KEY + traderAccount.publicKey.toString()
         ) || '[]'
@@ -79,9 +80,8 @@ const useHydrateStore = () => {
         })
         if (currentExercise) {
           const currentExerciseHistoryItem = savedExercisesHistory.find(
-            (item) =>
-              item.publicKey == currentExercise.data.publicKey.toString()
-          ) as ExerciseHistoryItem
+            (item) => item.cid == currentExercise.cid
+          )
           if (currentExerciseHistoryItem) {
             setStore((state) => {
               state.practiceForm.validation =
@@ -94,6 +94,54 @@ const useHydrateStore = () => {
       }
     }
   }, [traderAccount])
+
+  useEffect(() => {
+    if (currentExercise?.data?.publicKey && traderAccount) {
+      const listener = connection.onAccountChange(
+        currentExercise.data.publicKey,
+        (info, context) => {
+          console.log('Exercise account changed', info, context)
+
+          // exercise account changed, cases
+          // ...
+          // exercise outcome changed, we can load the solution from IPFS TODO
+
+          if (!info.data.length) {
+            console.log('Exercise account deleted')
+            return
+          }
+          const exerciseAccount = cooperatyClient.program.coder.accounts.decode(
+            'Exercise',
+            info.data
+          )
+
+          if (exerciseAccount.sealed && currentExercise.state == 'active') {
+            console.log('Exercise expired')
+            setStore((state) => {
+              state.selectedExercise.current.state = 'expired'
+            })
+          }
+
+          const outcome = exerciseAccount.outcome.toNumber()
+          if (outcome != 0) {
+            const validation = exerciseAccount.validations.filter(
+              (validation) => validation.trader.equals(traderAccount.publicKey)
+            )
+            if (validation.length == 1) {
+              setStore((s) => {
+                s.selectedExercise.current.state =
+                  validation[0].value.toNumber() * outcome > 0
+                    ? 'success'
+                    : 'failed'
+              })
+            }
+          }
+          console.log('Exercise account decoded', exerciseAccount)
+        }
+      )
+      console.log('Exercise account changed listener', listener)
+    }
+  }, [currentExercise])
 
   // update orderbook when market changes
   useEffect(() => {

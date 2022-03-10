@@ -66,7 +66,7 @@ export const exerciseToHistoryItem = (
   validation = 0
 ): ExerciseHistoryItem => {
   return {
-    cid: exercise.data.account.cid,
+    cid: exercise.cid,
     direction: exercise.file.position.direction,
     takeProfit: exercise.file.position.takeProfit,
     stopLoss: exercise.file.position.stopLoss,

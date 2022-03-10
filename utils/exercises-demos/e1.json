@@ -11719,54 +11719,6 @@
       "open": 49870,
       "close": 50050.5,
       "volume": 0.2246
-    },
-    {
-      "time": 1640512800000,
-      "low": 50073.9,
-      "high": 50073.9,
-      "open": 50073.9,
-      "close": 50073.9,
-      "volume": 0.023
-    },
-    {
-      "time": 1640516400000,
-      "low": 49600,
-      "high": 50094,
-      "open": 50094,
-      "close": 49700,
-      "volume": 10.926899999999998
-    },
-    {
-      "time": 1640520000000,
-      "low": 49740,
-      "high": 49949.3,
-      "open": 49740,
-      "close": 49919.4,
-      "volume": 0.6457999999999999
-    },
-    {
-      "time": 1640523600000,
-      "low": 49841.2,
-      "high": 49981.2,
-      "open": 49881.7,
-      "close": 49845.7,
-      "volume": 2.0529
-    },
-    {
-      "time": 1640527200000,
-      "low": 49815,
-      "high": 49986.7,
-      "open": 49927.2,
-      "close": 49969,
-      "volume": 0.3214
-    },
-    {
-      "time": 1640530800000,
-      "low": 50000,
-      "high": 50289.9,
-      "open": 50000,
-      "close": 50255.6,
-      "volume": 15.1261
     }
   ],
   "position": {
@@ -11776,6 +11728,6 @@
     "postBars": 6
   },
   "type": "Scalping",
-  "solutionCID": "bafkreicdp2ms3okyxp2nasdcjaxmxvmdfbxx7wfvhhwqpynzqozpj2rtpq",
+  "solutionCID": "bafkreig63m46iq5enq35am67fsqucqizitdo4s4qxefc4lx23haxprievu",
   "timeframes": ["1", "5", "15", "30"]
 }

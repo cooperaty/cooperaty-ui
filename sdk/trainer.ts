@@ -384,6 +384,9 @@ export class TrainerSDK {
       this.provider.opts.commitment
     )
     eventEmitter.on('change', callback)
+    eventEmitter.on('error', (error: Error) => {
+      console.error(error)
+    })
   }
 
   onTraderChange(

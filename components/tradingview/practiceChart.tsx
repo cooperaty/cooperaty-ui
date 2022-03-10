@@ -11,6 +11,7 @@ import useStore from '../../stores/useStore'
 import { useViewport } from '../../hooks/useViewport'
 import { breakpoints } from '../practice/PracticePageGrid'
 import Datafeed from './datafeed'
+import { sleep } from '../../utils'
 
 export const priceToValidation = (price: number, bar): number => {
   let newValidation
@@ -66,6 +67,7 @@ const TVChartContainer = () => {
   const validation = useStore((s) => s.practiceForm.validation)
   const currentExercise = useStore((s) => s.selectedExercise.current)
   const currentExerciseChart = currentExercise.file
+  const currentExerciseSolution = currentExercise.solution
 
   const { theme } = useTheme()
   const { width } = useViewport()
@@ -102,10 +104,24 @@ const TVChartContainer = () => {
 
   useEffect(() => {
     if (!currentExerciseChart) return
-    const exerciseData = currentExerciseChart.candles.map((item) => {
+    const exerciseBars = currentExerciseChart.candles.map((item) => {
       return Object.assign({}, item)
     })
-    const datafeed = new Datafeed(exerciseData, ['1', '5', '15', '30'])
+
+    console.log('solution', currentExerciseSolution)
+
+    if (currentExerciseSolution?.candles?.length > 0) {
+      console.log('Loading solution candles', currentExerciseSolution.candles)
+      exerciseBars.concat(
+        currentExerciseSolution.candles.map((item) => {
+          return Object.assign({}, item)
+        })
+      )
+    }
+
+    console.log('exerciseBars', exerciseBars)
+
+    const datafeed = new Datafeed(exerciseBars, ['1', '5', '15', '30'])
 
     const widgetOptions: ChartingLibraryWidgetOptions = {
       symbol: currentExercise.file.type,
@@ -181,14 +197,33 @@ const TVChartContainer = () => {
     }
 
     tvWidgetRef.current = new widget(widgetOptions)
-    tvWidgetRef.current.onChartReady(function () {
+    tvWidgetRef.current.onChartReady(async function () {
       console.log('TRADINGVIEW', tvWidgetRef.current)
+
+      await sleep(500) // TODO: remove this hack and find a better way to wait for the chart to be ready
 
       // get last bar information
       // @ts-ignore
       const bars = tvWidgetRef.current.chart().getSeries()._series
           .m_data.m_bars,
-        lastBar = bars._items[bars._end - 1]
+        lastBarIndex =
+          bars._end -
+          1 -
+          (currentExerciseSolution?.candles
+            ? currentExerciseChart.position.postBars
+            : 0),
+        lastBar = bars._items[lastBarIndex]
+
+      console.log(
+        'lastBar',
+        lastBar,
+        lastBarIndex,
+        bars,
+        bars._end,
+        currentExerciseSolution?.candles
+          ? currentExerciseChart.position.postBars
+          : 0
+      )
 
       const long: boolean =
         currentExerciseChart.position.direction == 'long_position'
@@ -210,7 +245,7 @@ const TVChartContainer = () => {
         open: lastBar.value[1],
         close: lastBar.value[4],
         percent: lastBar.value[1],
-        distance: lastBar.exTime - bars._items[bars._end - 2].exTime,
+        distance: lastBar.exTime - bars._items[lastBarIndex - 1].exTime,
         takeProfitPrice,
         stopLossPrice,
         upperPrice: long ? takeProfitPrice : stopLossPrice,
@@ -261,11 +296,11 @@ const TVChartContainer = () => {
           setValidation(newValidation)
         })
         .setText('Validation')
-        .setQuantity('0%')
-        .setPrice(lastBarData.current.close)
+        .setQuantity(validation + '%')
+        .setPrice(validationToPrice(validation as number, lastBarData.current))
     })
     //eslint-disable-next-line
-  }, [theme, isMobile, currentExerciseChart])
+  }, [theme, isMobile, currentExerciseChart, currentExerciseSolution])
 
   useEffect(() => {
     if (validationLine.current != null && typeof validation == 'number') {

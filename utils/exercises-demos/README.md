@@ -9,7 +9,7 @@ Currently, the exercises are uploaded to IPFS using nft.storage.
 
 ## CIDs
 
-- S1: [bafkreicdp2ms3okyxp2nasdcjaxmxvmdfbxx7wfvhhwqpynzqozpj2rtpq](https://ipfs.io/ipfs/bafkreicdp2ms3okyxp2nasdcjaxmxvmdfbxx7wfvhhwqpynzqozpj2rtpq)
+- S1: [bafkreig63m46iq5enq35am67fsqucqizitdo4s4qxefc4lx23haxprievu](https://ipfs.io/ipfs/bafkreig63m46iq5enq35am67fsqucqizitdo4s4qxefc4lx23haxprievu)
 - S2: [bafkreieg5w4g4lplv4ci43i7ppwcaznzue3focaclpm5ase4amgp56k7ya](https://ipfs.io/ipfs/bafkreieg5w4g4lplv4ci43i7ppwcaznzue3focaclpm5ase4amgp56k7ya)
-- E1: [bafkreigyzpenio53l3z4f5l2rkwkjcbjnbgi7mfom6uaf2jczhdnbfktxu](https://ipfs.io/ipfs/bafkreigyzpenio53l3z4f5l2rkwkjcbjnbgi7mfom6uaf2jczhdnbfktxu)
+- E1: [bafkreibs4rp5yfkj26pmpy5si3g7tasparmhjn2blkll5vlzm4t3l7s2hy](https://ipfs.io/ipfs/bafkreigyzpenio53l3z4f5l2rkwkjcbjnbgi7mfom6uaf2jczhdnbfktxu)
 - E2: [bafkreiezrksiw4k75dxpplojdqbbt6rvtisjj45euvp6hnrwicmulmff4u](https://ipfs.io/ipfs/bafkreiezrksiw4k75dxpplojdqbbt6rvtisjj45euvp6hnrwicmulmff4u)

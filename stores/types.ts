@@ -79,6 +79,7 @@ export interface Exercise {
   data: ExerciseData | null
   file: ExerciseFile
   solution: ExerciseSolution | null
+  cid: string
   state: ExerciseState
 }
 

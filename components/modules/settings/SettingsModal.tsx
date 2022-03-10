@@ -74,7 +74,7 @@ const SettingsModal = ({ isOpen, onClose }) => {
           >
             <span>{t('exercise')}</span>
             <div className="flex items-center text-th-fgd-3 text-xs">
-              {currentExercise?.data.account.cid.slice(0, 30)}...
+              {currentExercise?.cid.slice(0, 30)}...
               <ChevronRightIcon className="h-5 ml-1 w-5 text-th-primary" />
             </div>
           </button>
@@ -196,9 +196,8 @@ const ExerciseSettings = ({ setSettingsView }) => {
   }
 
   const handleSetExercise = async (exerciseCID) => {
-    const exercise = getExercise(exerciseCID)
-    if (exercise != null) {
-      await actions.fetchExercise(exercise)
+    if (exerciseCID) {
+      await actions.fetchExercise(exerciseCID)
       setSettingsView('')
     }
   }
@@ -250,7 +249,7 @@ const ExerciseSettings = ({ setSettingsView }) => {
   useEffect(() => {
     setInitialAvailableExercises()
     if (currentExercise) {
-      setExerciseCID(currentExercise.data.account.cid)
+      setExerciseCID(currentExercise.cid)
     }
   }, [])
 
