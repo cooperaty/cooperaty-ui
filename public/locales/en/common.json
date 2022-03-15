@@ -390,7 +390,7 @@
   "no-practice-history": "No practice history",
   "predict": "Predict",
   "create-trader-account": "Create Trader Account",
-  "insufficient-sol": "You need 0.035 SOL to create a Trader Account.",
+  "insufficient-sol": "You need 0.00135 SOL to create a Trader Account.",
   "trader-name": "Trader Name",
   "trader-account-info": "This account will store on-chain your trading performance (rank) and your last validation results.",
   "trader-accounts": "Trader Accounts",
@@ -411,5 +411,7 @@
   "outcome": "Outcome",
   "add-outcome": "Add Outcome",
   "check-all-validations": "Check all validations",
-  "add": "Add"
+  "add": "Add",
+  "failed": "Failed",
+  "success": "Success"
 }

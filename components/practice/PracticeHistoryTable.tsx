@@ -13,7 +13,7 @@ import Pagination from '../elements/Pagination'
 import usePagination from '../../hooks/usePagination'
 import useStore from '../../stores/useStore'
 import { ExerciseHistoryItem } from '../../stores/types'
-import { useEffect } from 'react'
+import { useEffect, useState } from 'react'
 import useLocalStorageState from '../../hooks/useLocalStorageState'
 
 export const EXERCISES_HISTORY_STORAGE_KEY = 'exercisesHistory'
@@ -23,15 +23,15 @@ const PracticeHistoryTable = ({ numExercises }: { numExercises?: number }) => {
   const { asPath } = useRouter()
   const setStore = useStore((s) => s.set)
   const traderAccount = useStore((s) => s.selectedTraderAccount.current)
-  const [savedExercisesHistory, setSavedExercisesHistory] =
-    useLocalStorageState(
-      EXERCISES_HISTORY_STORAGE_KEY + (traderAccount?.publicKey ?? ''),
-      []
-    )
+  const [, setSavedExercisesHistory] = useLocalStorageState(
+    EXERCISES_HISTORY_STORAGE_KEY + (traderAccount?.publicKey ?? ''),
+    []
+  )
   const exercisesHistory = useStore((state) => state.exercisesHistory)
+  const [exercises, setExercises] = useState([...exercisesHistory])
   const actions = useStore((state) => state.actions)
 
-  const preFilteredExercises = savedExercisesHistory.filter(
+  const preFilteredExercises = exercises.filter(
     (exercise) => exercise.state != 'skipped' // TODO: improve the history filter by type
   )
 
@@ -39,6 +39,7 @@ const PracticeHistoryTable = ({ numExercises }: { numExercises?: number }) => {
     useSortableData(preFilteredExercises)
   const { width } = useViewport()
   const isMobile = width ? width < breakpoints.md : false
+
   const filteredExercises = preFilteredExercises
     ? items.slice(0, numExercises)
     : items
@@ -55,16 +56,21 @@ const PracticeHistoryTable = ({ numExercises }: { numExercises?: number }) => {
   } = usePagination(filteredExercises, { perPage: 500 })
 
   useEffect(() => {
-    console.log(
-      'Setting exercises history list',
-      filteredExercises,
-      exercisesHistory
-    )
+    console.log('Setting exercises history list', exercisesHistory)
     if (traderAccount) {
-      setData(filteredExercises)
-      setSavedExercisesHistory(exercisesHistory)
+      setExercises(exercisesHistory)
     }
-  }, [exercisesHistory])
+  }, [JSON.stringify(exercisesHistory)])
+
+  useEffect(() => {
+    console.log('Setting saved exercises history list', exercises)
+    setSavedExercisesHistory(exercises)
+  }, [JSON.stringify(exercises)])
+
+  useEffect(() => {
+    console.log('Setting data exercises history list', filteredExercises)
+    setData(filteredExercises)
+  }, [JSON.stringify(filteredExercises)])
 
   return (
     <div className={`flex flex-col sm:pb-4`}>

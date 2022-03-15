@@ -606,7 +606,8 @@ const useStore = create<Store>((set, get) => {
       }) {
         const set = get().set
         const exerciseSolution: ExerciseSolution | null =
-          ((exerciseData && exerciseData.account?.outcome) || !exerciseData) &&
+          ((exerciseData && exerciseData.account?.outcome?.toNumber() != 0) ||
+            !exerciseData) &&
           exerciseFile?.solutionCID
             ? await this.getExerciseSolution(exerciseFile.solutionCID)
             : null

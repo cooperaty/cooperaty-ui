@@ -208,10 +208,9 @@ const TVChartContainer = () => {
           .m_data.m_bars,
         lastBarIndex =
           bars._end -
-          1 -
           (currentExerciseSolution?.candles
-            ? currentExerciseChart.position.postBars
-            : 0),
+            ? currentExerciseChart.position.postBars + 1
+            : 1),
         lastBar = bars._items[lastBarIndex]
 
       console.log(
@@ -260,7 +259,7 @@ const TVChartContainer = () => {
             time:
               lastBarData.current.time +
               lastBarData.current.distance *
-                currentExerciseChart.position.postBars,
+                (currentExerciseChart.position.postBars - 1),
             price: lastBarData.current.close,
           },
         ],

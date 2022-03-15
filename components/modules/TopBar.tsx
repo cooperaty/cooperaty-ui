@@ -31,8 +31,8 @@ const TopBar = () => {
                   className={`cursor-pointer flex-shrink-0 flex items-center`}
                 >
                   <img
-                    className={`h-8 w-auto`}
-                    src="/assets/icons/logo.png"
+                    className={`h-6 w-auto`}
+                    src="/assets/icons/logo.svg"
                     alt="next"
                   />
                 </div>

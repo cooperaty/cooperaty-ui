@@ -1,6 +1,7 @@
 {
-  "name": "with-typescript-eslint-jest",
-  "author": "@erikdstock",
+  "name": "cooperaty-ui",
+  "author": "@cooperaty",
+  "description": "Based on @blockworks-foundation/mango-ui-v3",
   "license": "MIT",
   "version": "1.0.0",
   "scripts": {

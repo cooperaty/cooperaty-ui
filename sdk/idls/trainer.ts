@@ -5,6 +5,89 @@ export type TrainerIDL = {
   name: 'trainer'
   instructions: [
     {
+      name: 'initializeParams'
+      accounts: [
+        {
+          name: 'params'
+          isMut: true
+          isSigner: false
+        },
+        {
+          name: 'authority'
+          isMut: true
+          isSigner: true
+        },
+        {
+          name: 'systemProgram'
+          isMut: false
+          isSigner: false
+        }
+      ]
+      args: [
+        {
+          name: 'minValidations'
+          type: 'u8'
+        }
+      ]
+    },
+    {
+      name: 'modifyAuthority'
+      accounts: [
+        {
+          name: 'params'
+          isMut: true
+          isSigner: false
+        },
+        {
+          name: 'newAuthority'
+          isMut: false
+          isSigner: false
+        },
+        {
+          name: 'authority'
+          isMut: true
+          isSigner: true
+        },
+        {
+          name: 'systemProgram'
+          isMut: false
+          isSigner: false
+        }
+      ]
+      args: []
+    },
+    {
+      name: 'createTrainer'
+      accounts: [
+        {
+          name: 'trainer'
+          isMut: true
+          isSigner: false
+        },
+        {
+          name: 'authority'
+          isMut: true
+          isSigner: true
+        },
+        {
+          name: 'trainerAuthority'
+          isMut: false
+          isSigner: false
+        },
+        {
+          name: 'params'
+          isMut: true
+          isSigner: false
+        },
+        {
+          name: 'systemProgram'
+          isMut: false
+          isSigner: false
+        }
+      ]
+      args: []
+    },
+    {
       name: 'createTrader'
       accounts: [
         {
@@ -39,9 +122,19 @@ export type TrainerIDL = {
           isSigner: false
         },
         {
+          name: 'trainer'
+          isMut: true
+          isSigner: false
+        },
+        {
           name: 'authority'
           isMut: true
           isSigner: true
+        },
+        {
+          name: 'params'
+          isMut: true
+          isSigner: false
         },
         {
           name: 'systemProgram'
@@ -230,10 +323,6 @@ export type TrainerIDL = {
             type: 'i64'
           },
           {
-            name: 'solutionCid'
-            type: 'string'
-          },
-          {
             name: 'validationsCapacity'
             type: 'u8'
           },
@@ -244,6 +333,42 @@ export type TrainerIDL = {
                 defined: 'Validation'
               }
             }
+          },
+          {
+            name: 'bump'
+            type: 'u8'
+          }
+        ]
+      }
+    },
+    {
+      name: 'Trainer'
+      type: {
+        kind: 'struct'
+        fields: [
+          {
+            name: 'authority'
+            type: 'publicKey'
+          },
+          {
+            name: 'bump'
+            type: 'u8'
+          }
+        ]
+      }
+    },
+    {
+      name: 'Params'
+      type: {
+        kind: 'struct'
+        fields: [
+          {
+            name: 'authority'
+            type: 'publicKey'
+          },
+          {
+            name: 'minValidations'
+            type: 'u8'
           },
           {
             name: 'bump'
@@ -276,6 +401,21 @@ export type TrainerIDL = {
     }
   ]
   events: [
+    {
+      name: 'NewTrainerEvent'
+      fields: [
+        {
+          name: 'authority'
+          type: 'publicKey'
+          index: false
+        },
+        {
+          name: 'timestamp'
+          type: 'i64'
+          index: false
+        }
+      ]
+    },
     {
       name: 'NewTraderEvent'
       fields: [
@@ -365,51 +505,61 @@ export type TrainerIDL = {
   errors: [
     {
       code: 6000
+      name: 'WrongAuthority'
+      msg: 'Wrong authority'
+    },
+    {
+      code: 6001
+      name: 'WrongExerciseAuthority'
+      msg: 'Wrong exercise authority'
+    },
+    {
+      code: 6002
       name: 'ValidationsCapacityTooSmall'
       msg: 'Validations capacity too small, must be greater than 0'
     },
     {
-      code: 6001
+      code: 6003
       name: 'ExpiredTimeout'
       msg: 'Expired timeout, it must be in the future'
     },
     {
-      code: 6002
+      code: 6004
       name: 'WrongExerciseCreator'
       msg: 'Specified exercise creator does not match the pubkey in the exercise'
     },
     {
-      code: 6003
+      code: 6005
       name: 'WrongUser'
       msg: 'Specified user does not match the pubkey in the trader'
     },
     {
-      code: 6004
+      code: 6006
       name: 'WrongValidationIndex'
       msg: 'Specified validation index does not match the pubkey in the trader'
     },
     {
-      code: 6005
+      code: 6007
       name: 'DuplicatedValidation'
       msg: 'Trader have already added a validation'
     },
     {
-      code: 6006
+      code: 6008
       name: 'InvalidValidationIndex'
       msg: 'Invalid validation index'
     },
     {
-      code: 6007
+      code: 6009
       name: 'BumpNotFound'
       msg: 'Bump not found'
     },
     {
-      code: 6008
+      code: 6010
       name: 'ExerciseTimeout'
       msg: 'Exercise timeout'
     },
     {
-      code: 6009
+      code: 6011
       name: 'ExerciseSealed'
       msg: 'Exercise sealed'
     }
@@ -419,6 +569,89 @@ export const TrainerJSON: TrainerIDL = {
   version: '0.1.0',
   name: 'trainer',
   instructions: [
+    {
+      name: 'initializeParams',
+      accounts: [
+        {
+          name: 'params',
+          isMut: true,
+          isSigner: false,
+        },
+        {
+          name: 'authority',
+          isMut: true,
+          isSigner: true,
+        },
+        {
+          name: 'systemProgram',
+          isMut: false,
+          isSigner: false,
+        },
+      ],
+      args: [
+        {
+          name: 'minValidations',
+          type: 'u8',
+        },
+      ],
+    },
+    {
+      name: 'modifyAuthority',
+      accounts: [
+        {
+          name: 'params',
+          isMut: true,
+          isSigner: false,
+        },
+        {
+          name: 'newAuthority',
+          isMut: false,
+          isSigner: false,
+        },
+        {
+          name: 'authority',
+          isMut: true,
+          isSigner: true,
+        },
+        {
+          name: 'systemProgram',
+          isMut: false,
+          isSigner: false,
+        },
+      ],
+      args: [],
+    },
+    {
+      name: 'createTrainer',
+      accounts: [
+        {
+          name: 'trainer',
+          isMut: true,
+          isSigner: false,
+        },
+        {
+          name: 'authority',
+          isMut: true,
+          isSigner: true,
+        },
+        {
+          name: 'trainerAuthority',
+          isMut: false,
+          isSigner: false,
+        },
+        {
+          name: 'params',
+          isMut: true,
+          isSigner: false,
+        },
+        {
+          name: 'systemProgram',
+          isMut: false,
+          isSigner: false,
+        },
+      ],
+      args: [],
+    },
     {
       name: 'createTrader',
       accounts: [
@@ -454,9 +687,19 @@ export const TrainerJSON: TrainerIDL = {
           isSigner: false,
         },
         {
+          name: 'trainer',
+          isMut: true,
+          isSigner: false,
+        },
+        {
           name: 'authority',
           isMut: true,
           isSigner: true,
+        },
+        {
+          name: 'params',
+          isMut: true,
+          isSigner: false,
         },
         {
           name: 'systemProgram',
@@ -645,10 +888,6 @@ export const TrainerJSON: TrainerIDL = {
             type: 'i64',
           },
           {
-            name: 'solutionCid',
-            type: 'string',
-          },
-          {
             name: 'validationsCapacity',
             type: 'u8',
           },
@@ -659,6 +898,42 @@ export const TrainerJSON: TrainerIDL = {
                 defined: 'Validation',
               },
             },
+          },
+          {
+            name: 'bump',
+            type: 'u8',
+          },
+        ],
+      },
+    },
+    {
+      name: 'Trainer',
+      type: {
+        kind: 'struct',
+        fields: [
+          {
+            name: 'authority',
+            type: 'publicKey',
+          },
+          {
+            name: 'bump',
+            type: 'u8',
+          },
+        ],
+      },
+    },
+    {
+      name: 'Params',
+      type: {
+        kind: 'struct',
+        fields: [
+          {
+            name: 'authority',
+            type: 'publicKey',
+          },
+          {
+            name: 'minValidations',
+            type: 'u8',
           },
           {
             name: 'bump',
@@ -691,6 +966,21 @@ export const TrainerJSON: TrainerIDL = {
     },
   ],
   events: [
+    {
+      name: 'NewTrainerEvent',
+      fields: [
+        {
+          name: 'authority',
+          type: 'publicKey',
+          index: false,
+        },
+        {
+          name: 'timestamp',
+          type: 'i64',
+          index: false,
+        },
+      ],
+    },
     {
       name: 'NewTraderEvent',
       fields: [
@@ -780,51 +1070,61 @@ export const TrainerJSON: TrainerIDL = {
   errors: [
     {
       code: 6000,
+      name: 'WrongAuthority',
+      msg: 'Wrong authority',
+    },
+    {
+      code: 6001,
+      name: 'WrongExerciseAuthority',
+      msg: 'Wrong exercise authority',
+    },
+    {
+      code: 6002,
       name: 'ValidationsCapacityTooSmall',
       msg: 'Validations capacity too small, must be greater than 0',
     },
     {
-      code: 6001,
+      code: 6003,
       name: 'ExpiredTimeout',
       msg: 'Expired timeout, it must be in the future',
     },
     {
-      code: 6002,
+      code: 6004,
       name: 'WrongExerciseCreator',
       msg: 'Specified exercise creator does not match the pubkey in the exercise',
     },
     {
-      code: 6003,
+      code: 6005,
       name: 'WrongUser',
       msg: 'Specified user does not match the pubkey in the trader',
     },
     {
-      code: 6004,
+      code: 6006,
       name: 'WrongValidationIndex',
       msg: 'Specified validation index does not match the pubkey in the trader',
     },
     {
-      code: 6005,
+      code: 6007,
       name: 'DuplicatedValidation',
       msg: 'Trader have already added a validation',
     },
     {
-      code: 6006,
+      code: 6008,
       name: 'InvalidValidationIndex',
       msg: 'Invalid validation index',
     },
     {
-      code: 6007,
+      code: 6009,
       name: 'BumpNotFound',
       msg: 'Bump not found',
     },
     {
-      code: 6008,
+      code: 6010,
       name: 'ExerciseTimeout',
       msg: 'Exercise timeout',
     },
     {
-      code: 6009,
+      code: 6011,
       name: 'ExerciseSealed',
       msg: 'Exercise sealed',
     },

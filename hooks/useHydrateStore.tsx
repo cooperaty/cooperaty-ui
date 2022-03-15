@@ -18,7 +18,7 @@ import {
   marketsSelector,
 } from '../stores/selectors'
 import { EXERCISES_HISTORY_STORAGE_KEY } from '../components/practice/PracticeHistoryTable'
-import { ExerciseHistoryItem } from '../stores/types'
+import { ExerciseHistoryItem, ExerciseState } from '../stores/types'
 
 const SECONDS = 1000
 
@@ -51,6 +51,7 @@ const useHydrateStore = () => {
   const mangoAccount = useStore(mangoAccountSelector)
   const traderAccount = useStore((s) => s.selectedTraderAccount.current)
   const currentExercise = useStore((s) => s.selectedExercise.current)
+  const exercisesHistory = useStore((s) => s.exercisesHistory)
   const loadNewExercise = useStore((s) => s.selectedExercise.loadNew)
   const loadInitialExercise = useStore((s) => s.selectedExercise.initialLoad)
   const cooperatyClient = useStore((s) => s.connection.cooperatyClient)
@@ -93,7 +94,35 @@ const useHydrateStore = () => {
         }
       }
     }
-  }, [traderAccount])
+  }, [traderAccount?.publicKey])
+
+  const setExerciseState = (cid: string, state: ExerciseState) => {
+    const historyIndex = exercisesHistory.findIndex((pastExercise) => {
+      return pastExercise.cid == cid
+    })
+    setStore((s) => {
+      s.selectedExercise.current.state = state
+      if (historyIndex >= 0) s.exercisesHistory[historyIndex].state = state
+    })
+  }
+  const setExerciseCheckedState = (cid: string, outcome: number) => {
+    const exerciseHistoryItemIndex = exercisesHistory.findIndex(
+      (pastExercise) => {
+        return pastExercise.cid == cid
+      }
+    )
+    if (exerciseHistoryItemIndex >= 0) {
+      const newExerciseState =
+        outcome * exercisesHistory[exerciseHistoryItemIndex].validation > 0
+          ? 'success'
+          : 'failed'
+      setStore((state) => {
+        state.selectedExercise.current.state = newExerciseState
+        state.exercisesHistory[exerciseHistoryItemIndex].state =
+          newExerciseState
+      })
+    }
+  }
 
   useEffect(() => {
     if (currentExercise?.data?.publicKey && traderAccount) {
@@ -106,37 +135,50 @@ const useHydrateStore = () => {
           // ...
           // exercise outcome changed, we can load the solution from IPFS TODO
 
-          if (!info.data.length) {
-            console.log('Exercise account deleted')
-            return
-          }
-          const exerciseAccount = cooperatyClient.program.coder.accounts.decode(
-            'Exercise',
-            info.data
-          )
+          switch (currentExercise.state) {
+            case 'checking': {
+              if (!info.data.length) {
+                console.log('Checking exercise account deleted')
+                if (currentExercise.solution)
+                  setExerciseCheckedState(
+                    currentExercise.cid,
+                    currentExercise.solution.outcome
+                  )
+                break
+              }
+              const exerciseAccount =
+                cooperatyClient.program.coder.accounts.decode(
+                  'Exercise',
+                  info.data
+                )
+              console.log('Checking exercise account decoded', exerciseAccount)
 
-          if (exerciseAccount.sealed && currentExercise.state == 'active') {
-            console.log('Exercise expired')
-            setStore((state) => {
-              state.selectedExercise.current.state = 'expired'
-            })
-          }
+              const outcome = exerciseAccount.outcome.toNumber()
+              if (outcome != 0) {
+                setExerciseState(currentExercise.cid, outcome)
+              }
+              break
+            }
+            case 'active': {
+              if (!info.data.length) {
+                console.log('Active exercise account deleted')
+                setExerciseState(currentExercise.cid, 'expired')
+                break
+              }
 
-          const outcome = exerciseAccount.outcome.toNumber()
-          if (outcome != 0) {
-            const validation = exerciseAccount.validations.filter(
-              (validation) => validation.trader.equals(traderAccount.publicKey)
-            )
-            if (validation.length == 1) {
-              setStore((s) => {
-                s.selectedExercise.current.state =
-                  validation[0].value.toNumber() * outcome > 0
-                    ? 'success'
-                    : 'failed'
-              })
+              const exerciseAccount =
+                cooperatyClient.program.coder.accounts.decode(
+                  'Exercise',
+                  info.data
+                )
+              console.log('Active exercise account decoded', exerciseAccount)
+
+              if (exerciseAccount.sealed && currentExercise.state == 'active') {
+                console.log('Exercise expired')
+                setExerciseState(currentExercise.cid, 'expired')
+              }
             }
           }
-          console.log('Exercise account decoded', exerciseAccount)
         }
       )
       console.log('Exercise account changed listener', listener)
@@ -247,7 +289,6 @@ const useHydrateStore = () => {
 
   useInterval(async () => {
     await actions.fetchMangoGroup()
-    await actions.fetchExercise()
   }, 120 * SECONDS)
 
   useInterval(() => {
