@@ -413,5 +413,8 @@
   "check-all-validations": "Check all validations",
   "add": "Add",
   "failed": "Failed",
-  "success": "Success"
+  "success": "Success",
+  "trader-account": "Trader Account",
+  "tooltip-performance": "Performance",
+  "tooltip-league": "League"
 }

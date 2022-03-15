@@ -1,4 +1,4 @@
-import { useEffect } from 'react'
+import { useEffect, useRef } from 'react'
 import { AccountInfo } from '@solana/web3.js'
 import useStore from '../stores/useStore'
 import useInterval from './useInterval'
@@ -19,6 +19,7 @@ import {
 } from '../stores/selectors'
 import { EXERCISES_HISTORY_STORAGE_KEY } from '../components/practice/PracticeHistoryTable'
 import { ExerciseHistoryItem, ExerciseState } from '../stores/types'
+import { notify } from '../utils/notifications'
 
 const SECONDS = 1000
 
@@ -96,57 +97,123 @@ const useHydrateStore = () => {
     }
   }, [traderAccount?.publicKey])
 
-  const setExerciseState = (cid: string, state: ExerciseState) => {
-    const historyIndex = exercisesHistory.findIndex((pastExercise) => {
-      return pastExercise.cid == cid
-    })
+  const setExerciseState = (
+    cid: string,
+    state: ExerciseState,
+    historyIndex: number | null = null
+  ) => {
+    console.log('Setting exercise state', cid, state, historyIndex)
+    if (!historyIndex)
+      historyIndex = exercisesHistory.findIndex((pastExercise) => {
+        return pastExercise.cid == cid
+      })
     setStore((s) => {
       s.selectedExercise.current.state = state
       if (historyIndex >= 0) s.exercisesHistory[historyIndex].state = state
     })
+    switch (state) {
+      case 'expired': {
+        notify({
+          title: 'Exercise expired',
+          description:
+            'The exercise has expired, it is already checked or deleted',
+          type: 'info',
+        })
+        setStore((s) => {
+          s.selectedExercise.loadNew = true
+        })
+        break
+      }
+      case 'success': {
+        notify({
+          title: 'Successful validation',
+          description: 'Your validation was correct, review your exercise',
+          type: 'success',
+        })
+        break
+      }
+      case 'failed': {
+        notify({
+          title: 'Wrong validation',
+          description: 'Your validation was incorrect, review your exercise',
+          type: 'error',
+        })
+        break
+      }
+    }
   }
-  const setExerciseCheckedState = (cid: string, outcome: number) => {
+  const setExerciseCheckedState = async (cid: string, outcome: number) => {
     const exerciseHistoryItemIndex = exercisesHistory.findIndex(
       (pastExercise) => {
         return pastExercise.cid == cid
       }
+    )
+    console.log(
+      'Setting exercise checked state',
+      cid,
+      outcome,
+      exerciseHistoryItemIndex
     )
     if (exerciseHistoryItemIndex >= 0) {
       const newExerciseState =
         outcome * exercisesHistory[exerciseHistoryItemIndex].validation > 0
           ? 'success'
           : 'failed'
-      setStore((state) => {
-        state.selectedExercise.current.state = newExerciseState
-        state.exercisesHistory[exerciseHistoryItemIndex].state =
-          newExerciseState
+      setExerciseState(cid, newExerciseState, exerciseHistoryItemIndex)
+      setStore((s) => {
+        s.exercisesHistory[exerciseHistoryItemIndex].outcome = outcome
       })
+      await actions.reloadTraderAccount()
     }
   }
 
+  const listeners = useRef({})
+
   useEffect(() => {
-    if (currentExercise?.data?.publicKey && traderAccount) {
-      const listener = connection.onAccountChange(
-        currentExercise.data.publicKey,
-        (info, context) => {
-          console.log('Exercise account changed', info, context)
+    // TODO: close listener after when change state or exercise
+    console.log('Adding listeners', currentExercise, listeners)
+    if (
+      currentExercise?.data?.publicKey &&
+      traderAccount &&
+      !listeners.current[currentExercise.data.publicKey.toString()]
+    ) {
+      console.log('PASSING', currentExercise, listeners)
+      listeners.current[currentExercise.data.publicKey.toString()] =
+        connection.onAccountChange(
+          currentExercise.data.publicKey,
+          async (info, context) => {
+            const currentSelectedExercise =
+              useStore.getState().selectedExercise.current
+            console.log(
+              'Exercise account changed',
+              info,
+              context,
+              currentSelectedExercise
+            )
 
-          // exercise account changed, cases
-          // ...
-          // exercise outcome changed, we can load the solution from IPFS TODO
-
-          switch (currentExercise.state) {
-            case 'checking': {
-              if (!info.data.length) {
-                console.log('Checking exercise account deleted')
-                if (currentExercise.solution)
-                  setExerciseCheckedState(
-                    currentExercise.cid,
-                    currentExercise.solution.outcome
+            switch (currentSelectedExercise.state) {
+              case 'checking': {
+                if (!info.data.length) {
+                  console.log('Checking exercise account deleted')
+                  const solution =
+                    currentSelectedExercise.solution ??
+                    (await actions.getExerciseSolution(
+                      currentSelectedExercise.file.solutionCID
+                    ))
+                  console.log('Solution', solution)
+                  await setExerciseCheckedState(
+                    currentSelectedExercise.cid,
+                    solution.outcome
                   )
-                break
-              }
-              const exerciseAccount =
+                  console.log('Setting solution')
+                  if (!currentSelectedExercise.solution) {
+                    setStore((s) => {
+                      s.selectedExercise.current.solution = solution
+                    })
+                  }
+                  break
+                }
+                /*const exerciseAccount =
                 cooperatyClient.program.coder.accounts.decode(
                   'Exercise',
                   info.data
@@ -155,33 +222,36 @@ const useHydrateStore = () => {
 
               const outcome = exerciseAccount.outcome.toNumber()
               if (outcome != 0) {
-                setExerciseState(currentExercise.cid, outcome)
-              }
-              break
-            }
-            case 'active': {
-              if (!info.data.length) {
-                console.log('Active exercise account deleted')
-                setExerciseState(currentExercise.cid, 'expired')
+                await setExerciseCheckedState(currentSelectedExercise.cid, outcome)
+                console.log('Exercise checked')
+              }*/
                 break
               }
+              case 'active': {
+                if (!info.data.length) {
+                  console.log('Active exercise account deleted')
+                  setExerciseState(currentSelectedExercise.cid, 'expired')
+                  break
+                }
 
-              const exerciseAccount =
-                cooperatyClient.program.coder.accounts.decode(
-                  'Exercise',
-                  info.data
-                )
-              console.log('Active exercise account decoded', exerciseAccount)
+                const exerciseAccount =
+                  cooperatyClient.program.coder.accounts.decode(
+                    'Exercise',
+                    info.data
+                  )
+                console.log('Active exercise account decoded', exerciseAccount)
 
-              if (exerciseAccount.sealed && currentExercise.state == 'active') {
-                console.log('Exercise expired')
-                setExerciseState(currentExercise.cid, 'expired')
+                if (
+                  exerciseAccount.sealed &&
+                  currentSelectedExercise.state == 'active'
+                ) {
+                  console.log('Exercise expired')
+                  setExerciseState(currentSelectedExercise.cid, 'expired')
+                }
               }
             }
           }
-        }
-      )
-      console.log('Exercise account changed listener', listener)
+        )
     }
   }, [currentExercise])
 

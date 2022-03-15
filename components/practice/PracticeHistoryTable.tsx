@@ -6,8 +6,14 @@ import { LinkButton } from '../elements/Button'
 import { useSortableData } from '../../hooks/useSortableData'
 import { useViewport } from '../../hooks/useViewport'
 import { breakpoints } from '../TradePageGrid'
-import { Table, Td, Th, TrBody, TrHead } from '../elements/TableElements'
-import { ExpandableRow } from '../elements/TableElements'
+import {
+  ExpandableRow,
+  Table,
+  Td,
+  Th,
+  TrBody,
+  TrHead,
+} from '../elements/TableElements'
 import { useTranslation } from 'next-i18next'
 import Pagination from '../elements/Pagination'
 import usePagination from '../../hooks/usePagination'
@@ -153,6 +159,40 @@ const PracticeHistoryTable = ({ numExercises }: { numExercises?: number }) => {
                       <Th>
                         <LinkButton
                           className="flex items-center no-underline font-normal"
+                          onClick={() => requestSort('validation')}
+                        >
+                          {t('validation')}
+                          <ArrowSmDownIcon
+                            className={`default-transition flex-shrink-0 h-4 w-4 ml-1 ${
+                              sortConfig?.key === 'validation'
+                                ? sortConfig.direction === 'ascending'
+                                  ? 'transform rotate-180'
+                                  : 'transform rotate-360'
+                                : null
+                            }`}
+                          />
+                        </LinkButton>
+                      </Th>
+                      <Th>
+                        <LinkButton
+                          className="flex items-center no-underline font-normal"
+                          onClick={() => requestSort('outcome')}
+                        >
+                          {t('outcome')}
+                          <ArrowSmDownIcon
+                            className={`default-transition flex-shrink-0 h-4 w-4 ml-1 ${
+                              sortConfig?.key === 'outcome'
+                                ? sortConfig.direction === 'ascending'
+                                  ? 'transform rotate-180'
+                                  : 'transform rotate-360'
+                                : null
+                            }`}
+                          />
+                        </LinkButton>
+                      </Th>
+                      <Th>
+                        <LinkButton
+                          className="flex items-center no-underline font-normal"
                           onClick={() => requestSort('state')}
                         >
                           {t('state')}
@@ -208,6 +248,8 @@ const PracticeHistoryTable = ({ numExercises }: { numExercises?: number }) => {
                             </Td>
                             <Td>{exercise.takeProfit}</Td>
                             <Td>{exercise.stopLoss}</Td>
+                            <Td>{exercise.validation}</Td>
+                            <Td>{exercise.outcome}</Td>
                             <Td>{t(exercise.state)}</Td>
                           </TrBody>
                         )

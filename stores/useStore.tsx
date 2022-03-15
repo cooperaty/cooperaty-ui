@@ -26,7 +26,13 @@ import { MSRM_DECIMALS } from '@project-serum/serum/lib/token-instructions'
 import { ExerciseData, TraderData, TrainerSDK } from '../sdk'
 import Axios from 'axios'
 import { LAST_TRADER_ACCOUNT_KEY } from '../components/trader_account/TraderAccountsModal'
-import { Exercise, ExerciseFile, ExerciseSolution, Store } from './types'
+import {
+  Exercise,
+  ExerciseFile,
+  ExerciseSolution,
+  ExerciseState,
+  Store,
+} from './types'
 import {
   CLUSTER,
   corruptedExerciseToHistoryItem,
@@ -601,7 +607,7 @@ const useStore = create<Store>((set, get) => {
       }: {
         exerciseData?: ExerciseData
         exerciseFile: ExerciseFile
-        state: Exercise['state']
+        state: ExerciseState
         exerciseCID: string
       }) {
         const set = get().set
@@ -620,7 +626,7 @@ const useStore = create<Store>((set, get) => {
           solution: exerciseSolution,
         }
 
-        console.log('Setting new exercice', exercise)
+        console.log('Setting new exercise', exercise)
 
         set((state) => {
           console.log(typeof state.selectedExercise.current)
@@ -676,13 +682,16 @@ const useStore = create<Store>((set, get) => {
           return newExercises[0]
         }
       },
-      async fetchExercise(exerciseCID, state: Exercise['state'] = 'active') {
+      async fetchExercise(exerciseCID: string) {
         const set = get().set
-        const coopeartyClient = get().connection.cooperatyClient
+        const cooperatyClient = get().connection.cooperatyClient
         const exerciseLoadInitial = get().selectedExercise.initialLoad
         const exerciseLoadNew = get().selectedExercise.loadNew
+        const exercisesHistory = get().exercisesHistory
         let exerciseData: ExerciseData = null
         let exerciseFile: ExerciseFile = null
+        let state: ExerciseState = 'active'
+        let validation: number | null = null
 
         // exercise loads priority
         // 1. when the window is opened and cid in url path TODO
@@ -692,8 +701,10 @@ const useStore = create<Store>((set, get) => {
         // 4. when the user clicks on an exercise history item
 
         if (exerciseLoadInitial) {
+          // when the window is opened and cid on localstorage
           exerciseCID =
             localStorage.getItem(LAST_EXERCISE_LOCAL_STORAGE_KEY) ?? null
+          // if there is no cid on localstorage, try to load a new exercise
           if (!exerciseCID) {
             exerciseData = await this.getNewExercise()
             if (exerciseData) {
@@ -701,7 +712,9 @@ const useStore = create<Store>((set, get) => {
             }
           }
         } else if (exerciseLoadNew) {
+          // when the user clicks on change exercise / load exercise button
           exerciseData = await this.getNewExercise()
+          // if there is a new exercise, set it as current
           if (exerciseData) {
             exerciseCID = exerciseData.account.cid
           }
@@ -709,21 +722,23 @@ const useStore = create<Store>((set, get) => {
 
         if (exerciseCID) {
           exerciseFile = await this.getExerciseFile(exerciseCID)
-          if (!exerciseFile) {
-            set((state) => {
-              state.exercisesHistory.push(
-                corruptedExerciseToHistoryItem(exerciseCID)
-              )
-              state.selectedExercise.current = null
-            })
-          }
-          if (!exerciseData) {
+          // if there's an exercise file, but not yet its account data, load it
+          // this means that the exercise was not loaded from the blockchain
+          if (exerciseFile && !exerciseData) {
             const filteredExercises =
-              await coopeartyClient.getFilteredExercises({
+              await cooperatyClient.getFilteredExercises({
                 cid: exerciseCID,
               })
             if (filteredExercises.length == 1) {
               exerciseData = filteredExercises[0]
+            }
+            const exerciseHistoryItem = exercisesHistory.find(
+              (exercise) => exercise.cid === exerciseCID
+            )
+            console.log(exerciseHistoryItem)
+            if (exerciseHistoryItem) {
+              state = exerciseHistoryItem.state
+              validation = exerciseHistoryItem.validation
             }
           }
         }
@@ -736,6 +751,11 @@ const useStore = create<Store>((set, get) => {
             state,
             exerciseCID,
           })
+          if (validation) {
+            set((s) => {
+              s.selectedExercise.validation = validation
+            })
+          }
           // if exercise is null, then we stop searching for new exercises
         } else {
           set((state) => {

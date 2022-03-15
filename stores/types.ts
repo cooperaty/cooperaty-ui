@@ -27,13 +27,14 @@ export type ExerciseState =
 
 export interface ExerciseHistoryItem {
   cid: string
-  direction: 'long_position' | 'short_position'
-  takeProfit: number
-  stopLoss: number
-  postBars: number
-  type: 'Scalping' | 'Swing'
+  direction: 'long_position' | 'short_position' | null
+  takeProfit: number | null
+  stopLoss: number | null
+  postBars: number | null
+  type: 'Scalping' | 'Swing' | null
   state: ExerciseState
-  validation: number
+  validation: number | null
+  outcome: number | null
 }
 
 export interface ExerciseFile {

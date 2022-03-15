@@ -88,6 +88,7 @@ export const corruptedExerciseToHistoryItem = (
     postBars: null,
     type: null,
     state: 'corrupted',
-    validation: 0,
+    validation: null,
+    outcome: null,
   }
 }

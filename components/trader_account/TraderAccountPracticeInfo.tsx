@@ -13,7 +13,7 @@ export default function TraderAccountPracticeInfo() {
   const { width } = useViewport()
   const isMobile = width ? width < breakpoints.sm : false
 
-  const ranking = traderAccount
+  const performance = traderAccount
     ? traderAccount.account.performance.toNumber()
     : 0.0
 
@@ -23,23 +23,7 @@ export default function TraderAccountPracticeInfo() {
         className={!connected && !isMobile ? 'filter blur-sm' : undefined}
         id="account-details-tip"
       >
-        {!isMobile ? (
-          <ElementTitle>
-            <Tooltip
-              content={
-                traderAccount ? (
-                  <div>
-                    {t('maint-health')}: {ranking.toFixed(4)}
-                  </div>
-                ) : (
-                  ''
-                )
-              }
-            >
-              {t('account')}
-            </Tooltip>
-          </ElementTitle>
-        ) : null}
+        {!isMobile ? <ElementTitle>{t('trader-account')}</ElementTitle> : null}
         <div>
           <div className="flex justify-center text-xs -mt-2">
             <a
@@ -61,58 +45,73 @@ export default function TraderAccountPracticeInfo() {
                 {traderAccount?.account?.name}
               </div>
             </div>
-            <div className="flex justify-between pb-3">
-              <div className="font-normal text-th-fgd-3 leading-4">
-                {t('league')}
+            <Tooltip
+              content={
+                <div>
+                  {t('tooltip-league')}{' '}
+                  <a
+                    href="https://docs.cooperaty.org/overview#league"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                  >
+                    {t('learn-more')}
+                  </a>
+                </div>
+              }
+            >
+              <div className="flex justify-between pb-3">
+                <div className="font-normal text-th-fgd-3 leading-4">
+                  {t('league')}
+                </div>
+                <div className="text-th-fgd-1">Academy</div>
               </div>
-              <div className="text-th-fgd-1">Gold</div>
-            </div>
+            </Tooltip>
           </div>
-          <div className="border border-th-bkg-4 rounded flex items-center my-2 sm:my-3 p-2.5">
-            <div className="flex items-center pr-2">
-              <StarIcon
-                className="h-5 mr-1.5 w-5 text-th-primary"
-                aria-hidden="true"
-              />
-              <span>
-                <Tooltip
-                  content={
-                    <div>
-                      {t('tooltip-account-liquidated')}{' '}
-                      <a
-                        href="https://docs.cooperaty.org/overview#ranking"
-                        target="_blank"
-                        rel="noopener noreferrer"
-                      >
-                        {t('learn-more')}
-                      </a>
-                    </div>
-                  }
+          <Tooltip
+            content={
+              <div>
+                {t('tooltip-performance')}{' '}
+                <a
+                  href="https://docs.cooperaty.org/overview#performance"
+                  target="_blank"
+                  rel="noopener noreferrer"
                 >
+                  {t('learn-more')}
+                </a>
+              </div>
+            }
+          >
+            <div className="border border-th-bkg-4 rounded flex items-center my-2 sm:my-3 p-2.5">
+              <div className="flex items-center pr-2">
+                <StarIcon
+                  className="h-5 mr-1.5 w-5 text-th-primary"
+                  aria-hidden="true"
+                />
+                <span>
                   <div className="cursor-help font-normal text-th-fgd-3 leading-4 border-b border-th-fgd-3 border-dashed border-opacity-20 default-transition hover:border-th-bkg-2">
-                    {t('rank')}
+                    {t('')}
                   </div>
-                </Tooltip>
-              </span>
+                </span>
+              </div>
+              <div className="h-1.5 flex flex-grow rounded bg-th-bkg-4">
+                <div
+                  style={{
+                    width: `${performance}%`,
+                  }}
+                  className={`flex rounded ${
+                    performance > 50
+                      ? 'bg-th-green'
+                      : performance > 25
+                      ? 'bg-th-orange'
+                      : 'bg-th-red'
+                  }`}
+                />
+              </div>
+              <div className="pl-2 text-right">
+                {performance > 100 ? '>100' : performance.toFixed(2)}%
+              </div>
             </div>
-            <div className="h-1.5 flex flex-grow rounded bg-th-bkg-4">
-              <div
-                style={{
-                  width: `${ranking}%`,
-                }}
-                className={`flex rounded ${
-                  ranking > 50
-                    ? 'bg-th-green'
-                    : ranking > 25
-                    ? 'bg-th-orange'
-                    : 'bg-th-red'
-                }`}
-              />
-            </div>
-            <div className="pl-2 text-right">
-              {ranking > 100 ? '>100' : ranking.toFixed(2)}%
-            </div>
-          </div>
+          </Tooltip>
         </div>
       </div>
     </>

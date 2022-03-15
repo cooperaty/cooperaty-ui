@@ -65,6 +65,7 @@ export interface ChartContainerProps {
 const TVChartContainer = () => {
   const set = useStore((s) => s.set)
   const validation = useStore((s) => s.practiceForm.validation)
+  const exercisesHistory = useStore((s) => s.exercisesHistory)
   const currentExercise = useStore((s) => s.selectedExercise.current)
   const currentExerciseChart = currentExercise.file
   const currentExerciseSolution = currentExercise.solution
@@ -304,6 +305,12 @@ const TVChartContainer = () => {
   useEffect(() => {
     if (validationLine.current != null && typeof validation == 'number') {
       const actualPrice = validationLine.current.getPrice()
+      if (currentExercise.state != 'active') {
+        const exerciseHistoryItem = exercisesHistory.find(
+          (exercise) => exercise.cid == currentExercise.cid
+        )
+        setValidation(exerciseHistoryItem.validation)
+      }
       if (validation > 100) {
         setValidation(100)
       } else if (validation < -100) {
