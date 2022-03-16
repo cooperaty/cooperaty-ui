@@ -306,9 +306,11 @@ const TVChartContainer = () => {
     if (validationLine.current != null && typeof validation == 'number') {
       const actualPrice = validationLine.current.getPrice()
       if (currentExercise.state != 'active') {
-        const exerciseHistoryItem = exercisesHistory.find(
-          (exercise) => exercise.cid == currentExercise.cid
-        )
+        const exerciseHistoryItem = exercisesHistory[currentExercise.cid]
+        if (!exerciseHistoryItem)
+          console.error(
+            'Can not find exercise history item when updating validation line'
+          )
         setValidation(exerciseHistoryItem.validation)
       }
       if (validation > 100) {

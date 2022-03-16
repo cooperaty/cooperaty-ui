@@ -132,7 +132,7 @@ export default function useWallet() {
         state.wallet.connected = false
         state.traderAccounts = []
         state.selectedTraderAccount.current = null
-        state.exercisesHistory = []
+        state.exercisesHistory = {}
       })
       notify({
         type: 'info',

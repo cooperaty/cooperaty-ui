@@ -4,12 +4,23 @@ import PracticeHistoryTable from './PracticeHistoryTable'
 import ManualRefresh from '../elements/ManualRefresh'
 import Tabs from '../elements/Tabs'
 import useStore from '../../stores/useStore'
+import { ExerciseHistoryItem } from '../../stores/types'
 
 const TABS = ['Practice History']
 
 const UserPracticeInfoTabs = ({ activeTab, setActiveTab }) => {
   const traderAccount = useStore((state) => state.selectedTraderAccount.current)
-  const exercisesHistory = useStore((state) => state.exercisesHistory)
+  const actions = useStore((state) => state.actions)
+  // @ts-ignore
+  const exerciseHistoryItemsNoSkipped: ExerciseHistoryItem[] =
+    actions.getFilteredExerciseHistoryItems(
+      // @ts-ignore
+      (exercisesHistoryItem) =>
+        exercisesHistoryItem.state != 'skipped' &&
+        exercisesHistoryItem.state != 'expired' &&
+        exercisesHistoryItem.state != 'corrupted',
+      true
+    )
 
   const handleTabChange = (tabName) => {
     setActiveTab(tabName)
@@ -21,13 +32,11 @@ const UserPracticeInfoTabs = ({ activeTab, setActiveTab }) => {
         activeTab={activeTab}
         onChange={handleTabChange}
         showCount={
-          exercisesHistory.length
+          exerciseHistoryItemsNoSkipped.length
             ? [
                 {
                   tabName: 'Practice History',
-                  count: exercisesHistory.filter(
-                    (exercise) => exercise.state != 'skipped'
-                  ).length,
+                  count: exerciseHistoryItemsNoSkipped.length,
                 },
               ]
             : null

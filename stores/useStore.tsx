@@ -29,6 +29,7 @@ import { LAST_TRADER_ACCOUNT_KEY } from '../components/trader_account/TraderAcco
 import {
   Exercise,
   ExerciseFile,
+  ExerciseHistoryItem,
   ExerciseSolution,
   ExerciseState,
   Store,
@@ -136,7 +137,7 @@ const useStore = create<Store>((set, get) => {
       validation: 0,
       practiceType: 'Profit',
     },
-    exercisesHistory: [],
+    exercisesHistory: {},
     selectedExercise: {
       current: null,
       initialLoad: true,
@@ -502,19 +503,13 @@ const useStore = create<Store>((set, get) => {
           sealed: false,
         })
 
-        // get exercises' data from the blockchain
-        const exercises2: any[] = await cooperatyClient.getFilteredExercises()
-
-        console.log('Exercises', exercises, exercises2)
+        console.log('Exercises', exercises)
 
         // filter exercises that are already in history
-        return !exercisesHistory.length
+        return !Object.values(exercises).length
           ? exercises
           : exercises.filter(
-              (exercise) =>
-                !exercisesHistory.filter((pastExercise) => {
-                  return pastExercise.cid == exercise.account.cid
-                }).length
+              (exercise) => !exercisesHistory[exercise.account.cid]
             )
       },
       async getExerciseFile(cid: string) {
@@ -544,9 +539,13 @@ const useStore = create<Store>((set, get) => {
             type: 'error',
           })
           const set = get().set
-          set((state) => {
-            state.exercisesHistory.push(corruptedExerciseToHistoryItem(cid))
-            state.selectedExercise.current = null
+          const exercisesHistory = get().exercisesHistory
+          set((s) => {
+            s.exercisesHistory = {
+              ...exercisesHistory,
+              [cid]: corruptedExerciseToHistoryItem(cid),
+            }
+            s.selectedExercise.current = null
           })
           return null
         }
@@ -638,6 +637,20 @@ const useStore = create<Store>((set, get) => {
 
         localStorage.setItem(LAST_EXERCISE_LOCAL_STORAGE_KEY, exerciseCID)
       },
+      getFilteredExerciseHistoryItems(
+        conditions: (exerciseHistoryItem: ExerciseHistoryItem) => boolean,
+        returnArray = false
+      ) {
+        const exercisesHistory = get().exercisesHistory
+        if (returnArray) {
+          return Object.values(exercisesHistory).filter(conditions)
+        } else {
+          const exercisesHistoryArray = Object.entries(exercisesHistory)
+          return exercisesHistoryArray.filter(([_cid, exerciseHistoryItem]) =>
+            conditions(exerciseHistoryItem)
+          )
+        }
+      },
       async getNewExercise() {
         const set = get().set
         const exercisesHistory = get().exercisesHistory
@@ -648,11 +661,15 @@ const useStore = create<Store>((set, get) => {
 
         // if there is no available exercises, try remove from history the skipped exercises
         if (newExercises.length == 0) {
-          const historyWithoutSkippedExercises = exercisesHistory.filter(
-            (exercise) => exercise.state !== 'skipped'
-          )
+          const historyWithoutSkippedExercises =
+            this.getFilteredExerciseHistoryItems((exercisesHistoryItem) => {
+              return exercisesHistoryItem.state != 'skipped'
+            })
           // if there were skipped exercises removed from history
-          if (historyWithoutSkippedExercises.length < exercisesHistory.length) {
+          if (
+            Object.values(historyWithoutSkippedExercises).length <
+            Object.values(exercisesHistory).length
+          ) {
             set((s) => {
               s.exercisesHistory = historyWithoutSkippedExercises
             })
@@ -732,9 +749,7 @@ const useStore = create<Store>((set, get) => {
             if (filteredExercises.length == 1) {
               exerciseData = filteredExercises[0]
             }
-            const exerciseHistoryItem = exercisesHistory.find(
-              (exercise) => exercise.cid === exerciseCID
-            )
+            const exerciseHistoryItem = exercisesHistory[exerciseCID]
             console.log(exerciseHistoryItem)
             if (exerciseHistoryItem) {
               state = exerciseHistoryItem.state

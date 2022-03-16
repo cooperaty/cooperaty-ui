@@ -18,8 +18,9 @@ import {
   marketsSelector,
 } from '../stores/selectors'
 import { EXERCISES_HISTORY_STORAGE_KEY } from '../components/practice/PracticeHistoryTable'
-import { ExerciseHistoryItem, ExerciseState } from '../stores/types'
 import { notify } from '../utils/notifications'
+import { ExerciseSolution, ExerciseState, Store } from '../stores/types'
+import UseStore from '../stores/useStore'
 
 const SECONDS = 1000
 
@@ -52,7 +53,6 @@ const useHydrateStore = () => {
   const mangoAccount = useStore(mangoAccountSelector)
   const traderAccount = useStore((s) => s.selectedTraderAccount.current)
   const currentExercise = useStore((s) => s.selectedExercise.current)
-  const exercisesHistory = useStore((s) => s.exercisesHistory)
   const loadNewExercise = useStore((s) => s.selectedExercise.loadNew)
   const loadInitialExercise = useStore((s) => s.selectedExercise.initialLoad)
   const cooperatyClient = useStore((s) => s.connection.cooperatyClient)
@@ -66,12 +66,12 @@ const useHydrateStore = () => {
 
   useEffect(() => {
     if (traderAccount) {
-      const savedExercisesHistory: ExerciseHistoryItem[] = JSON.parse(
+      const savedExercisesHistory: Store['exercisesHistory'] = JSON.parse(
         localStorage.getItem(
           EXERCISES_HISTORY_STORAGE_KEY + traderAccount.publicKey.toString()
-        ) || '[]'
+        ) || '{}'
       )
-      if (savedExercisesHistory.length > 0) {
+      if (Object.entries(savedExercisesHistory).length > 0) {
         console.log(
           'Loading saved exercises history',
           savedExercisesHistory,
@@ -81,9 +81,8 @@ const useHydrateStore = () => {
           state.exercisesHistory = savedExercisesHistory
         })
         if (currentExercise) {
-          const currentExerciseHistoryItem = savedExercisesHistory.find(
-            (item) => item.cid == currentExercise.cid
-          )
+          const currentExerciseHistoryItem =
+            savedExercisesHistory[currentExercise.cid]
           if (currentExerciseHistoryItem) {
             setStore((state) => {
               state.practiceForm.validation =
@@ -97,20 +96,33 @@ const useHydrateStore = () => {
     }
   }, [traderAccount?.publicKey])
 
-  const setExerciseState = (
-    cid: string,
-    state: ExerciseState,
-    historyIndex: number | null = null
-  ) => {
-    console.log('Setting exercise state', cid, state, historyIndex)
-    if (!historyIndex)
-      historyIndex = exercisesHistory.findIndex((pastExercise) => {
-        return pastExercise.cid == cid
+  const setExerciseState = ({
+    cid,
+    state,
+    outcome,
+    solution,
+  }: {
+    cid: string
+    state?: ExerciseState
+    outcome?: number
+    solution?: ExerciseSolution
+  }) => {
+    console.log('Setting state', state, outcome, cid)
+    const exercisesHistory = UseStore.getState().exercisesHistory
+    if (!state)
+      state =
+        outcome * exercisesHistory[cid].validation > 0 ? 'success' : 'failed'
+    const setCheckedState = () => {
+      console.log('Setting checked state', state, outcome)
+      setStore((s) => {
+        s.selectedExercise.current.state = state
+        s.selectedExercise.current.solution = solution
+        s.exercisesHistory = {
+          ...exercisesHistory,
+          [cid]: { ...exercisesHistory[cid], state, outcome },
+        }
       })
-    setStore((s) => {
-      s.selectedExercise.current.state = state
-      if (historyIndex >= 0) s.exercisesHistory[historyIndex].state = state
-    })
+    }
     switch (state) {
       case 'expired': {
         notify({
@@ -120,7 +132,12 @@ const useHydrateStore = () => {
           type: 'info',
         })
         setStore((s) => {
+          s.selectedExercise.current = null
           s.selectedExercise.loadNew = true
+          s.exercisesHistory = {
+            ...exercisesHistory,
+            [cid]: { ...exercisesHistory[cid], state },
+          }
         })
         break
       }
@@ -130,6 +147,7 @@ const useHydrateStore = () => {
           description: 'Your validation was correct, review your exercise',
           type: 'success',
         })
+        setCheckedState()
         break
       }
       case 'failed': {
@@ -138,32 +156,9 @@ const useHydrateStore = () => {
           description: 'Your validation was incorrect, review your exercise',
           type: 'error',
         })
+        setCheckedState()
         break
       }
-    }
-  }
-  const setExerciseCheckedState = async (cid: string, outcome: number) => {
-    const exerciseHistoryItemIndex = exercisesHistory.findIndex(
-      (pastExercise) => {
-        return pastExercise.cid == cid
-      }
-    )
-    console.log(
-      'Setting exercise checked state',
-      cid,
-      outcome,
-      exerciseHistoryItemIndex
-    )
-    if (exerciseHistoryItemIndex >= 0) {
-      const newExerciseState =
-        outcome * exercisesHistory[exerciseHistoryItemIndex].validation > 0
-          ? 'success'
-          : 'failed'
-      setExerciseState(cid, newExerciseState, exerciseHistoryItemIndex)
-      setStore((s) => {
-        s.exercisesHistory[exerciseHistoryItemIndex].outcome = outcome
-      })
-      await actions.reloadTraderAccount()
     }
   }
 
@@ -201,16 +196,11 @@ const useHydrateStore = () => {
                       currentSelectedExercise.file.solutionCID
                     ))
                   console.log('Solution', solution)
-                  await setExerciseCheckedState(
-                    currentSelectedExercise.cid,
-                    solution.outcome
-                  )
-                  console.log('Setting solution')
-                  if (!currentSelectedExercise.solution) {
-                    setStore((s) => {
-                      s.selectedExercise.current.solution = solution
-                    })
-                  }
+                  await setExerciseState({
+                    cid: currentSelectedExercise.cid,
+                    outcome: solution.outcome,
+                    solution,
+                  })
                   break
                 }
                 /*const exerciseAccount =
@@ -230,7 +220,10 @@ const useHydrateStore = () => {
               case 'active': {
                 if (!info.data.length) {
                   console.log('Active exercise account deleted')
-                  setExerciseState(currentSelectedExercise.cid, 'expired')
+                  setExerciseState({
+                    cid: currentSelectedExercise.cid,
+                    state: 'expired',
+                  })
                   break
                 }
 
@@ -246,7 +239,10 @@ const useHydrateStore = () => {
                   currentSelectedExercise.state == 'active'
                 ) {
                   console.log('Exercise expired')
-                  setExerciseState(currentSelectedExercise.cid, 'expired')
+                  setExerciseState({
+                    cid: currentSelectedExercise.cid,
+                    state: 'expired',
+                  })
                 }
               }
             }

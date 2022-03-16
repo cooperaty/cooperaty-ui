@@ -83,6 +83,7 @@ module.exports = {
           red: { DEFAULT: '#F84638', dark: '#C7251A', muted: '#6d2832' },
           green: { DEFAULT: '#AFD803', dark: '#91B503', muted: '#49601b' },
           orange: { DEFAULT: '#FF9C24' },
+          blue: { DEFAULT: '#01C4FF', dark: '#0161FF', muted: '#003399' },
           'bkg-0':
             'linear-gradient(254deg, rgba(0,72,161,1) 0%, rgba(76,0,102,1) 100%)',
           'bkg-1': 'rgba(0,0,0,1)',

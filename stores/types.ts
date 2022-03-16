@@ -184,7 +184,9 @@ export interface Store extends State {
     validation: number | ''
     practiceType: 'Loss' | 'Profit'
   }
-  exercisesHistory: ExerciseHistoryItem[]
+  exercisesHistory: {
+    [cid: string]: ExerciseHistoryItem
+  }
   selectedExercise: {
     current: Exercise | null
     initialLoad: boolean

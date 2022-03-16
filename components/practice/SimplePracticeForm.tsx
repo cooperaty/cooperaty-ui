@@ -71,12 +71,17 @@ export default function SimplePracticeForm() {
   }
 
   function onSubmitChangeExercise() {
+    const exercisesHistory = useStore.getState().exercisesHistory
     set((s) => {
       if (selectedExercise) {
         if (selectedExercise.state == 'active')
-          s.exercisesHistory.push(
-            exerciseToHistoryItem(selectedExercise, 'skipped')
-          )
+          s.exercisesHistory = {
+            ...exercisesHistory,
+            [selectedExercise.cid]: exerciseToHistoryItem(
+              selectedExercise,
+              'skipped'
+            ),
+          }
         s.selectedExercise.current = null
       }
       s.selectedExercise.loadNew = true
@@ -95,6 +100,7 @@ export default function SimplePracticeForm() {
     const wallet = useStore.getState().wallet.current
     const selectedExercise = useStore.getState().selectedExercise.current
     const traderAccount = useStore.getState().selectedTraderAccount.current
+    const exercisesHistory = useStore.getState().exercisesHistory
 
     if (
       !wallet ||
@@ -117,9 +123,14 @@ export default function SimplePracticeForm() {
 
       set((s) => {
         if (selectedExercise.state == 'active')
-          s.exercisesHistory.push(
-            exerciseToHistoryItem(selectedExercise, 'checking', validation)
-          )
+          s.exercisesHistory = {
+            ...exercisesHistory,
+            [selectedExercise.cid]: exerciseToHistoryItem(
+              selectedExercise,
+              'checking',
+              validation
+            ),
+          }
         s.practiceForm.validation = 0
         s.selectedExercise.loadNew = true
       })

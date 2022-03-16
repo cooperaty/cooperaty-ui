@@ -31,15 +31,22 @@ const PracticeHistoryTable = ({ numExercises }: { numExercises?: number }) => {
   const traderAccount = useStore((s) => s.selectedTraderAccount.current)
   const [, setSavedExercisesHistory] = useLocalStorageState(
     EXERCISES_HISTORY_STORAGE_KEY + (traderAccount?.publicKey ?? ''),
-    []
+    {}
   )
   const exercisesHistory = useStore((state) => state.exercisesHistory)
-  const [exercises, setExercises] = useState([...exercisesHistory])
+  const [exercises, setExercises] = useState(exercisesHistory)
   const actions = useStore((state) => state.actions)
 
-  const preFilteredExercises = exercises.filter(
-    (exercise) => exercise.state != 'skipped' // TODO: improve the history filter by type
-  )
+  // @ts-ignore
+  const preFilteredExercises: ExerciseHistoryItem[] =
+    actions.getFilteredExerciseHistoryItems((exercisesHistoryItem) => {
+      return (
+        exercisesHistoryItem.state != 'skipped' &&
+        exercisesHistoryItem.state != 'expired' &&
+        exercisesHistoryItem.state != 'corrupted'
+      )
+      // @ts-ignore
+    }, true)
 
   const { items, requestSort, sortConfig } =
     useSortableData(preFilteredExercises)
