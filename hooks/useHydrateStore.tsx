@@ -1,8 +1,9 @@
 import { useEffect, useRef } from 'react'
 import { AccountInfo } from '@solana/web3.js'
 import useStore from '../stores/useStore'
+import UseStore from '../stores/useStore'
 import useInterval from './useInterval'
-import { Orderbook as SpotOrderBook, Market } from '@project-serum/serum'
+import { Market, Orderbook as SpotOrderBook } from '@project-serum/serum'
 import {
   BookSide,
   BookSideLayout,
@@ -20,7 +21,6 @@ import {
 import { EXERCISES_HISTORY_STORAGE_KEY } from '../components/practice/PracticeHistoryTable'
 import { notify } from '../utils/notifications'
 import { ExerciseSolution, ExerciseState, Store } from '../stores/types'
-import UseStore from '../stores/useStore'
 
 const SECONDS = 1000
 
@@ -96,18 +96,22 @@ const useHydrateStore = () => {
     }
   }, [traderAccount?.publicKey])
 
-  const setExerciseState = ({
-    cid,
-    state,
-    outcome,
-    solution,
-  }: {
-    cid: string
-    state?: ExerciseState
-    outcome?: number
-    solution?: ExerciseSolution
-  }) => {
-    console.log('Setting state', state, outcome, cid)
+  const setExerciseState = (
+    {
+      cid,
+      isCurrentExercise,
+      state,
+      outcome,
+      solution,
+    }: {
+      cid: string
+      isCurrentExercise: boolean
+      state?: ExerciseState
+      outcome?: number
+      solution?: ExerciseSolution
+    } = { cid: null, state: null, outcome: null, isCurrentExercise: true }
+  ) => {
+    console.log('Setting state', state, outcome, cid, isCurrentExercise)
     const exercisesHistory = UseStore.getState().exercisesHistory
     if (!state)
       state =
@@ -115,8 +119,10 @@ const useHydrateStore = () => {
     const setCheckedState = () => {
       console.log('Setting checked state', state, outcome)
       setStore((s) => {
-        s.selectedExercise.current.state = state
-        s.selectedExercise.current.solution = solution
+        if (isCurrentExercise) {
+          s.selectedExercise.current.state = state
+          s.selectedExercise.current.solution = solution
+        }
         s.exercisesHistory = {
           ...exercisesHistory,
           [cid]: { ...exercisesHistory[cid], state, outcome },
@@ -132,8 +138,10 @@ const useHydrateStore = () => {
           type: 'info',
         })
         setStore((s) => {
-          s.selectedExercise.current = null
-          s.selectedExercise.loadNew = true
+          if (isCurrentExercise) {
+            s.selectedExercise.current = null
+            s.selectedExercise.loadNew = true
+          }
           s.exercisesHistory = {
             ...exercisesHistory,
             [cid]: { ...exercisesHistory[cid], state },
@@ -179,28 +187,50 @@ const useHydrateStore = () => {
           async (info, context) => {
             const currentSelectedExercise =
               useStore.getState().selectedExercise.current
+            const exercisesHistory = useStore.getState().exercisesHistory
+
             console.log(
               'Exercise account changed',
               info,
               context,
               currentSelectedExercise
             )
+            const isCurrentExercise =
+              currentSelectedExercise &&
+              currentExercise.cid == currentSelectedExercise.cid
 
-            switch (currentSelectedExercise.state) {
+            const exercise = isCurrentExercise
+              ? currentSelectedExercise
+              : exercisesHistory[currentExercise.cid]
+
+            switch (exercise.state) {
               case 'checking': {
                 if (!info.data.length) {
                   console.log('Checking exercise account deleted')
-                  const solution =
-                    currentSelectedExercise.solution ??
-                    (await actions.getExerciseSolution(
-                      currentSelectedExercise.file.solutionCID
-                    ))
-                  console.log('Solution', solution)
-                  await setExerciseState({
-                    cid: currentSelectedExercise.cid,
-                    outcome: solution.outcome,
-                    solution,
-                  })
+                  if (isCurrentExercise) {
+                    const solution =
+                      currentSelectedExercise.solution ??
+                      (await actions.getExerciseSolution(exercise.cid))
+                    await setExerciseState({
+                      cid: exercise.cid,
+                      outcome: solution.outcome,
+                      solution,
+                      isCurrentExercise,
+                    })
+                  } else {
+                    // TODO: find a better way to get the outcome
+                    const exerciseFile = await actions.getExerciseFile(
+                      exercise.cid
+                    )
+                    const solution = await actions.getExerciseSolution(
+                      exerciseFile.solutionCID
+                    )
+                    await setExerciseState({
+                      cid: exercise.cid,
+                      outcome: solution.outcome,
+                      isCurrentExercise,
+                    })
+                  }
                   break
                 }
                 /*const exerciseAccount =
@@ -223,6 +253,7 @@ const useHydrateStore = () => {
                   setExerciseState({
                     cid: currentSelectedExercise.cid,
                     state: 'expired',
+                    isCurrentExercise,
                   })
                   break
                 }
@@ -242,6 +273,7 @@ const useHydrateStore = () => {
                   setExerciseState({
                     cid: currentSelectedExercise.cid,
                     state: 'expired',
+                    isCurrentExercise,
                   })
                 }
               }
@@ -249,7 +281,7 @@ const useHydrateStore = () => {
           }
         )
     }
-  }, [currentExercise])
+  }, [currentExercise, traderAccount])
 
   // update orderbook when market changes
   useEffect(() => {
