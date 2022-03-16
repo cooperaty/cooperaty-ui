@@ -14,11 +14,11 @@ const UserPracticeInfoTabs = ({ activeTab, setActiveTab }) => {
   // @ts-ignore
   const exerciseHistoryItemsNoSkipped: ExerciseHistoryItem[] =
     actions.getFilteredExerciseHistoryItems(
-      // @ts-ignore
       (exercisesHistoryItem) =>
         exercisesHistoryItem.state != 'skipped' &&
         exercisesHistoryItem.state != 'expired' &&
         exercisesHistoryItem.state != 'corrupted',
+      // @ts-ignore
       true
     )
 

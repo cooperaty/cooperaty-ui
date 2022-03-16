@@ -225,9 +225,9 @@ const PracticeHistoryTable = ({ numExercises }: { numExercises?: number }) => {
                               <LinkButton
                                 className="flex items-center no-underline font-normal"
                                 onClick={() => {
-                                  // @ts-ignore
                                   actions.fetchExercise(
                                     exercise.cid,
+                                    // @ts-ignore
                                     exercise.state
                                   )
                                   setStore((state) => {
